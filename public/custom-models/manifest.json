@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "models": [
+    {
+      "id": "builtin-arrow",
+      "name": "Demo arrow",
+      "builtinType": "arrow"
+    },
+    {
+      "id": "builtin-pad",
+      "name": "Demo pad",
+      "builtinType": "pad"
+    },
+    {
+      "id": "Bar-Chair",
+      "name": "Bar Chair",
+      "icon": "Bar-Chair.PNG",
+      "glb": "Bar-Chair.glb"
+    }
+  ]
+}

@@ -1,0 +1,49 @@
+{
+  "moduleId": "ppe-zone-entry",
+  "title": "PPE Zone Entry",
+  "version": "1.0.0",
+  "estimatedMinutes": 5,
+  "assetQrCode": "atlas:ppe-zone-entry",
+  "steps": [
+    {
+      "id": "s01",
+      "title": "Read zone signage",
+      "instruction": "Read required PPE posted at the zone entrance.",
+      "safetyClass": "normal",
+      "validation": { "type": "dwell_ms", "ms": 2500 }
+    },
+    {
+      "id": "s02",
+      "title": "Don hard hat",
+      "instruction": "Put on hard hat with chin strap secured.",
+      "safetyClass": "normal",
+      "validation": { "type": "manual_confirm" }
+    },
+    {
+      "id": "s03",
+      "title": "Don safety glasses",
+      "instruction": "Put on ANSI-rated safety glasses.",
+      "safetyClass": "normal",
+      "validation": { "type": "manual_confirm" }
+    },
+    {
+      "id": "s04",
+      "title": "Don high-visibility vest",
+      "instruction": "Put on hi-vis vest. Mark the zone entry line on the floor.",
+      "safetyClass": "critical",
+      "validation": { "type": "manual_confirm" },
+      "hint": "Vest must be visible from the front and back.",
+      "placement": {
+        "object": "zone",
+        "prompt": "Place the ring on the floor at the zone boundary beside the real line or tape."
+      }
+    },
+    {
+      "id": "s05",
+      "title": "Enter zone",
+      "instruction": "Cross the entry line only when all PPE is on.",
+      "safetyClass": "critical",
+      "validation": { "type": "manual_confirm" }
+    }
+  ]
+}

@@ -1,0 +1,73 @@
+{
+  "moduleId": "loto-pump-7a",
+  "title": "LOTO — Pump 7A Disconnect",
+  "version": "1.0.0",
+  "estimatedMinutes": 12,
+  "assetQrCode": "atlas:loto-pump-7a",
+  "steps": [
+    {
+      "id": "s01",
+      "title": "Review active work permits",
+      "instruction": "Confirm no conflicting work orders on Pump 7A. Notify supervisor if any are open.",
+      "safetyClass": "normal",
+      "validation": { "type": "manual_confirm" },
+      "hint": "Check the permit board or CMMS before proceeding."
+    },
+    {
+      "id": "s02",
+      "title": "Notify affected personnel",
+      "instruction": "Inform operators that Pump 7A will be locked out.",
+      "safetyClass": "normal",
+      "validation": { "type": "dwell_ms", "ms": 3000 }
+    },
+    {
+      "id": "s03",
+      "title": "Locate main disconnect",
+      "instruction": "Stand beside the disconnect. Place the arrow on the floor next to the real panel.",
+      "safetyClass": "critical",
+      "validation": { "type": "manual_confirm" },
+      "hint": "Wrong disconnect is a top LOTO failure mode.",
+      "placement": {
+        "object": "arrow",
+        "prompt": "Point at the floor beside the disconnect. When the blue ring shows, tap Place on floor."
+      }
+    },
+    {
+      "id": "s04",
+      "title": "Open disconnect",
+      "instruction": "Switch disconnect to OFF. Mark the work zone on the floor in front of the panel.",
+      "safetyClass": "critical",
+      "validation": { "type": "dwell_ms", "ms": 4000 },
+      "placement": {
+        "object": "zone",
+        "prompt": "Place the orange ring on the floor where you will stand to operate the disconnect."
+      }
+    },
+    {
+      "id": "s05",
+      "title": "Apply lock and tag",
+      "instruction": "Apply your personal lock and tag. Place the pad on the floor where the lock should be applied.",
+      "safetyClass": "critical",
+      "validation": { "type": "manual_confirm" },
+      "hint": "One person, one lock, one key.",
+      "placement": {
+        "object": "pad",
+        "prompt": "Place the blue pad on the floor beside the lock point on the real equipment."
+      }
+    },
+    {
+      "id": "s06",
+      "title": "Verify zero energy",
+      "instruction": "Attempt a normal restart from the control station (should not start). Record result.",
+      "safetyClass": "critical",
+      "validation": { "type": "manual_confirm" }
+    },
+    {
+      "id": "s07",
+      "title": "Session complete",
+      "instruction": "LOTO placement verified. Do not remove locks until your work is complete and approved.",
+      "safetyClass": "normal",
+      "validation": { "type": "manual_confirm" }
+    }
+  ]
+}
