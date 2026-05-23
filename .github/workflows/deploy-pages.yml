@@ -3,8 +3,6 @@ name: Deploy Atlas WebXR to GitHub Pages
 on:
   push:
     branches: [main, master]
-    paths:
-      - "atlas-webxr/**"
   workflow_dispatch:
 
 permissions:
@@ -20,19 +18,36 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
         with:
-          node-version: "22"
-          cache: npm
-          cache-dependency-path: atlas-webxr/package-lock.json
-      - run: npm ci
-        working-directory: atlas-webxr
-      - run: npm run build
-        working-directory: atlas-webxr
-      - uses: actions/upload-pages-artifact@v3
+          node-version: "22" # Using Node 22 fixes the deprecation warning!
+
+      - name: Install Dependencies
+        run: |
+          if [ -d "atlas-webxr" ]; then
+            cd atlas-webxr && npm ci
+          else
+            npm ci
+          fi
+
+      - name: Build Project
+        run: |
+          if [ -d "atlas-webxr" ]; then
+            cd atlas-webxr && npm run build
+          else
+            npm run build
+          fi
+
+      - name: Upload Build Output
+        uses: actions/upload-pages-artifact@v3
         with:
-          path: atlas-webxr/dist
+          path: |
+            dist
+            atlas-webxr/dist
 
   deploy:
     needs: build
