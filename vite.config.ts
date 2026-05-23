@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite';
+import { defineConfig } from 'vite'
 import basicSsl from "@vitejs/plugin-basic-ssl";
 import { VitePWA } from "vite-plugin-pwa";
 import { customModelsApiPlugin } from "./plugins/custom-models-api";
@@ -26,7 +26,8 @@ export default defineConfig({
         theme_color: "#1565c0",
         background_color: "#0a1628",
         display: "standalone",
-        start_url: "./",
+        start_url: "/atlas-webxr/",
+        scope: "/atlas-webxr/",
         icons: [
           {
             src: "favicon.svg",
