@@ -16,6 +16,18 @@
       "name": "Bar Chair",
       "icon": "Bar-Chair.PNG",
       "glb": "Bar-Chair.glb"
+    },
+	{
+      "id": "CT202",
+      "name": "CT202",
+      "icon": "CT202.PNG",
+      "glb": "CT202.glb"
+    },
+	{
+      "id": "CV108",
+      "name": "CV108",
+      "icon": "CV108.PNG",
+      "glb": "CV108.glb"
     }
   ]
 }
