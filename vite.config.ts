@@ -1,4 +1,9 @@
-import { defineConfig } from "vite";
+import { defineConfig } from 'vite'
+
+export default defineConfig({
+  base: '/atlas-webxr/',
+})
+
 import basicSsl from "@vitejs/plugin-basic-ssl";
 import { VitePWA } from "vite-plugin-pwa";
 import { customModelsApiPlugin } from "./plugins/custom-models-api";
