@@ -4,7 +4,8 @@ import { VitePWA } from "vite-plugin-pwa";
 import { customModelsApiPlugin } from "./plugins/custom-models-api";
 
 export default defineConfig({
-  base: "./",
+  
+  base: '/atlas-webxr/',
   server: {
     host: true,
     https: true,
