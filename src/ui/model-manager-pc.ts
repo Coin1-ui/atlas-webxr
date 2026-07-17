@@ -27,13 +27,10 @@ import {
 } from "../data/glb-to-usdz";
 import { USDZ_MIME } from "../xr/ios/quick-look-ar";
 import { globalModelArUrl } from "../shared/model-ar-url";
-<<<<<<< Updated upstream
-=======
 import {
   checkModelUploadSizes,
   uploadSizeNoteHtml,
 } from "../shared/upload-size-limits";
->>>>>>> Stashed changes
 
 function storageBadge(model: CatalogModel): string {
   const storage = (model as AdminCatalogModel).demoStorage;
@@ -121,10 +118,7 @@ export function renderPcModelManager(
         <label class="field-label">iOS AR model (.usdz) <span class="muted-id">optional — Safari Quick Look</span></label>
         <input type="file" name="usdz" accept=".usdz,model/vnd.usdz+zip" />
         <p class="home-sub">Leave USDZ empty to auto-generate from GLB, or upload one from Apple Reality Converter for best iOS texture quality.</p>
-<<<<<<< Updated upstream
-=======
         <p class="upload-status camera-warning hidden" id="upload-size-warning" role="status" aria-live="polite"></p>
->>>>>>> Stashed changes
         ${workspace ? `<p class="home-sub auth-hint">Uploads save to your <strong>operator workspace</strong> catalog (powers Try live demo AR).</p>` : uploadDestinationHtml()}
         <div class="upload-progress-wrap hidden" id="upload-progress-wrap">
           <div class="upload-progress-bar"><div class="upload-progress-fill" id="upload-progress-fill"></div></div>
@@ -141,10 +135,7 @@ export function renderPcModelManager(
   bindModelIconFallbacks(root);
 
   const statusEl = root.querySelector("#upload-status") as HTMLElement;
-<<<<<<< Updated upstream
-=======
   const sizeWarningEl = root.querySelector("#upload-size-warning") as HTMLElement;
->>>>>>> Stashed changes
   const progressWrap = root.querySelector("#upload-progress-wrap") as HTMLElement;
   const progressFill = root.querySelector("#upload-progress-fill") as HTMLElement;
   const progressLabel = root.querySelector("#upload-progress-label") as HTMLElement;
@@ -159,8 +150,6 @@ export function renderPcModelManager(
 
   preloadGlbToUsdzModules();
 
-<<<<<<< Updated upstream
-=======
   const showSizeFeedback = (check: ReturnType<typeof checkModelUploadSizes>) => {
     if (check.error) {
       sizeWarningEl.classList.remove("hidden");
@@ -202,7 +191,6 @@ export function renderPcModelManager(
   form.querySelector('input[name="usdz"]')?.addEventListener("change", previewUploadSizes);
   form.querySelector('input[name="icon"]')?.addEventListener("change", previewUploadSizes);
 
->>>>>>> Stashed changes
   form.onsubmit = (e) => {
     e.preventDefault();
     if (!workspace && uploadBlockedReason()) {
@@ -220,8 +208,6 @@ export function renderPcModelManager(
       const glb = fd.get("glb");
       const manualUsdz = fd.get("usdz");
       if (!(icon instanceof File) || !(glb instanceof File)) return;
-<<<<<<< Updated upstream
-=======
       const sizeCheck = checkModelUploadSizes({
         glb,
         usdz: manualUsdz instanceof File ? manualUsdz : null,
@@ -230,7 +216,6 @@ export function renderPcModelManager(
       });
       showSizeFeedback(sizeCheck);
       if (sizeCheck.blocked) return;
->>>>>>> Stashed changes
       const target = workspace ? ("remote" as const) : selectedUploadTarget(form);
       submitBtn.disabled = true;
       progressWrap.classList.remove("hidden");
@@ -256,9 +241,6 @@ export function renderPcModelManager(
           usdzFile = new File([usdzResult.blob], usdzFileFromGlbName(glb.name), {
             type: USDZ_MIME,
           });
-<<<<<<< Updated upstream
-          onProgress(10, `USDZ ready (${Math.round(usdzResult.byteLength / 1024)} KB)`);
-=======
           const usdzSizeCheck = checkModelUploadSizes({
             glb,
             usdz: usdzFile,
@@ -271,7 +253,6 @@ export function renderPcModelManager(
           } else {
             onProgress(10, `USDZ ready (${Math.round(usdzResult.byteLength / 1024)} KB)`);
           }
->>>>>>> Stashed changes
         } else {
           onProgress(10, `USDZ failed: ${usdzResult.error}`);
           statusEl.textContent = `USDZ conversion failed: ${usdzResult.error}. Uploading GLB only — add a manual .usdz from Reality Converter for iOS, or retry in Chrome on desktop.`;

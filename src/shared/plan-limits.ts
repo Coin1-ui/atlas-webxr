@@ -1,6 +1,7 @@
 import type { PlanTierId } from "./plan-display";
 import { effectiveBillingTier, isTrialSuspended, SUSPENDED_LIMITS, type TrialWorkspace } from "./trial";
 import type { WorkspacePlan } from "./tenant";
+import { storageBytesForModelCount } from "./upload-size-limits";
 
 export type PlanLimits = {
   models: number;
@@ -8,28 +9,6 @@ export type PlanLimits = {
   storageBytes: number;
 };
 
-<<<<<<< Updated upstream
-export const BILLING_TIER_LIMITS: Record<PlanTierId, PlanLimits> = {
-  starter: {
-    models: 5,
-    sessionsPerMonth: 100,
-    storageBytes: 2 * 1024 * 1024 * 1024,
-  },
-  launch: {
-    models: 30,
-    sessionsPerMonth: 1000,
-    storageBytes: 5 * 1024 * 1024 * 1024,
-  },
-  growth: {
-    models: 100,
-    sessionsPerMonth: 5000,
-    storageBytes: 25 * 1024 * 1024 * 1024,
-  },
-  scale: {
-    models: 10_000,
-    sessionsPerMonth: 1_000_000,
-    storageBytes: 1024 * 1024 * 1024 * 1024,
-=======
 /** AR sessions included per catalog model per month (Starter, Launch, Growth). */
 export const SESSIONS_PER_MODEL_PER_MONTH = 100;
 
@@ -65,7 +44,6 @@ export const BILLING_TIER_LIMITS: Record<PlanTierId, PlanLimits> = {
     models: 10_000,
     sessionsPerMonth: UNLIMITED_SESSIONS_PER_MONTH,
     storageBytes: storageBytesForModelCount(10_000),
->>>>>>> Stashed changes
   },
 };
 

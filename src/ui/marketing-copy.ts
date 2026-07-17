@@ -66,20 +66,12 @@ export const MKT = {
   /** MF-1 — guided onboarding + landing FAQ */
   onboardingTarget: "Target: live in under 10 minutes",
   onboardingUploadFaq:
-<<<<<<< Updated upstream
-    "You (or your catalog team) upload GLB files once from the desktop admin — typically 5–15 minutes for your first model, including icon and link copy.",
-=======
     "You (or your catalog team) upload GLB files once from the desktop admin — max 50 MB per file; workspace storage budgets ~2.5× GLB size per model (GLB + iOS USDZ). Typically 5–15 minutes for your first model, including icon and link copy.",
->>>>>>> Stashed changes
   onboardingRoiNote:
     "Retail pilots report fewer size-related returns when buyers place at true floor scale before purchase — without a six-figure custom AR app.",
   uploadFaqTitle: "Who uploads the 3D models?",
   uploadFaqBody:
-<<<<<<< Updated upstream
-    "Your merchandising or 3D team — once per SKU from desktop admin. USDZ for iPhone is generated automatically. Shoppers only open your branded link; they never upload.",
-=======
     "Your merchandising or 3D team — once per SKU from desktop admin. Max 50 MB per GLB or USDZ. USDZ for iPhone is generated automatically when under the cap. Shoppers only open your branded link; they never upload.",
->>>>>>> Stashed changes
   howItWorksTitle: "Desktop admin → phone AR",
   howItWorksLead:
     "Upload and brand on PC. Associates and shoppers open your link on Chrome or Safari — no app store, no MDM rollout.",

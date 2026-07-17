@@ -1,11 +1,7 @@
 import type { Workspace } from "../shared/tenant";
 import { brandedHeaderHtml, mountWorkspaceLogo } from "../branding/workspace-theme";
 import type { WorkspaceUsageResponse } from "../data/usage-api";
-<<<<<<< Updated upstream
-import { formatStorageBytes } from "../shared/plan-limits";
-=======
 import { formatStorageBytes, formatSessionsLimit, isUnlimitedSessionsLimit } from "../shared/plan-limits";
->>>>>>> Stashed changes
 import { estimateOverageUsd, upgradeOptions, type PlanTier } from "../shared/plan-display";
 import { effectiveBillingTier, trialProfilePlanLine, accountTrialBannerHtml, trialSuspendedBannerHtml, mountTrialCountdown, planActionVerbForTier } from "../shared/trial";
 import { isOveragePaidLocally } from "../data/billing-api";
@@ -78,11 +74,7 @@ export function renderAccountPage(
         </div>
         <div class="admin-stat">
           <span class="admin-stat-label">AR sessions</span>
-<<<<<<< Updated upstream
-          <span class="admin-stat-val">${usage.usage.sessionCount}${unrestricted ? `<span class="admin-stat-unlimited"> · tracked · no limit</span>` : `<span> / ${usage.limits.sessionsPerMonth}</span>`}</span>
-=======
           <span class="admin-stat-val">${usage.usage.sessionCount}${unrestricted ? `<span class="admin-stat-unlimited"> · tracked · no limit</span>` : isUnlimitedSessionsLimit(usage.limits.sessionsPerMonth) ? `<span class="admin-stat-unlimited"> · unlimited</span>` : `<span> / ${formatSessionsLimit(usage.limits.sessionsPerMonth)}</span>`}</span>
->>>>>>> Stashed changes
         </div>
         <div class="admin-stat">
           <span class="admin-stat-label">Storage</span>

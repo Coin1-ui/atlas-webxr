@@ -15,14 +15,9 @@
 | **Admin seats** | 1 | 2 | 10 | Unlimited |
 | **Field reps / viewers** | Unlimited | Unlimited | Unlimited | Unlimited |
 | **GLB models** | 5 | 30 | 100 | Custom |
-<<<<<<< Updated upstream
-| **AR sessions / mo** | 100 | 1,000 | 5,000 | Custom |
-| **Storage** | 2 GB | 5 GB | 25 GB | Custom |
-=======
 | **Max GLB / USDZ file** | 50 MB | 50 MB | 50 MB | 50 MB |
 | **AR sessions / mo** | 100/model (500 max) | 100/model (3,000 max) | 100/model (10,000 max) | Unlimited |
 | **Storage** (models × 50 MB × 2.5) | 625 MB | 3.7 GB | 12.2 GB | ~1.2 TB |
->>>>>>> Stashed changes
 | **White-label customer UI** | Branded link | Full | Full | Full + custom domain |
 | **Browser-based AR (Chrome & Safari)** | ✓ | ✓ | ✓ | ✓ |
 | **Analytics** | Basic | Basic | Full + export | Full + export + API |

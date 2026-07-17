@@ -35,13 +35,8 @@ const TIERS = [
     description: "Try floor AR with a tiny catalog — perfect for first tests",
     features: [
       "1 workspace · 5 GLB models",
-<<<<<<< Updated upstream
-      "100 AR sessions / month included",
-      "2 GB storage",
-=======
       "100 AR sessions / model / month (500 included)",
       "625 MB storage",
->>>>>>> Stashed changes
       "Unlimited shoppers & field reps",
       MKT.pricingFeatureAr,
       "Branded link `/w/your-brand`",
@@ -60,13 +55,8 @@ const TIERS = [
     description: "Single showroom or pilot team — live this week",
     features: [
       "1 workspace · 30 GLB models",
-<<<<<<< Updated upstream
-      "1,000 AR sessions / month included",
-      "5 GB storage",
-=======
       "100 AR sessions / model / month (3,000 included)",
       "3.7 GB storage",
->>>>>>> Stashed changes
       "Unlimited field reps & shoppers",
       MKT.pricingFeatureAr,
       "Full white-label customer experience",
@@ -84,13 +74,8 @@ const TIERS = [
     description: "Regional retail & active field sales",
     features: [
       "1 workspace · 100 GLB models",
-<<<<<<< Updated upstream
-      "5,000 AR sessions / month included",
-      "25 GB storage",
-=======
       "100 AR sessions / model / month (10,000 included)",
       "12.2 GB storage",
->>>>>>> Stashed changes
       "Full white-label customer experience",
       "Analytics export for sales ops",
       "Custom logo & accent color",

@@ -134,11 +134,7 @@
 | **ENG-36** | **Auto 14-day Growth trial** on signup (`trialEndsAt`, Growth limits, no card) | **P0** | Full-stack | done · [BATCH-28-CONFIRMED.md](./BATCH-28-CONFIRMED.md) |
 | **ENG-37** | **Plan-gate features:** `sessionLogDownload` on by default for Growth+; tier-driven feature flags | **P0** | Full-stack | **done** (Batch 33) · owner explicit override via `featuresSessionLogDownloadExplicit` |
 | **ENG-38** | **Hard-block upload** at model limit (or explicit upgrade gate UX) | P1 | Full-stack | **done** (Batch 33) · API 403 + admin UI gate |
-<<<<<<< Updated upstream
-| **PM-3** | **Align storage copy:** PRICING.md Starter 2 GB vs `plan-limits.ts` 5 GB | P1 | PM | **done** (Batch 33) · code + pricing page aligned to 2/5/25 GB |
-=======
 | **PM-3** | **Align storage copy:** PRICING.md vs `plan-limits.ts` | P1 | PM | **done** · code + pricing page aligned to derived storage (models × 50 MB × 2.5): Starter 625 MB · Launch 3.7 GB · Growth 12.2 GB · Scale ~1.2 TB |
->>>>>>> Stashed changes
 | **PM-4** | **Admin seat copy vs product:** implement seat limits or remove 2/10 seat claims from PRICING + pricing page | P2 | PM | todo |
 | **BILL-3** | **Overage billing via Stripe** (replace localStorage ack in `/account`) | P1 | Backend | **on_hold** · blocked by Batch 29 |
 | **BILL-4** | **Annual prepay SKUs** (20% off Launch/Growth) | P2 | Backend | **on_hold** · blocked by Batch 29 |
@@ -602,11 +598,7 @@ Full matrix: [PRICING-FEATURE-READINESS.md](./PRICING-FEATURE-READINESS.md)
 | 1 | **Agents Orchestrator** | Scoped ENG-37 + ENG-38 + PM-3; billing remains on hold |
 | 2 | **Backend Architect** | Tier-default `sessionLogDownload` for Growth+ · explicit owner override flag · upload 403 message |
 | 3 | **Frontend Developer** | Admin upload gate UI + Account upgrade CTA · presign error parsing |
-<<<<<<< Updated upstream
-| 4 | **Product Manager** | Storage limits aligned: Starter 2 GB · Launch 5 GB · Growth 25 GB (code + pricing page) |
-=======
 | 4 | **Product Manager** | Storage limits aligned: Starter 625 MB · Launch 3.7 GB · Growth 12.2 GB · Scale ~1.2 TB (50 MB max file all plans; code + pricing page) |
->>>>>>> Stashed changes
 | 5 | **QA** | `npm run test:batch33` ✅ · `npm run build` ✅ |
 | 6 | **Deploy gate** | **Pending** — `npm run package:atlas-api` + Amplify push |
 
@@ -680,8 +672,6 @@ Full matrix: [PRICING-FEATURE-READINESS.md](./PRICING-FEATURE-READINESS.md)
 
 ---
 
-<<<<<<< Updated upstream
-=======
 ## NEXUS-Sprint orchestration log (2026-07-17) — Plan limits doc sweep
 
 ### Batch — 50 MB file cap + 2.5× storage alignment (docs + copy)
@@ -714,7 +704,6 @@ Full matrix: [PRICING-FEATURE-READINESS.md](./PRICING-FEATURE-READINESS.md)
 
 ---
 
->>>>>>> Stashed changes
 ## Dependency graph (Sprint 1)
 
 ```

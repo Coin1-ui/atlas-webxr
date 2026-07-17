@@ -80,10 +80,7 @@ record(
 // FE bundle + routes
 let bundleFile = null;
 let hasPricingStorage = false;
-<<<<<<< Updated upstream
-=======
 let hasSessionCopy = false;
->>>>>>> Stashed changes
 let hasOwnerEmailColumn = false;
 try {
   const home = await fetch(`${ORIGIN}/`).then((r) => r.text());
@@ -94,16 +91,12 @@ try {
   if (m) {
     bundleFile = m[1];
     const js = await fetch(`${ORIGIN}${m[1]}`).then((r) => r.text());
-<<<<<<< Updated upstream
-    hasPricingStorage = js.includes("2 GB storage") || js.includes("25 GB storage");
-=======
     hasPricingStorage =
       js.includes("625 MB storage") ||
       js.includes("12.2 GB storage");
     hasSessionCopy =
       js.includes("100 AR sessions / model") ||
       js.includes("10,000 included");
->>>>>>> Stashed changes
     hasOwnerEmailColumn = js.includes("Owner email") || js.includes("owner-email-cell");
     record("QA-33-07", "FE bundle fetch", "PASS", { bundleFile });
     record(
@@ -113,15 +106,12 @@ try {
       { note: "Deploy latest Amplify build for Batch 33 storage lines" },
     );
     record(
-<<<<<<< Updated upstream
-=======
       "QA-33-08b",
       "Pricing page session copy in bundle",
       hasSessionCopy ? "PASS" : "WARN",
       { note: "Deploy latest FE for 100 sessions/model copy" },
     );
     record(
->>>>>>> Stashed changes
       "QA-33-09",
       "Owner dashboard email column in bundle",
       hasOwnerEmailColumn ? "PASS" : "WARN",

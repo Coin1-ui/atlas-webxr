@@ -16,19 +16,12 @@ export const ADMIN_HELP_SECTIONS: AdminHelpSection[] = [  {
     paragraphs: [
       "Use Manage 3D models on desktop admin only. Each product needs a display name, a square icon image (PNG, JPEG, or WebP), and a GLB file.",
       "When upload succeeds, Atlas AR stores the model in your workspace prefix and generates USDZ for iPhone Quick Look automatically.",
-<<<<<<< Updated upstream
-    ],
-    bullets: [
-      "GLB must be valid glTF 2.0 binary — export from Blender, Sketchfab, or your PIM as .glb",
-      "Keep files under your plan storage limit; compress textures if uploads are slow",
-=======
       "Max 50 MB per GLB or USDZ file on every plan. Each model uses about 2.5× the GLB size in workspace storage (GLB + iOS USDZ).",
     ],
     bullets: [
       "GLB must be valid glTF 2.0 binary — export from Blender, Sketchfab, or your PIM as .glb",
       "Keep each GLB under 50 MB. Prefer GLBs under ~33 MB if you rely on auto-USDZ so conversion stays under the cap.",
       "Workspace storage is derived from your plan model slots × 50 MB × 2.5 — compress textures if uploads are slow",
->>>>>>> Stashed changes
       "Name appears in the showroom catalog; use the same name shoppers recognize",
     ],
     tip: "Target: first model live in under 10 minutes from signup.",

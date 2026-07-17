@@ -77,14 +77,10 @@ export function estimateOverageUsd(
   limits: { models: number; sessionsPerMonth: number; storageBytes: number }
 ): number {
   let total = 0;
-<<<<<<< Updated upstream
-  const sessionOver = Math.max(0, usage.sessionCount - limits.sessionsPerMonth);
-=======
   const sessionOver =
     limits.sessionsPerMonth <= 0
       ? 0
       : Math.max(0, usage.sessionCount - limits.sessionsPerMonth);
->>>>>>> Stashed changes
   const modelOver = Math.max(0, usage.modelCount - limits.models);
   const storageOverGb = Math.max(0, (usage.storageBytes - limits.storageBytes) / (1024 * 1024 * 1024));
 

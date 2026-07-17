@@ -2,11 +2,7 @@ import type { Workspace } from "../shared/tenant";
 import { brandedHeaderHtml, mountWorkspaceLogo } from "../branding/workspace-theme";
 import { workspaceApiHint } from "../data/workspace-api";
 import type { WorkspaceUsageResponse } from "../data/usage-api";
-<<<<<<< Updated upstream
-import { formatStorageBytes } from "../shared/plan-limits";
-=======
 import { formatStorageBytes, formatSessionsLimit, isUnlimitedSessionsLimit } from "../shared/plan-limits";
->>>>>>> Stashed changes
 import { workspacePlanLabel, trialBannerHtml, mountTrialCountdown } from "../shared/trial";
 import { MKT_ASSETS } from "./marketing-assets";
 import type { OnboardingState } from "../shared/onboarding-progress";
@@ -36,11 +32,7 @@ function usageStatHtml(
         </div>
         <div class="admin-stat">
           <span class="admin-stat-label">AR sessions</span>
-<<<<<<< Updated upstream
-          <span class="admin-stat-val">${usage.usage.sessionCount}${unrestricted ? "" : `<span> / ${usage.limits.sessionsPerMonth}</span>`}</span>
-=======
           <span class="admin-stat-val">${usage.usage.sessionCount}${unrestricted ? "" : isUnlimitedSessionsLimit(usage.limits.sessionsPerMonth) ? `<span class="admin-stat-unlimited"> · unlimited</span>` : `<span> / ${formatSessionsLimit(usage.limits.sessionsPerMonth)}</span>`}</span>
->>>>>>> Stashed changes
         </div>
         <div class="admin-stat">
           <span class="admin-stat-label">Storage</span>

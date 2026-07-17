@@ -95,11 +95,8 @@
 
 ## Recommended pricing v2 (sales-ready)
 
-<<<<<<< Updated upstream
-=======
 **File & storage policy (all tiers):** max **50 MB** per GLB or USDZ file. Workspace storage = **model slots × 50 MB × 2.5**. AR sessions = **100 per model / month** on Starter, Launch, Growth; **Scale unlimited**.
 
->>>>>>> Stashed changes
 ### Launch — $59/mo ($47/mo billed annually)
 
 **For:** Single showroom, pilot field team, design partners converting from trial.
@@ -109,14 +106,9 @@
 | Workspaces | 1 |
 | Admin seats | 2 |
 | GLB models | 30 |
-<<<<<<< Updated upstream
-| AR sessions / mo | 1,000 |
-| Storage | 5 GB |
-=======
 | Max GLB / USDZ file | 50 MB |
 | AR sessions / mo | 100 per model (3,000 max) |
 | Storage | 3.7 GB |
->>>>>>> Stashed changes
 | Android WebXR floor AR | ✓ |
 | iOS Quick Look (USDZ) | ✓ |
 | Branded `/w/{slug}` link | ✓ |
@@ -132,14 +124,9 @@
 | Workspaces | 1 (multi-brand: Scale) |
 | Admin seats | 10 |
 | GLB models | 100 |
-<<<<<<< Updated upstream
-| AR sessions / mo | 5,000 |
-| Storage | 25 GB |
-=======
 | Max GLB / USDZ file | 50 MB |
 | AR sessions / mo | 100 per model (10,000 max) |
 | Storage | 12.2 GB |
->>>>>>> Stashed changes
 | White-label (no Atlas badge on customer UI) | ✓ |
 | Analytics + CSV export | ✓ |
 | Custom accent + logo | ✓ |
@@ -193,11 +180,7 @@
 
 ### vs Zolak / Roomle ($99–450/mo)
 
-<<<<<<< Updated upstream
-> “Same floor AR outcome, self-serve in an afternoon — no demo gate, no implementation quote. Launch is **$59/mo** with 1,000 sessions included.”
-=======
 > “Same floor AR outcome, self-serve in an afternoon — no demo gate, no implementation quote. Launch is **$59/mo** with 100 sessions per model (3,000 included).”
->>>>>>> Stashed changes
 
 ### vs Shopify AR app ($10–65/mo)
 
@@ -231,11 +214,7 @@
 |----|-----|-----------|
 | Starter $99 | Launch **$59** | Undercut Zolak $99; faster yes |
 | Pro $299 | Growth **$179** | Still premium vs Shopify; below Roomle €280 |
-<<<<<<< Updated upstream
-| 500 sessions Starter | **1,000** | 2× generosity removes overage fear in pilot |
-=======
 | 500 sessions Starter | **500** (5 × 100/model) | Per-model session buckets scale with catalog slots |
->>>>>>> Stashed changes
 | 25 models Starter | **30** | Round number; enough for pilot catalog |
 | No trial spec | **14-day Growth trial** | PLG standard |
 
