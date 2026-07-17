@@ -1,0 +1,9 @@
+{
+  "projectId": "proj_74a5fa4cd43e",
+  "simulationId": "sim_4fa4b86a352a",
+  "reportId": "report_2796d7237aa1",
+  "liveRun": true,
+  "llm": "ollama/qwen2.5:7b",
+  "status": "completed",
+  "recoveredFromBackend": true
+}

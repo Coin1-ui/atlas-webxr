@@ -1,0 +1,150 @@
+/** Atlas AR SAL-1 — slide content (from SALES-DECK.md) */
+export const SLIDES = [
+  {
+    id: 1,
+    template: "title",
+    headline: "See it on their floor",
+    headlineEm: "before they buy it.",
+    subhead: "White-label browser floor AR for retail showrooms and field sales teams.",
+    image: "assets/slide-01-title-hero.png",
+    webgl: "floor-grid",
+    notes:
+      "Open with the outcome first — not platform details. Your customers and reps already have Chrome or Safari — we turn your GLB catalog into a branded link they can place on the real floor in minutes. Ask: How are you showing scale today — photos, PDFs, or a custom AR project?",
+  },
+  {
+    id: 2,
+    template: "problem",
+    headline: "Static catalogs fail at the moment of decision.",
+    bullets: [
+      "Shoppers return high-AOV items citing wrong size — photos lie about scale",
+      "Field reps still rely on PDFs and PowerPoint in the customer's actual space",
+      "Showroom AR incumbents gate demos behind $99–450/mo contracts and sales calls",
+      "Custom AR apps stall at $100k+ and months of IT review",
+    ],
+    image: "assets/slide-02-problem.png",
+    webgl: "none",
+    notes:
+      "Mirror Elena (retail) or Marcus (field) from discovery. Top sim objection: too complex / unclear value — this slide sets up we fix complexity with a link, not a project.",
+  },
+  {
+    id: 3,
+    template: "solution",
+    headline: "One workspace. One branded link. Real floor AR.",
+    bullets: [
+      "Upload GLB catalog once from desktop admin",
+      "Share /w/your-brand — no app store, no shopper login",
+      "Chrome & Safari — floor placement + 3D inspect in one session",
+      "Unlimited field reps and shoppers on every plan",
+    ],
+    image: "assets/slide-03-solution-hero.png",
+    webgl: "orbit-cube",
+    notes:
+      "Not a single-store plugin — a white-label workspace. Differentiate from Shopify embeds: one catalog, one brand, showroom + field.",
+  },
+  {
+    id: 4,
+    template: "steps",
+    headline: "Live in under 10 minutes",
+    steps: [
+      { num: 1, title: "Upload", detail: "Merchandising uploads GLB + icon from PC; USDZ auto-generated for iPhone" },
+      { num: 2, title: "Brand", detail: "Logo, accent color, showroom slug /w/your-brand" },
+      { num: 3, title: "Share & place", detail: "Customer or rep opens link on phone → Start AR → true floor scale" },
+    ],
+    image: "assets/slide-04-how-it-works.png",
+    webgl: "none",
+    notes:
+      "Time-box a live demo: Let's place one SKU on your floor before we hang up. Target <15 min first placement.",
+  },
+  {
+    id: 5,
+    template: "icp-image",
+    headline: "Furniture & home retail",
+    persona: { name: "Elena", role: "Head of e-commerce" },
+    bullets: [
+      "QR on tags + showroom associates sharing one link",
+      "Floor-locked placement — not floating on tables",
+      "↓ returns from size mismatch · ↑ conversion on sofas, beds, tables",
+      "$5 Starter to test 5 SKUs · Launch $59 for full showroom",
+    ],
+    image: "assets/slide-05-retail-icp.png",
+    webgl: "none",
+    notes:
+      "Objection: We tried AR and it floated. Response: cyan ring = placeable, red = blocked, session-tuned floor lock.",
+  },
+  {
+    id: 6,
+    template: "icp-quote",
+    headline: "B2B field sales",
+    persona: { name: "Marcus", role: "VP Sales" },
+    quote: "My reps won't install another app.",
+    bullets: [
+      "Reps share approved SKUs only — central catalog control",
+      "Buyer sees model in their facility during the visit",
+      "Session analytics for sales ops — which models get placed",
+      "No six-figure custom app · no MDM rollout",
+    ],
+    webgl: "none",
+    notes:
+      "Plugin angle: Embed is one website; Marcus needs a curated line per region in one branded workspace.",
+  },
+  {
+    id: 7,
+    template: "comparison",
+    headline: "White-label workspace — not a plugin, not a gated demo",
+    columns: ["Store plugins", "Showroom SaaS", "Atlas AR"],
+    rows: [
+      { label: "Scope", values: ["Single store embed", "One vendor contract", "Your brand, your catalog"] },
+      { label: "Price", values: ["$10–65/mo", "$99–450/mo + demo gate", "From $5/mo self-serve"] },
+      { label: "Reps / viewers", values: ["Per-site", "Often seat-limited", "Unlimited"] },
+      { label: "Time to live", values: ["Dev integration", "Sales cycle", "Same day"] },
+    ],
+    image: "assets/slide-07-comparison.png",
+    webgl: "none",
+    notes: "CFO frame: one avoided $2k return ≈ 34 months of Launch ($59).",
+  },
+  {
+    id: 8,
+    template: "pricing",
+    headline: "Start at $5. Scale without seat fees.",
+    tiers: [
+      { name: "Starter", price: "$5/mo", detail: "First tests · 5 models · 100 sessions" },
+      { name: "Launch", price: "$59/mo", detail: "Showroom or pilot team · 30 models", featured: true },
+      { name: "Growth", price: "$179/mo", detail: "IT sign-off · 100 models · full analytics" },
+      { name: "Scale", price: "From $499", detail: "Multi-brand · custom limits" },
+    ],
+    offers: "14-day Growth trial (no card) · Founding 10: Growth @ Launch price × 12 mo",
+    webgl: "none",
+    notes: "Lead month 1–3 with Starter; month 4+ Launch for teams. Never apologize for $5 — it's the wedge.",
+  },
+  {
+    id: 9,
+    template: "security",
+    headline: "Built for buying committees",
+    bullets: [
+      "Tenant isolation — separate catalog, branding, usage per workspace",
+      "HTTPS-only delivery · shoppers never create accounts",
+      "Cognito JWT for admin; catalog in workspace-scoped storage",
+      "No native app → no app-store MDM project",
+    ],
+    image: "assets/slide-09-security-trust.png",
+    webgl: "shield-grid",
+    notes: "Send IT one-pager + link to landing security section. Late-stage blocker in sims — get Priya before CFO.",
+  },
+  {
+    id: 10,
+    template: "cta",
+    headline: "Start free this week",
+    ctas: [
+      { title: "Sign up", detail: "Starter $5/mo · 14-day Growth trial" },
+      { title: "Live demo", detail: "/demo on your phone (no account)" },
+      { title: "Design partner", detail: "3 slots · 90-day Growth @ $59/mo · ≥50 sessions/mo" },
+      { title: "Founding 10", detail: "Growth @ Launch price ($59/mo) × 12 months" },
+    ],
+    contact: "https://main.d3t9wmef56h86w.amplifyapp.com",
+    demoUrl: "https://main.d3t9wmef56h86w.amplifyapp.com/demo",
+    image: "assets/slide-10-cta.png",
+    webgl: "particles",
+    notes:
+      "Four-path close: Starter, live upload, Design partner (3 slots, biweekly feedback), Founding 10. Always end with a dated next step.",
+  },
+];

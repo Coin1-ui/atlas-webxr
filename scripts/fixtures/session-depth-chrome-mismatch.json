@@ -1,0 +1,20 @@
+{
+  "events": [
+    {
+      "id": "ar-start",
+      "status": "ok",
+      "details": {
+        "depthRequested": true,
+        "depthSensingGranted": false,
+        "sessionDepthUsage": "cpu-optimized",
+        "sessionDepthDataFormat": "luminance-alpha",
+        "depthFeatureEnabled": true,
+        "depthFeatureAttached": false,
+        "depthOcclusion": false,
+        "depthSessionDataAvailable": true,
+        "depthAttachWorkaround": false,
+        "enabledFeatures": "anchors, plane-detection, hit-test, dom-overlay, local-floor"
+      }
+    }
+  ]
+}

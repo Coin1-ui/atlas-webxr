@@ -10,10 +10,20 @@ export type ArSessionEvent = {
   error?: string;
 };
 
+export type SessionPlacementSummary = {
+  placementCount: number;
+  warnCount: number;
+  failCount: number;
+  submergedCount: number;
+  shadowIssues: number;
+  floorYMedianM: number | null;
+  issues: string[];
+};
+
 export type ArSessionReport = {
   meta: {
     type: "atlas-ar-live-session";
-    version: "1.0.0";
+    version: string;
     startedAt: string;
     finishedAt: string;
     durationMs: number;
@@ -28,4 +38,5 @@ export type ArSessionReport = {
     devicePixelRatio: number;
   };
   events: ArSessionEvent[];
+  placementSummary?: SessionPlacementSummary;
 };

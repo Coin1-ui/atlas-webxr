@@ -1,0 +1,68 @@
+# Atlas AR — Hybrid pricing model
+
+**Current (v2 — sales & onboarding):** June 2026 market research → [PRICING-RESEARCH.md](./PRICING-RESEARCH.md)
+
+## Structure
+
+**14-day Growth trial (no credit card)** → **monthly workspace fee** + **usage overage** at renewal.
+
+## Tiers (v2 — recommended for quick onboarding)
+
+| | **Starter** | **Launch** | **Growth** | **Scale** |
+|---|-------------|------------|------------|-----------|
+| **Base / mo** | **$5** ($4 annual) | **$59** ($47 annual) | **$179** ($143 annual) | From **$499** |
+| **Workspaces** | 1 | 1 | 1 | Multi-brand |
+| **Admin seats** | 1 | 2 | 10 | Unlimited |
+| **Field reps / viewers** | Unlimited | Unlimited | Unlimited | Unlimited |
+| **GLB models** | 5 | 30 | 100 | Custom |
+| **AR sessions / mo** | 100 | 1,000 | 5,000 | Custom |
+| **Storage** | 2 GB | 5 GB | 25 GB | Custom |
+| **White-label customer UI** | Branded link | Full | Full | Full + custom domain |
+| **Browser-based AR (Chrome & Safari)** | ✓ | ✓ | ✓ | ✓ |
+| **Analytics** | Basic | Basic | Full + export | Full + export + API |
+| **Support** | Email 72h | Email 48h | Email 24h | SLA + CSM |
+
+**Trial:** 14 days of **Growth** limits · no credit card · self-serve signup.
+
+## Overage (hybrid usage)
+
+| Meter | Starter | Launch | Growth |
+|-------|---------|--------|--------|
+| Extra sessions | +$20 / 100 | +$15 / 1,000 | +$10 / 1,000 |
+| Extra models | +$3 each | +$12 / 10 | +$8 / 10 |
+| Extra storage | +$8 / 5 GB | +$6 / 10 GB | +$4 / 10 GB |
+
+**MVP:** Soft warnings in admin; manual invoicing. Stripe metering → Phase 3.
+
+## Conversion offers
+
+| Offer | Terms |
+|-------|--------|
+| **14-day trial** | Growth features, no card |
+| **Annual prepay** | 20% off Launch & Growth |
+| **Founding 10** | Growth at Launch price ($59/mo) × 12 months |
+| **Design partner** | 90-day Growth at Launch price; ≥50 sessions/mo → 15% off annual |
+
+## Competitive anchor (sales)
+
+- Below **Zolak Start ($99)** and **Roomle viewer (~$108/mo)**
+- Above Shopify AR plugins ($10–65) — different product (white-label workspace)
+- vs **custom AR app ($100k+)** — “live this week under $2k/year”
+
+## Engineering spec (plan enum)
+
+1. `workspace.plan`: `launch | growth | scale` (migrate from `starter | pro | enterprise`)
+2. Counters: `modelCount`, `sessionCountMonthly`, `storageBytes`
+3. Trial state: `trialEndsAt`, `trialPlan: growth`
+4. MVP limits: **hard-block** model upload at plan cap; warn on session/storage overage
+5. Session = `session-start` → `session-end` with ≥1 placement
+
+---
+
+## v1 draft (superseded — kept for reference)
+
+| | **Starter** | **Pro** | **Enterprise** |
+|---|-------------|---------|----------------|
+| **Base / mo** | $99 | $299 | Custom |
+
+See git history for full v1 table. v2 lowers entry and Growth price based on [PRICING-RESEARCH.md](./PRICING-RESEARCH.md).

@@ -1,0 +1,37 @@
+{
+  "status": "batch_20_confirmed",
+  "simulationId": "sim_e6b7b440cb5a",
+  "projectId": "proj_e8b9dcc98715",
+  "updatedAt": "2026-05-21",
+  "orchestration": {
+    "process": "NEXUS-Sprint",
+    "latestBatch": 20,
+    "latestBatchTitle": "QA gate + deploy handoff",
+    "userConfirmation": {
+      "batch19": "confirmed",
+      "batch20": "confirmed"
+    },
+    "batches": {
+      "12": {
+        "title": "Box dims + nav MutationObserver + API workspace defaults",
+        "status": "confirmed_with_batch_20"
+      },
+      "19": {
+        "title": "Plugins/showroom dots on horizontal rail",
+        "status": "confirmed"
+      },
+      "20": {
+        "title": "QA gate + deploy handoff",
+        "status": "confirmed"
+      }
+    },
+    "nextBatchCandidates": [
+      "Batch 7 — MiroFish report cleanup (deferred)",
+      "SUP-2 — AR troubleshooting docs",
+      "MKT-3 — Demo video script",
+      "SAL-1 — Sales deck"
+    ]
+  },
+  "liveUrl": "https://main.d3t9wmef56h86w.amplifyapp.com",
+  "qaGate": "npm run test:sprint3 — 26 passed, 0 failed"
+}

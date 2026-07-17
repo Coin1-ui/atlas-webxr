@@ -4,17 +4,38 @@
     <meta charset="UTF-8" />
     <meta
       name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+      content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover"
     />
-    <meta name="theme-color" content="#1565c0" />
+    <meta name="theme-color" content="#050a14" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <title>Atlas Field AR</title>
+    <meta
+      name="description"
+      content="White-label floor AR for furniture retailers and B2B field sales. Browser-based AR in Chrome and Safari — no app install."
+    />
+    <meta property="og:title" content="Atlas AR — See it on their floor before they buy it" />
+    <meta property="og:image" content="/marketing/hero-ar-phone.png" />
+    <meta
+      property="og:description"
+      content="Upload GLB once. Share a branded link. Shoppers and field reps place models at true scale."
+    />
+    <title>Atlas AR — White-label floor AR for retail &amp; field sales</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon-180.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Instrument+Serif:ital@0;1&display=swap"
+      rel="stylesheet"
+    />
   </head>
   <body>
     <div id="app"></div>
-    <div id="ar-overlay" class="ar-dom-overlay hidden" aria-live="polite"></div>
+    <div id="ar-overlay" class="ar-dom-overlay hidden">
+      <div id="ar-dom-panel" class="ar-dom-panel"></div>
+    </div>
     <canvas id="xr-canvas" class="xr-canvas hidden"></canvas>
     <video id="camera-feed" class="camera-feed hidden" playsinline autoplay muted></video>
     <script type="module" src="/src/main.ts"></script>

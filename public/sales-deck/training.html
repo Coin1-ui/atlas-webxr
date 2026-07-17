@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#050a14" />
+    <meta
+      name="description"
+      content="Atlas AR SAL-3 sales training — interactive presenter script walkthrough for your sales team."
+    />
+    <title>Atlas AR — Sales Training (SAL-3)</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon-180.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700;1,9..40,400&family=Instrument+Serif:ital@0;1&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./training.css" />
+  </head>
+  <body>
+    <div class="deck-shell training-shell">
+      <header class="deck-toolbar training-toolbar">
+        <div class="deck-brand">Atlas <span>AR</span> · SAL-3 Training</div>
+        <div class="deck-toolbar-actions">
+          <a class="deck-btn deck-btn-deck" href="./index.html" title="Back to sales deck">← Sales deck</a>
+          <a class="deck-btn deck-btn-outreach" href="./outreach.html" title="SAL-2 design partner outreach">Outreach</a>
+          <button type="button" class="deck-btn deck-btn-training active" title="You are in training mode">Training</button>
+          <button type="button" class="deck-btn" id="btn-reset" title="Reset practice progress">Reset</button>
+          <button type="button" class="deck-btn" id="btn-help" title="Help">?</button>
+          <button type="button" class="deck-btn" id="btn-prev" aria-label="Previous lesson">←</button>
+          <button type="button" class="deck-btn deck-btn-primary" id="btn-next" aria-label="Next lesson">→</button>
+        </div>
+      </header>
+
+      <div class="training-layout">
+        <aside class="training-sidebar" aria-label="Training lessons">
+          <h2>Lessons</h2>
+          <div class="training-progress-block">
+            <div class="training-progress-label" id="training-progress-label">0 / 10 lessons practiced</div>
+            <div class="training-progress-bar" aria-hidden="true">
+              <div class="training-progress-fill" id="training-progress-fill" style="width: 0%"></div>
+            </div>
+          </div>
+          <div class="training-persona">
+            <label for="training-persona">Buyer persona focus</label>
+            <select id="training-persona" aria-label="Buyer persona">
+              <option value="general">General / mixed room</option>
+              <option value="retail">Retail — Elena</option>
+              <option value="field">Field — Marcus</option>
+            </select>
+          </div>
+          <ul class="training-lesson-list" id="training-lesson-list"></ul>
+        </aside>
+
+        <main class="training-main" id="training-main" aria-live="polite"></main>
+      </div>
+    </div>
+
+    <div class="deck-help" id="training-help" role="dialog" aria-modal="true" aria-label="Training help">
+      <div class="deck-help-inner">
+        <h2>Sales training module</h2>
+        <ul>
+          <li>Work through 10 lessons aligned to each sales deck slide.</li>
+          <li><kbd>→</kbd> <kbd>Space</kbd> Next · <kbd>←</kbd> Previous</li>
+          <li>Check <strong>Practiced aloud</strong> after role-play with a peer or manager.</li>
+          <li>Progress saves in this browser (localStorage).</li>
+          <li><a href="./index.html">Sales deck</a> · <a href="./outreach.html">SAL-2 outreach</a></li>
+        </ul>
+        <p style="margin-top: 16px">
+          <button type="button" class="deck-btn" id="btn-help-close">Close</button>
+        </p>
+      </div>
+    </div>
+
+    <script type="module" src="./training.js"></script>
+  </body>
+</html>

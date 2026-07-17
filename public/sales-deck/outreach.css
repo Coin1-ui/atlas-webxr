@@ -1,0 +1,24 @@
+/* SAL-2 interactive outreach — extends SAL-3 training layout */
+@import url("./training.css");
+
+.training-toolbar .deck-btn-outreach {
+  border-color: var(--accent-warm);
+  color: var(--accent-warm);
+}
+
+.training-toolbar .deck-btn-outreach.active {
+  background: rgba(251, 191, 36, 0.12);
+}
+
+.training-template-pre {
+  font-family: "DM Sans", system-ui, sans-serif;
+  font-size: 0.88rem;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  background: rgba(5, 10, 20, 0.6);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin: 0;
+  color: var(--text);
+}

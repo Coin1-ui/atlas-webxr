@@ -1,6 +1,8 @@
 import { loadModule } from "../data/module-store";
 import { getCameraSupport, startCameraFeed, stopCameraFeed } from "../xr/fallback-camera";
 import { isWebXRARAvailable } from "../xr/mode-detector";
+import { supportsIosQuickLookAr } from "../xr/ios/quick-look-ar";
+import { isIOS } from "../utils/platform";
 import type { WebXRSession } from "../xr/webxr-ar";
 import type {
   DeviceTestProgress,
@@ -193,8 +195,16 @@ export async function runDeviceHardwareCheck(
 
     await runStep(
       "webxr-support",
-      "WebXR AR supported",
+      isIOS() ? "Safari Quick Look AR" : "WebXR AR supported",
       async () => {
+        if (isIOS()) {
+          const ok = supportsIosQuickLookAr();
+          return {
+            status: ok ? "passed" : "skipped",
+            details: { quickLookAr: ok, platform: "ios-safari-quick-look" },
+            error: ok ? undefined : "Quick Look AR not supported in this browser",
+          };
+        }
         const ok = await isWebXRARAvailable();
         return {
           status: ok ? "passed" : "skipped",
@@ -209,8 +219,18 @@ export async function runDeviceHardwareCheck(
 
     await runStep(
       "webxr-session",
-      "WebXR AR session starts",
+      isIOS() ? "Quick Look AR (manual)" : "WebXR AR session starts",
       async () => {
+        if (isIOS()) {
+          ctx.onArHint?.("On iOS, tap View in AR on the home screen to open a USDZ model in Quick Look.");
+          return {
+            status: "skipped",
+            details: {
+              reason: "ios-quick-look-only",
+              quickLookSupported: supportsIosQuickLookAr(),
+            },
+          };
+        }
         const supported = await isWebXRARAvailable();
         if (!supported) {
           return { status: "skipped", details: { reason: "immersive-ar not supported" } };
@@ -255,8 +275,14 @@ export async function runDeviceHardwareCheck(
 
     await runStep(
       "webxr-place",
-      "Place 3D object on floor (AR)",
+      isIOS() ? "Quick Look placement (manual)" : "Place 3D object on floor (AR)",
       async () => {
+        if (isIOS()) {
+          return {
+            status: "skipped",
+            details: { reason: "ios-quick-look-only — tap a USDZ model from View in AR" },
+          };
+        }
         const session = activeArSession;
         if (!session) {
           return { status: "skipped", details: { reason: "no webxr session" } };

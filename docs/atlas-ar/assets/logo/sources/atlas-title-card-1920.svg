@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" width="1920" height="1080" role="img" aria-label="Atlas Field AR title card">
+  <rect width="1920" height="1080" fill="#050a14"/>
+  <g transform="translate(580 444) scale(2)">
+    <defs>
+      <linearGradient id="atlasAccent" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#2dd4bf"/>
+        <stop offset="0.55" stop-color="#38bdf8"/>
+        <stop offset="1" stop-color="#a78bfa"/>
+      </linearGradient>
+    </defs>
+    <rect x="6" y="14" width="68" height="68" rx="16" ry="16" fill="none" stroke="url(#atlasAccent)" stroke-width="3.5"/>
+    <path d="M20 62 L54 62" stroke="#38bdf8" stroke-width="3" stroke-linecap="round" opacity="0.7"/>
+    <path d="M24 60 L40 30 L56 60" fill="none" stroke="url(#atlasAccent)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M32 52 L48 52" stroke="url(#atlasAccent)" stroke-width="4" stroke-linecap="round"/>
+    <circle cx="40" cy="30" r="4.5" fill="#2dd4bf"/>
+    <circle cx="40" cy="30" r="9" fill="none" stroke="#2dd4bf" stroke-width="1.5" opacity="0.5"/>
+    <text x="92" y="60" font-size="52" fill="#f8fafc" font-family="Georgia, 'Times New Roman', serif">Atlas</text>
+    <text x="94" y="80" font-size="12.5" letter-spacing="4.5" fill="#94a3b8" font-family="'Segoe UI', system-ui, sans-serif">FIELD AR</text>
+  </g>
+</svg>

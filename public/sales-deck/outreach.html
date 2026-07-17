@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#050a14" />
+    <meta
+      name="description"
+      content="Atlas AR SAL-2 design partner outreach — interactive templates and discovery scripts for your sales team."
+    />
+    <title>Atlas AR — Design Partner Outreach (SAL-2)</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon-180.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700;1,9..40,400&family=Instrument+Serif:ital@0;1&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./outreach.css" />
+  </head>
+  <body>
+    <div class="deck-shell training-shell">
+      <header class="deck-toolbar training-toolbar">
+        <div class="deck-brand">Atlas <span>AR</span> · SAL-2 Outreach</div>
+        <div class="deck-toolbar-actions">
+          <a class="deck-btn deck-btn-deck" href="./index.html" title="Back to sales deck">← Sales deck</a>
+          <a class="deck-btn deck-btn-training" href="./training.html" title="SAL-3 presenter training">Training</a>
+          <button type="button" class="deck-btn deck-btn-outreach active" title="Design partner outreach">Outreach</button>
+          <button type="button" class="deck-btn" id="btn-reset" title="Reset practice progress">Reset</button>
+          <button type="button" class="deck-btn" id="btn-help" title="Help">?</button>
+          <button type="button" class="deck-btn" id="btn-prev" aria-label="Previous lesson">←</button>
+          <button type="button" class="deck-btn deck-btn-primary" id="btn-next" aria-label="Next lesson">→</button>
+        </div>
+      </header>
+
+      <div class="training-layout">
+        <aside class="training-sidebar" aria-label="Outreach lessons">
+          <h2>Lessons</h2>
+          <div class="training-progress-block">
+            <div class="training-progress-label" id="training-progress-label">0 / 12 lessons practiced</div>
+            <div class="training-progress-bar" aria-hidden="true">
+              <div class="training-progress-fill" id="training-progress-fill" style="width: 0%"></div>
+            </div>
+          </div>
+          <div class="training-persona">
+            <label for="training-persona">Outreach persona</label>
+            <select id="training-persona" aria-label="Outreach persona">
+              <option value="general">General / mixed</option>
+              <option value="retail">Retail — Elena</option>
+              <option value="field">Field — Marcus</option>
+            </select>
+          </div>
+          <ul class="training-lesson-list" id="training-lesson-list"></ul>
+        </aside>
+
+        <main class="training-main" id="training-main" aria-live="polite"></main>
+      </div>
+    </div>
+
+    <div class="deck-help" id="training-help" role="dialog" aria-modal="true" aria-label="Outreach help">
+      <div class="deck-help-inner">
+        <h2>Design partner outreach module</h2>
+        <ul>
+          <li>12 lessons: program, ICP, templates A–F, discovery, MOU checklist.</li>
+          <li><kbd>→</kbd> <kbd>Space</kbd> Next · <kbd>←</kbd> Previous</li>
+          <li>Check <strong>Practiced aloud</strong> before sending live outreach.</li>
+          <li>Progress saves in this browser (localStorage).</li>
+          <li><a href="./index.html#10">Sales deck slide 10</a> · <a href="./training.html">SAL-3 training</a></li>
+        </ul>
+        <p style="margin-top: 16px">
+          <button type="button" class="deck-btn" id="btn-help-close">Close</button>
+        </p>
+      </div>
+    </div>
+
+    <script type="module" src="./outreach.js"></script>
+  </body>
+</html>

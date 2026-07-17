@@ -1,0 +1,21 @@
+HTTP/1.1 200 OK
+Content-Type: text/html
+Content-Length: 3479
+Connection: keep-alive
+Date: Fri, 17 Jul 2026 05:14:40 GMT
+content-security-policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.amazonaws.com https://*.amazoncognito.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; connect-src 'self' https://*.amazonaws.com https://*.amazoncognito.com wss:; font-src 'self' data:; media-src 'self' blob:; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'
+Server: AmazonS3
+Accept-Ranges: bytes
+ETag: "bb81d6924a48c88e0da36f83ebf11cae"
+Last-Modified: Fri, 17 Jul 2026 05:04:39 GMT
+Cache-Control: public, max-age=0, s-maxage=31536000
+strict-transport-security: max-age=31536000; includeSubDomains
+x-content-type-options: nosniff
+x-frame-options: DENY
+referrer-policy: strict-origin-when-cross-origin
+X-Cache: Miss from cloudfront
+Via: 1.1 d987e485d7b96990d9dd62a38fd032d4.cloudfront.net (CloudFront)
+X-Amz-Cf-Pop: CCU50-P5
+Alt-Svc: h3=":443"; ma=86400
+X-Amz-Cf-Id: Son4nzi1wfJjT6riNhF7dw_lyoGqgnMZXYmFTLbutfyUrm1bO5rf3w==
+

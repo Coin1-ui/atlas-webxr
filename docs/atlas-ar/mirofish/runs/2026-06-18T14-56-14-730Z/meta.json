@@ -1,0 +1,9 @@
+{
+  "projectId": "proj_e8b9dcc98715",
+  "simulationId": "sim_e6b7b440cb5a",
+  "maxRounds": 40,
+  "simulationProvider": "Gemini-2",
+  "simulationModel": "gemini-2.5-flash",
+  "requirement": "Simulate 12 months of Atlas AR go-to-market with Starter ($5), Launch ($59), and Growth ($179) tiers. Deep-dive UI/UX design impact: AR session bottom dock, AR/3D slide toggle, dimensions chip, onboarding wizard, landing side-by-side PC→phone diagram, Chrome/Safari in-browser AR + 3D badges, owner per-customer toggles (Start AR vs camera check). Evaluate marketing message fit (workspace vs plugin, security/privacy section, browser AR + 3D product story, ROI strip), sales objections and playbook gaps, target audience wedge (furniture retail vs field sales vs Shopify), demographics (store associates 25–45, shoppers 30–55, IT/security, marketing ops, CFO), pricing sensitivity, and competitive response. Predict: paying customer range at month 12, dominant ICP, top 5 objections, UX conversion killers, recommended GTM/product changes, probability of $500k ARR in 18 months. Personas: Elena (retail e-comm), Marcus (field VP), Priya (IT), David (incumbent showroom), Lisa (Shopify), Jordan (shopper), Ana (CFO), Competitor PM.",
+  "reportSkipped": true
+}

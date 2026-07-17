@@ -2,6 +2,7 @@ import type { Plugin } from "vite";
 import fs from "node:fs";
 import path from "node:path";
 import { IncomingMessage, ServerResponse } from "node:http";
+import { convertGlbFileToUsdz } from "../scripts/glb-to-usdz-cli.mjs";
 
 const MODELS_DIR = "custom-models";
 const MANIFEST = "manifest.json";
@@ -12,6 +13,7 @@ type ManifestModel = {
   builtinType?: string;
   icon?: string;
   glb?: string;
+  usdz?: string;
 };
 
 function modelsRoot(root: string): string {
@@ -58,10 +60,7 @@ function parseMultipart(
     if (!nameMatch) continue;
     const name = nameMatch[1];
     if (fileMatch) {
-      files[name] = {
-        data: Buffer.from(content, "binary"),
-        filename: fileMatch[1],
-      };
+      files[name] = { data: Buffer.from(content, "binary"), filename: fileMatch[1] };
     } else {
       fields[name] = content;
     }
@@ -75,14 +74,13 @@ function sendJson(res: ServerResponse, status: number, data: unknown): void {
   res.end(JSON.stringify(data));
 }
 
-/** Dev-only API: upload/delete models on disk so phone loads them over HTTPS from the same PC server. */
+/** Local dev API when VITE_ATLAS_API_URL is not set. */
 export function customModelsApiPlugin(): Plugin {
   return {
     name: "custom-models-api",
     configureServer(server) {
       server.middlewares.use(async (req, res, next) => {
         if (!req.url?.startsWith("/api/custom-models")) return next();
-
         const root = server.config.root;
         const url = new URL(req.url, "http://localhost");
 
@@ -102,18 +100,13 @@ export function customModelsApiPlugin(): Plugin {
           manifest.models = manifest.models.filter((m) => m.id !== id);
           writeManifest(root, manifest);
           const dir = modelsRoot(root);
-          if (entry?.icon) {
-            try {
-              fs.unlinkSync(path.join(dir, entry.icon));
-            } catch {
-              /* ignore */
-            }
-          }
-          if (entry?.glb) {
-            try {
-              fs.unlinkSync(path.join(dir, entry.glb));
-            } catch {
-              /* ignore */
+          for (const f of [entry?.icon, entry?.glb, entry?.usdz]) {
+            if (f) {
+              try {
+                fs.unlinkSync(path.join(dir, f));
+              } catch {
+                /* ignore */
+              }
             }
           }
           sendJson(res, 200, { ok: true });
@@ -127,13 +120,13 @@ export function customModelsApiPlugin(): Plugin {
             sendJson(res, 400, { error: "Expected multipart form" });
             return;
           }
-          const boundary = boundaryMatch[1];
           try {
             const body = await readBody(req);
-            const { fields, files } = parseMultipart(body, boundary);
+            const { fields, files } = parseMultipart(body, boundaryMatch[1]);
             const name = (fields.name ?? "Untitled").trim();
             const iconFile = files.icon;
             const glbFile = files.glb;
+            const usdzFile = files.usdz;
             if (!iconFile?.data.length || !glbFile?.data.length) {
               sendJson(res, 400, { error: "icon and glb files required" });
               return;
@@ -146,9 +139,29 @@ export function customModelsApiPlugin(): Plugin {
             fs.mkdirSync(dir, { recursive: true });
             fs.writeFileSync(path.join(dir, iconName), iconFile.data);
             fs.writeFileSync(path.join(dir, glbName), glbFile.data);
+            let usdzName: string | undefined;
+            if (usdzFile?.data.length) {
+              usdzName = `${id}.usdz`;
+              fs.writeFileSync(path.join(dir, usdzName), usdzFile.data);
+            } else {
+              const usdzPath = path.join(dir, `${id}.usdz`);
+              const converted = await convertGlbFileToUsdz(
+                path.join(dir, glbName),
+                usdzPath
+              );
+              if (converted.ok) {
+                usdzName = `${id}.usdz`;
+              }
+            }
             const manifest = readManifest(root);
             manifest.models = manifest.models.filter((m) => m.id !== id);
-            manifest.models.push({ id, name, icon: iconName, glb: glbName });
+            manifest.models.push({
+              id,
+              name,
+              icon: iconName,
+              glb: glbName,
+              ...(usdzName ? { usdz: usdzName } : {}),
+            });
             writeManifest(root, manifest);
             sendJson(res, 200, { ok: true, id });
           } catch (e) {

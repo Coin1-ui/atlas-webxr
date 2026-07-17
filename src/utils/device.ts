@@ -5,3 +5,24 @@ export function isDesktopAdmin(): boolean {
   const mobileUa = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
   return finePointer && wide && !mobileUa;
 }
+
+/** Phone/tablet — showroom-first; admin dashboard stays desktop-only. */
+export function isMobileExperience(): boolean {
+  return !isDesktopAdmin();
+}
+
+/** Mobile-allowed setup & operator routes (workspace create, branding, owner console). */
+export function isMobileAllowedRoute(path: string): boolean {
+  return (
+    path === "/onboard" ||
+    path === "/owner" ||
+    path === "/admin/branding" ||
+    path === "/admin/get-started"
+  );
+}
+
+/** Full admin dashboard & model manager — desktop only. Auth + setup routes allowed on mobile. */
+export function isDesktopOnlyRoute(path: string): boolean {
+  if (isMobileAllowedRoute(path)) return false;
+  return path === "/forgot-password" || path.startsWith("/admin");
+}

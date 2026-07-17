@@ -17,11 +17,6 @@ const DB_NAME = "atlas-custom-models";
 const DB_VERSION = 1;
 const STORE = "models";
 
-const BUILTIN: CustomModelRecord[] = [
-  { id: "builtin-arrow", name: "Demo arrow", createdAt: "", builtinType: "arrow" },
-  { id: "builtin-pad", name: "Demo pad", createdAt: "", builtinType: "pad" },
-];
-
 function openDb(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
     const req = indexedDB.open(DB_NAME, DB_VERSION);
@@ -48,7 +43,7 @@ export async function listModelRecords(): Promise<CustomModelRecord[]> {
         createdAt,
         builtinType,
       }));
-      resolve([...BUILTIN, ...rows]);
+      resolve(rows);
     };
     req.onerror = () => reject(req.error);
   });
@@ -57,10 +52,6 @@ export async function listModelRecords(): Promise<CustomModelRecord[]> {
 export async function getModelAssets(
   id: string
 ): Promise<{ iconUrl: string | null; modelUrl: string | null; record: CustomModelRecord } | null> {
-  const builtin = BUILTIN.find((b) => b.id === id);
-  if (builtin) {
-    return { iconUrl: null, modelUrl: null, record: builtin };
-  }
   const db = await openDb();
   const row = await new Promise<StoredRow | undefined>((resolve, reject) => {
     const tx = db.transaction(STORE, "readonly");
@@ -105,7 +96,7 @@ export async function saveCustomModel(
 }
 
 export async function deleteCustomModel(id: string): Promise<void> {
-  if (BUILTIN.some((b) => b.id === id)) return;
+  if (id.startsWith("builtin-")) return;
   const db = await openDb();
   await new Promise<void>((resolve, reject) => {
     const tx = db.transaction(STORE, "readwrite");

@@ -1,0 +1,273 @@
+import type { PlanTierId } from "./plan-display";
+import { billingTierFromWorkspace, planDisplayName } from "./plan-display";
+import type { WorkspacePlan } from "./tenant";
+
+export const TRIAL_DURATION_DAYS = 14;
+
+export const SUSPENDED_LIMITS = {
+  models: 0,
+  sessionsPerMonth: 0,
+  storageBytes: 0,
+};
+
+export type TrialWorkspace = {
+  plan: WorkspacePlan;
+  billingTier?: PlanTierId;
+  /** Tier the customer has paid for (set on purchase, not at signup). */
+  purchasedBillingTier?: PlanTierId | null;
+  trialEndsAt?: string | null;
+  trialPlan?: PlanTierId | null;
+};
+
+export type TrialCountdownParts = {
+  days: number;
+  hours: number;
+  minutes: number;
+  seconds: number;
+};
+
+/**
+ * Minimum paid tier that keeps a workspace live after its trial ends.
+ * Starter is the universal floor — subscribing to any paid plan (Starter+)
+ * prevents suspension, regardless of which trial the workspace started on.
+ * (Signature keeps the trialPlan arg for call-site compatibility.)
+ */
+export function trialFallbackTier(_trialPlan: PlanTierId): PlanTierId {
+  return "starter";
+}
+
+export type PlanActionVerb = "Subscribe" | "Upgrade";
+
+/**
+ * Workspace-level Subscribe vs Upgrade — used for single-CTA / suspended copy.
+ * No paid plan on file → "Subscribe"; already paying → "Upgrade".
+ */
+export function planActionVerb(ws: TrialWorkspace): PlanActionVerb {
+  return ws.purchasedBillingTier ? "Upgrade" : "Subscribe";
+}
+
+/**
+ * Per-tier Subscribe vs Upgrade matrix.
+ *
+ * Reference tier = the level the workspace currently experiences:
+ *   • active trial → the trial plan
+ *   • otherwise    → the purchased tier (or none)
+ *
+ * For a target tier:
+ *   • target ≤ reference → "Subscribe" (lock in at/below current level; not paying yet)
+ *   • target >  reference → "Upgrade"  (move above current level)
+ * With no reference (never paid, no trial) every tier is "Subscribe".
+ *
+ *   Launch trial → Starter/Launch = Subscribe · Growth/Scale = Upgrade
+ *   Growth trial → Starter/Launch/Growth = Subscribe · Scale = Upgrade
+ */
+export function planActionVerbForTier(ws: TrialWorkspace, targetTier: PlanTierId): PlanActionVerb {
+  const referenceTier: PlanTierId | null =
+    isTrialActive(ws) && ws.trialPlan ? ws.trialPlan : ws.purchasedBillingTier ?? null;
+  if (!referenceTier) return "Subscribe";
+  return TIER_ORDER.indexOf(targetTier) > TIER_ORDER.indexOf(referenceTier) ? "Upgrade" : "Subscribe";
+}
+
+/** Tiers a trialing workspace can subscribe to (≤ trial) vs upgrade to (> trial). */
+export function trialCtaTiers(ws: TrialWorkspace): { subscribe: PlanTierId[]; upgrade: PlanTierId[] } {
+  const refIdx = TIER_ORDER.indexOf(ws.trialPlan ?? "growth");
+  return {
+    subscribe: TIER_ORDER.filter((t) => t !== "scale" && TIER_ORDER.indexOf(t) <= refIdx),
+    upgrade: TIER_ORDER.filter((t) => TIER_ORDER.indexOf(t) > refIdx),
+  };
+}
+
+function tierNameList(ws: TrialWorkspace, tiers: PlanTierId[]): string {
+  const names = tiers.map((t) => planDisplayName(ws.plan, t));
+  if (names.length <= 1) return names.join("");
+  return `${names.slice(0, -1).join(", ")} or ${names[names.length - 1]}`;
+}
+
+/** "Subscribe to Starter, Launch or Growth, or upgrade to Scale" — trial-tier aware. */
+export function trialCtaSentence(ws: TrialWorkspace): string {
+  if (!ws.trialPlan) return "";
+  const { subscribe, upgrade } = trialCtaTiers(ws);
+  const parts: string[] = [];
+  if (subscribe.length) parts.push(`Subscribe to ${tierNameList(ws, subscribe)}`);
+  if (upgrade.length) parts.push(`upgrade to ${tierNameList(ws, upgrade)}`);
+  return parts.join(", or ");
+}
+
+export function isTrialActive(ws: { trialEndsAt?: string | null; trialPlan?: PlanTierId | null }): boolean {
+  if (!ws.trialEndsAt || !ws.trialPlan) return false;
+  const end = Date.parse(ws.trialEndsAt);
+  if (Number.isNaN(end)) return false;
+  return Date.now() < end;
+}
+
+export function isTrialExpired(ws: { trialEndsAt?: string | null; trialPlan?: PlanTierId | null }): boolean {
+  if (!ws.trialEndsAt || !ws.trialPlan) return false;
+  const end = Date.parse(ws.trialEndsAt);
+  if (Number.isNaN(end)) return false;
+  return Date.now() >= end;
+}
+
+const TIER_ORDER: PlanTierId[] = ["starter", "launch", "growth", "scale"];
+
+export function hasPurchasedTrialFallback(ws: TrialWorkspace): boolean {
+  if (!ws.trialPlan || !ws.purchasedBillingTier) return false;
+  const fallback = trialFallbackTier(ws.trialPlan);
+  const fallbackIdx = TIER_ORDER.indexOf(fallback);
+  const purchasedIdx = TIER_ORDER.indexOf(ws.purchasedBillingTier);
+  return fallbackIdx >= 0 && purchasedIdx >= fallbackIdx;
+}
+
+/** Trial ended without purchasing the required fallback tier. */
+export function isTrialSuspended(ws: TrialWorkspace): boolean {
+  return isTrialExpired(ws) && Boolean(ws.trialPlan) && !hasPurchasedTrialFallback(ws);
+}
+
+export function trialDaysRemaining(ws: { trialEndsAt?: string | null }): number {
+  if (!ws.trialEndsAt) return 0;
+  const end = Date.parse(ws.trialEndsAt);
+  if (Number.isNaN(end)) return 0;
+  const ms = end - Date.now();
+  if (ms <= 0) return 0;
+  return Math.ceil(ms / (24 * 60 * 60 * 1000));
+}
+
+export function trialCountdownParts(ws: { trialEndsAt?: string | null }): TrialCountdownParts | null {
+  if (!ws.trialEndsAt) return null;
+  const end = Date.parse(ws.trialEndsAt);
+  if (Number.isNaN(end)) return null;
+  const ms = end - Date.now();
+  if (ms <= 0) return null;
+  const totalSec = Math.floor(ms / 1000);
+  return {
+    days: Math.floor(totalSec / 86400),
+    hours: Math.floor((totalSec % 86400) / 3600),
+    minutes: Math.floor((totalSec % 3600) / 60),
+    seconds: totalSec % 60,
+  };
+}
+
+export function formatTrialCountdown(parts: TrialCountdownParts): string {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${parts.days}d ${pad(parts.hours)}:${pad(parts.minutes)}:${pad(parts.seconds)}`;
+}
+
+export function effectiveBillingTier(ws: TrialWorkspace): PlanTierId {
+  if (isTrialActive(ws) && ws.trialPlan) return ws.trialPlan;
+  if (isTrialSuspended(ws) && ws.trialPlan) return trialFallbackTier(ws.trialPlan);
+  if (ws.purchasedBillingTier) return ws.purchasedBillingTier;
+  return billingTierFromWorkspace(ws);
+}
+
+export function trialEndsAtIso(days = TRIAL_DURATION_DAYS): string {
+  return new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
+}
+
+function trialAfterTrialMessage(ws: TrialWorkspace): string {
+  if (!ws.trialPlan) return "";
+  if (hasPurchasedTrialFallback(ws) && ws.purchasedBillingTier) {
+    return `continues on ${planDisplayName(ws.plan, ws.purchasedBillingTier)} after trial`;
+  }
+  return `${trialCtaSentence(ws).toLowerCase()} before trial ends or service pauses`;
+}
+
+export function trialProfilePlanLine(ws: TrialWorkspace): string {
+  if (isTrialActive(ws) && ws.trialEndsAt) {
+    try {
+      const end = new Date(ws.trialEndsAt).toLocaleDateString(undefined, {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      });
+      const trialName = planDisplayName(ws.plan, ws.trialPlan ?? "growth");
+      if (hasPurchasedTrialFallback(ws)) {
+        return `${trialName} trial · paid through ${end}`;
+      }
+      return `${trialName} trial · ${planActionVerb(ws).toLowerCase()} by ${end}`;
+    } catch {
+      return workspacePlanLabel(ws);
+    }
+  }
+  return workspacePlanLabel(ws);
+}
+
+/** Customer-facing plan line for account/admin (includes active trial). */
+export function workspacePlanLabel(ws: TrialWorkspace): string {
+  if (isTrialSuspended(ws) && ws.trialPlan) {
+    const required = planDisplayName(ws.plan, trialFallbackTier(ws.trialPlan));
+    return `Service paused — ${planActionVerb(ws).toLowerCase()} to ${required}`;
+  }
+  if (isTrialActive(ws)) {
+    const parts = trialCountdownParts(ws);
+    const trialName = planDisplayName(ws.plan, ws.trialPlan ?? "growth");
+    const countdown = parts ? formatTrialCountdown(parts) : `${trialDaysRemaining(ws)}d`;
+    return `${trialName} trial · ${countdown} left`;
+  }
+  return planDisplayName(ws.plan, effectiveBillingTier(ws));
+}
+
+export function trialBannerHtml(ws: TrialWorkspace): string {
+  if (!isTrialActive(ws) || !ws.trialPlan) return "";
+  const parts = trialCountdownParts(ws);
+  const countdown = parts ? formatTrialCountdown(parts) : `${trialDaysRemaining(ws)}d`;
+  const trialName = planDisplayName(ws.plan, ws.trialPlan);
+  const after = trialAfterTrialMessage(ws);
+  return `<div class="admin-trial-banner account-trial-banner account-trial-banner--active" role="status" aria-live="polite" data-trial-banner>
+    <strong>${escapeHtml(trialName)} trial active</strong> — <span class="account-trial-countdown" role="timer" data-trial-countdown>${escapeHtml(countdown)}</span> remaining with ${escapeHtml(trialName)} limits.
+    ${hasPurchasedTrialFallback(ws) ? `Your workspace will ${escapeHtml(after)}.` : `${escapeHtml(trialCtaSentence(ws))} before trial ends or your showroom will pause.`}
+  </div>`;
+}
+
+export function accountTrialBannerHtml(ws: TrialWorkspace): string {
+  if (!isTrialActive(ws) || !ws.trialPlan) return "";
+  const parts = trialCountdownParts(ws);
+  const countdown = parts ? formatTrialCountdown(parts) : `${trialDaysRemaining(ws)}d`;
+  const trialName = planDisplayName(ws.plan, ws.trialPlan);
+  const purchased = hasPurchasedTrialFallback(ws);
+  const purchasedName = ws.purchasedBillingTier ? planDisplayName(ws.plan, ws.purchasedBillingTier) : trialName;
+  return `<div class="account-trial-banner account-trial-banner--active" role="status" aria-live="polite" data-trial-banner>
+    <p class="account-trial-eyebrow">${escapeHtml(trialName)} trial</p>
+    <p class="account-trial-countdown" role="timer"><span data-trial-countdown>${escapeHtml(countdown)}</span> remaining</p>
+    <p class="account-trial-note auth-hint">${
+      purchased
+        ? `Your workspace will continue on ${escapeHtml(purchasedName)} when the trial ends.`
+        : `${escapeHtml(trialCtaSentence(ws))} before the trial ends to keep your showroom live. Otherwise service pauses until you resubscribe.`
+    }</p>
+  </div>`;
+}
+
+export function trialSuspendedBannerHtml(ws: TrialWorkspace): string {
+  if (!isTrialSuspended(ws) || !ws.trialPlan) return "";
+  const required = planDisplayName(ws.plan, trialFallbackTier(ws.trialPlan));
+  return `<div class="account-trial-banner account-trial-banner--paused" role="alert">
+    <p class="account-trial-eyebrow">Service paused</p>
+    <p class="account-trial-note">Your ${escapeHtml(planDisplayName(ws.plan, ws.trialPlan))} trial ended. ${planActionVerb(ws)} to ${escapeHtml(required)} to restore your showroom and admin access.</p>
+  </div>`;
+}
+
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+/** Wire live countdown ticks on any [data-trial-countdown] nodes under root. */
+export function mountTrialCountdown(root: HTMLElement, ws: TrialWorkspace): void {
+  if (!isTrialActive(ws) || !ws.trialEndsAt) return;
+  const endsAt = ws.trialEndsAt;
+  const prior = Number(root.dataset.trialCountdownId);
+  if (prior) window.clearInterval(prior);
+  const nodes = root.querySelectorAll("[data-trial-countdown]");
+  if (!nodes.length) return;
+  const tick = () => {
+    const parts = trialCountdownParts({ trialEndsAt: endsAt });
+    const text = parts ? formatTrialCountdown(parts) : "Trial ended";
+    nodes.forEach((el) => {
+      el.textContent = text;
+    });
+  };
+  tick();
+  const id = window.setInterval(tick, 1000);
+  root.dataset.trialCountdownId = String(id);
+}

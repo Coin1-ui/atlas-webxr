@@ -1,0 +1,21 @@
+{
+  "events": [
+    {
+      "id": "ar-start",
+      "status": "ok",
+      "details": {
+        "depthRequested": true,
+        "depthSensingGranted": false,
+        "sessionDepthUsage": "none",
+        "sessionDepthDataFormat": "none",
+        "depthFeatureEnabled": true,
+        "depthFeatureAttached": false,
+        "depthOcclusion": false,
+        "depthUsage": "none",
+        "depthDataFormat": "none",
+        "enabledFeatures": "hit-test, anchors, plane-detection, dom-overlay",
+        "depthBlockedReason": "depth-sensing-not-in-enabledFeatures"
+      }
+    }
+  ]
+}

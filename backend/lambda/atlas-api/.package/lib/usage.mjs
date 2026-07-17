@@ -1,0 +1,126 @@
+import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import {
+  DynamoDBDocumentClient,
+  GetCommand,
+  PutCommand,
+  UpdateCommand,
+} from "@aws-sdk/lib-dynamodb";
+
+const client = DynamoDBDocumentClient.from(new DynamoDBClient({}));
+
+function usageTable() {
+  return process.env.ATLAS_USAGE_TABLE || "atlas-usage";
+}
+
+function monthKey() {
+  const d = new Date();
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+}
+
+/**
+ * @param {string} workspaceId
+ * @param {{ modelDelta?: number; storageBytesDelta?: number; sessionDelta?: number }} deltas
+ */
+export async function incrementUsage(workspaceId, deltas) {
+  const month = monthKey();
+  const expr = [];
+  const names = { "#month": "month" };
+  const values = { ":zero": 0, ":wsId": workspaceId, ":monthVal": month };
+  const pk = `WORKSPACE#${workspaceId}`;
+  const sk = `MONTH#${month}`;
+
+  if (deltas.modelDelta) {
+    expr.push("modelCount = if_not_exists(modelCount, :zero) + :modelDelta");
+    values[":modelDelta"] = deltas.modelDelta;
+  }
+  if (deltas.storageBytesDelta) {
+    expr.push("storageBytes = if_not_exists(storageBytes, :zero) + :storageDelta");
+    values[":storageDelta"] = deltas.storageBytesDelta;
+  }
+  if (deltas.sessionDelta) {
+    expr.push("sessionCount = if_not_exists(sessionCount, :zero) + :sessionDelta");
+    values[":sessionDelta"] = deltas.sessionDelta;
+  }
+  if (!expr.length) return;
+
+  await client.send(
+    new UpdateCommand({
+      TableName: usageTable(),
+      Key: { pk: `WORKSPACE#${workspaceId}`, sk: `MONTH#${month}` },
+      UpdateExpression: `SET workspaceId = :wsId, #month = :monthVal, ${expr.join(", ")}`,
+      ExpressionAttributeNames: names,
+      ExpressionAttributeValues: {
+        ...values,
+      },
+    })
+  );
+}
+
+/**
+ * @param {string} workspaceId
+ */
+export async function incrementModelCount(workspaceId) {
+  await incrementUsage(workspaceId, { modelDelta: 1 });
+}
+
+/**
+ * @param {string} workspaceId
+ */
+export async function getMonthlyUsage(workspaceId) {
+  const month = monthKey();
+  const row = await client.send(
+    new GetCommand({
+      TableName: usageTable(),
+      Key: { pk: `WORKSPACE#${workspaceId}`, sk: `MONTH#${month}` },
+    })
+  );
+  return {
+    month,
+    modelCount: Number(row.Item?.modelCount ?? 0),
+    sessionCount: Number(row.Item?.sessionCount ?? 0),
+    storageBytes: Number(row.Item?.storageBytes ?? 0),
+  };
+}
+
+/**
+ * Count one AR session when session_end includes at least one placement.
+ * Dedupes by sessionId for 48h.
+ *
+ * @param {string} workspaceId
+ * @param {string} sessionId
+ * @param {number} placementCount
+ */
+export async function recordQualifiedSession(workspaceId, sessionId, placementCount) {
+  if (!sessionId || placementCount < 1) return { counted: false };
+
+  const dedupeKey = {
+    pk: `WORKSPACE#${workspaceId}`,
+    sk: `SESSION#${sessionId}`,
+  };
+  const ttl = Math.floor(Date.now() / 1000) + 48 * 3600;
+
+  try {
+    await client.send(
+      new PutCommand({
+        TableName: usageTable(),
+        Item: {
+          ...dedupeKey,
+          workspaceId,
+          sessionId,
+          placementCount,
+          recordedAt: new Date().toISOString(),
+          ttl,
+        },
+        ConditionExpression: "attribute_not_exists(pk)",
+      })
+    );
+  } catch (e) {
+    if (e?.name === "ConditionalCheckFailedException") {
+      return { counted: false, duplicate: true };
+    }
+    throw e;
+  }
+
+  await incrementUsage(workspaceId, { sessionDelta: 1 });
+  return { counted: true };
+}

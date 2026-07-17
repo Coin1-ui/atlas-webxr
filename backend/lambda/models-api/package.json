@@ -1,0 +1,18 @@
+{
+  "name": "models-api",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "package": "powershell -ExecutionPolicy Bypass -File scripts/package.ps1",
+    "deploy": "powershell -ExecutionPolicy Bypass -File scripts/deploy.ps1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.1065.0",
+    "@aws-sdk/s3-request-presigner": "^3.1065.0"
+  }
+}

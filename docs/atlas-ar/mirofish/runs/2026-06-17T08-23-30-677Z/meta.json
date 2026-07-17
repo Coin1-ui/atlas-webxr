@@ -1,0 +1,7 @@
+{
+  "projectId": "proj_74a5fa4cd43e",
+  "simulationId": "sim_4fa4b86a352a",
+  "reportId": "report_fd2488e0512d",
+  "liveRun": true,
+  "llm": "ollama/qwen2.5:14b"
+}

@@ -2,4 +2,8 @@ node_modules/
 dist/
 dev-dist/
 test-results/
+.atlas-dev/
 *.local
+.env
+.env.*
+!.env.example

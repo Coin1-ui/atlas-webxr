@@ -1,0 +1,8 @@
+{
+  "projectId": "proj_e8b9dcc98715",
+  "simulationId": "sim_e6b7b440cb5a",
+  "reportId": "report_b697138997db",
+  "liveRun": true,
+  "llm": "qwen2.5:7b",
+  "status": "completed"
+}

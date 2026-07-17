@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Atlas AR mark">
+  <defs>
+    <linearGradient id="markAccent" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2dd4bf"/>
+      <stop offset="0.55" stop-color="#38bdf8"/>
+      <stop offset="1" stop-color="#a78bfa"/>
+    </linearGradient>
+  </defs>
+  <path d="M15 47 L49 47" stroke="#38bdf8" stroke-width="4" stroke-linecap="round" opacity="0.6"/>
+  <path d="M20 47 L32 18 L44 47" fill="none" stroke="url(#markAccent)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M26 37 L38 37" stroke="url(#markAccent)" stroke-width="6" stroke-linecap="round"/>
+  <circle cx="32" cy="18" r="4.5" fill="#2dd4bf"/>
+  <circle cx="32" cy="18" r="9" fill="none" stroke="#2dd4bf" stroke-width="1.5" opacity="0.5"/>
+</svg>

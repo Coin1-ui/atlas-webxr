@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 380 96" width="380" height="96" role="img" aria-label="Atlas Field AR">
+  <defs>
+    <linearGradient id="atlasAccentLight" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0d9488"/>
+      <stop offset="0.55" stop-color="#0284c7"/>
+      <stop offset="1" stop-color="#7c3aed"/>
+    </linearGradient>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Instrument+Serif&amp;family=DM+Sans:wght@500&amp;display=swap');
+      .wm  { font-family: 'Instrument Serif', Georgia, 'Times New Roman', serif; }
+      .tag { font-family: 'DM Sans', 'Segoe UI', system-ui, sans-serif; }
+    </style>
+  </defs>
+
+  <!-- Mark: AR placement glyph (plane + anchored apex + reticle), tuned for light backgrounds -->
+  <g>
+    <rect x="6" y="14" width="68" height="68" rx="16" ry="16"
+          fill="none" stroke="url(#atlasAccentLight)" stroke-width="3.5"/>
+    <path d="M20 62 L54 62" stroke="#0284c7" stroke-width="3" stroke-linecap="round" opacity="0.75"/>
+    <path d="M24 60 L40 30 L56 60" fill="none" stroke="url(#atlasAccentLight)" stroke-width="4"
+          stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M32 52 L48 52" stroke="url(#atlasAccentLight)" stroke-width="4" stroke-linecap="round"/>
+    <circle cx="40" cy="30" r="4.5" fill="#0d9488"/>
+    <circle cx="40" cy="30" r="9" fill="none" stroke="#0d9488" stroke-width="1.5" opacity="0.5"/>
+  </g>
+
+  <!-- Wordmark (dark ink for light backgrounds) -->
+  <text class="wm" x="92" y="60" font-size="52" fill="#0a1628">Atlas</text>
+  <!-- Tagline -->
+  <text class="tag" x="94" y="80" font-size="12.5" letter-spacing="4.5" fill="#475569">FIELD AR</text>
+</svg>

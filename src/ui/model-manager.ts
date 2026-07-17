@@ -9,7 +9,7 @@ export function renderModelManager(
     onBack: () => void;
   }
 ): void {
-  const userModels = models.filter((m) => !m.id.startsWith("builtin-"));
+  const userModels = models.filter((m) => !m.builtinType && !m.id.startsWith("builtin-"));
   const list = userModels
     .map(
       (m) => `

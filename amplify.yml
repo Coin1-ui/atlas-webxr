@@ -1,0 +1,67 @@
+version: 1
+frontend:
+  phases:
+    preBuild:
+      commands:
+        - npm ci
+        - node scripts/verify-production-env.mjs --production
+    build:
+      commands:
+        - |
+          if [ -z "$VITE_ATLAS_API_URL" ]; then
+            echo "WARNING: VITE_ATLAS_API_URL is not set. Model uploads will fail until you add it in Amplify Environment variables and redeploy."
+          else
+            echo "VITE_ATLAS_API_URL is set for this build."
+          fi
+        - npm run build
+  artifacts:
+    baseDirectory: dist
+    files:
+      - "**/*"
+  cache:
+    paths:
+      - node_modules/**/*
+  customRedirects:
+    - source: "/sales-deck"
+      target: "/sales-deck/index.html"
+      status: "200"
+    - source: "/sales-deck/"
+      target: "/sales-deck/index.html"
+      status: "200"
+    - source: "/sales-deck.html"
+      target: "/sales-deck/index.html"
+      status: "200"
+    - source: "/sales-deck/training"
+      target: "/sales-deck/training.html"
+      status: "200"
+    - source: "/sales-deck/training/"
+      target: "/sales-deck/training.html"
+      status: "200"
+    - source: "/sales-deck/outreach"
+      target: "/sales-deck/outreach.html"
+      status: "200"
+    - source: "/sales-deck/outreach/"
+      target: "/sales-deck/outreach.html"
+      status: "200"
+    - source: "/mkt-3-storyboard"
+      target: "/mkt-3-storyboard/index.html"
+      status: "200"
+    - source: "/mkt-3-storyboard/"
+      target: "/mkt-3-storyboard/index.html"
+      status: "200"
+    - source: "/<*>"
+      target: "/index.html"
+      status: "404-200"
+  customHeaders:
+    - pattern: "**/*"
+      headers:
+        - key: Strict-Transport-Security
+          value: max-age=31536000; includeSubDomains
+        - key: X-Content-Type-Options
+          value: nosniff
+        - key: X-Frame-Options
+          value: DENY
+        - key: Referrer-Policy
+          value: strict-origin-when-cross-origin
+        - key: Content-Security-Policy
+          value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.amazonaws.com https://*.amazoncognito.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; connect-src 'self' https://*.amazonaws.com https://*.amazoncognito.com wss:; font-src 'self' data:; media-src 'self' blob:; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
