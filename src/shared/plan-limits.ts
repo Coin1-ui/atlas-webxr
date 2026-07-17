@@ -8,6 +8,7 @@ export type PlanLimits = {
   storageBytes: number;
 };
 
+<<<<<<< Updated upstream
 export const BILLING_TIER_LIMITS: Record<PlanTierId, PlanLimits> = {
   starter: {
     models: 5,
@@ -28,6 +29,43 @@ export const BILLING_TIER_LIMITS: Record<PlanTierId, PlanLimits> = {
     models: 10_000,
     sessionsPerMonth: 1_000_000,
     storageBytes: 1024 * 1024 * 1024 * 1024,
+=======
+/** AR sessions included per catalog model per month (Starter, Launch, Growth). */
+export const SESSIONS_PER_MODEL_PER_MONTH = 100;
+
+/** Scale tier — no monthly session cap (`0` skips usage warnings). */
+export const UNLIMITED_SESSIONS_PER_MONTH = 0;
+
+export function sessionsPerMonthForModelSlots(modelSlots: number): number {
+  return modelSlots * SESSIONS_PER_MODEL_PER_MONTH;
+}
+
+export function isUnlimitedSessionsLimit(sessionsPerMonth: number): boolean {
+  return sessionsPerMonth <= 0;
+}
+
+/** Storage = model slots × 50 MB max GLB × 2.5. Sessions = model slots × 100/mo (Scale: unlimited). */
+export const BILLING_TIER_LIMITS: Record<PlanTierId, PlanLimits> = {
+  starter: {
+    models: 5,
+    sessionsPerMonth: sessionsPerMonthForModelSlots(5),
+    storageBytes: storageBytesForModelCount(5),
+  },
+  launch: {
+    models: 30,
+    sessionsPerMonth: sessionsPerMonthForModelSlots(30),
+    storageBytes: storageBytesForModelCount(30),
+  },
+  growth: {
+    models: 100,
+    sessionsPerMonth: sessionsPerMonthForModelSlots(100),
+    storageBytes: storageBytesForModelCount(100),
+  },
+  scale: {
+    models: 10_000,
+    sessionsPerMonth: UNLIMITED_SESSIONS_PER_MONTH,
+    storageBytes: storageBytesForModelCount(10_000),
+>>>>>>> Stashed changes
   },
 };
 
@@ -121,4 +159,9 @@ export function formatStorageBytes(bytes: number): string {
     return `${Math.round(bytes / (1024 * 1024))} MB`;
   }
   return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+}
+
+/** Account/admin usage row for session cap (Scale → Unlimited). */
+export function formatSessionsLimit(sessionsPerMonth: number): string {
+  return isUnlimitedSessionsLimit(sessionsPerMonth) ? "Unlimited" : String(sessionsPerMonth);
 }

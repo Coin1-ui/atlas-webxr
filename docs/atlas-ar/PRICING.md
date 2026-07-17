@@ -15,8 +15,14 @@
 | **Admin seats** | 1 | 2 | 10 | Unlimited |
 | **Field reps / viewers** | Unlimited | Unlimited | Unlimited | Unlimited |
 | **GLB models** | 5 | 30 | 100 | Custom |
+<<<<<<< Updated upstream
 | **AR sessions / mo** | 100 | 1,000 | 5,000 | Custom |
 | **Storage** | 2 GB | 5 GB | 25 GB | Custom |
+=======
+| **Max GLB / USDZ file** | 50 MB | 50 MB | 50 MB | 50 MB |
+| **AR sessions / mo** | 100/model (500 max) | 100/model (3,000 max) | 100/model (10,000 max) | Unlimited |
+| **Storage** (models × 50 MB × 2.5) | 625 MB | 3.7 GB | 12.2 GB | ~1.2 TB |
+>>>>>>> Stashed changes
 | **White-label customer UI** | Branded link | Full | Full | Full + custom domain |
 | **Browser-based AR (Chrome & Safari)** | ✓ | ✓ | ✓ | ✓ |
 | **Analytics** | Basic | Basic | Full + export | Full + export + API |
@@ -54,8 +60,11 @@
 1. `workspace.plan`: `launch | growth | scale` (migrate from `starter | pro | enterprise`)
 2. Counters: `modelCount`, `sessionCountMonthly`, `storageBytes`
 3. Trial state: `trialEndsAt`, `trialPlan: growth`
-4. MVP limits: **hard-block** model upload at plan cap; warn on session/storage overage
-5. Session = `session-start` → `session-end` with ≥1 placement
+4. **Max file size:** **50 MB** per GLB, USDZ, or icon on **all** plans (`upload-limits.mjs`)
+5. **Storage quota:** `models × 50 MB × 2.5` per tier (Starter 625 MB · Launch 3.7 GB · Growth 12.2 GB · Scale ~1.2 TB)
+6. **AR sessions:** **100 per model / month** on Starter, Launch, Growth (workspace caps: 500 / 3,000 / 10,000); **Scale unlimited**
+7. MVP limits: **hard-block** model upload at plan cap; warn on session/storage overage; client preflight on file size
+8. Session = `session-start` → `session-end` with ≥1 placement
 
 ---
 

@@ -28,8 +28,13 @@ function looksLikeJwt(token) {
   return /^eyJ[A-Za-z0-9_-]+\.eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(token);
 }
 
+<<<<<<< Updated upstream
 const GROWTH_LIMITS = { models: 100, sessionsPerMonth: 5000 };
 const STARTER_LIMITS = { models: 5, sessionsPerMonth: 100 };
+=======
+const GROWTH_LIMITS = { models: 100, sessionsPerMonth: 10000 };
+const STARTER_LIMITS = { models: 5, sessionsPerMonth: 500 };
+>>>>>>> Stashed changes
 
 const { record, finish } = createReport("batch28-trial-smoke", {
   meta: { api: API, create: CREATE, workspaceId: WORKSPACE_ID || null },

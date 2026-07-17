@@ -100,7 +100,11 @@ $env:ATLAS_TEST_WORKSPACE_ID = "<workspace uuid>"
 npm run test:batch28
 ```
 
+<<<<<<< Updated upstream
 **Pass:** During active trial → `limits.models === 100`, `limits.sessionsPerMonth === 5000`.
+=======
+**Pass:** During active trial → `limits.models === 100`, `limits.sessionsPerMonth === 10000`.
+>>>>>>> Stashed changes
 
 ### C. API — create throwaway workspace
 

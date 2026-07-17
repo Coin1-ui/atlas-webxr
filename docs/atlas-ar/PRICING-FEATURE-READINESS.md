@@ -29,7 +29,11 @@ Legend: **Ready** = customer can use today without you intervening · **Partial*
 |------------------|--------|------------------|
 | 1 workspace | **Ready** | One workspace per signup |
 | 5 GLB models | **Partial** | Limits tracked + warnings at 80%/100%; **upload not hard-blocked** ([plan-limits.ts](../../src/shared/plan-limits.ts)) |
+<<<<<<< Updated upstream
 | 100 AR sessions / mo | **Partial** | Session counted on `session_end` + ≥1 placement; warnings only |
+=======
+| 100 AR sessions / model / mo | **Partial** | Session counted on `session_end` + ≥1 placement; workspace cap = model slots × 100; warnings only |
+>>>>>>> Stashed changes
 | Unlimited shoppers & reps | **Ready** | No seat metering |
 | Browser AR + 3D inspect (Chrome & Safari) | **Ready** | WebXR + Quick Look + object mode |
 | Branded `/w/your-brand` | **Ready** | Slug routing + theme |
@@ -40,7 +44,11 @@ Legend: **Ready** = customer can use today without you intervening · **Partial*
 
 | Promised feature | Status | Evidence / notes |
 |------------------|--------|------------------|
+<<<<<<< Updated upstream
 | 30 models · 1,000 sessions | **Partial** | Same warn-only enforcement |
+=======
+| 30 models · 3,000 sessions (100/model) | **Partial** | Same warn-only enforcement |
+>>>>>>> Stashed changes
 | Full white-label customer UI | **Ready** | Logo, accent, exit URL, branded catalog |
 | Basic session analytics | **Partial** | Admin usage dashboard (models/sessions/storage). **Not** per-model funnel UI — “basic” = workspace usage stats |
 | 2 admin seats (PRICING.md) | **Not built** | No admin-seat limit in product; any workspace member with admin role works |
@@ -49,7 +57,11 @@ Legend: **Ready** = customer can use today without you intervening · **Partial*
 
 | Promised feature | Status | Evidence / notes |
 |------------------|--------|------------------|
+<<<<<<< Updated upstream
 | 100 models · 5,000 sessions | **Partial** | Warn-only |
+=======
+| 100 models · 10,000 sessions (100/model) | **Partial** | Warn-only |
+>>>>>>> Stashed changes
 | Analytics export for sales ops | **Partial** | JSON session log download exists but is **owner-toggle** per workspace (`sessionLogDownload`), not auto-enabled by plan tier |
 | Custom logo & accent | **Ready** | Admin branding |
 | Priority email (24h) | **Partial** | Operational promise only |
@@ -78,7 +90,11 @@ Legend: **Ready** = customer can use today without you intervening · **Partial*
 | **Design partner — 90-day Growth @ Launch** | **Partial** | Same; document in [SAL-2-DESIGN-PARTNER-OUTREACH.md](./SAL-2-DESIGN-PARTNER-OUTREACH.md) |
 | **Self-serve paid checkout** | **Not built** | BILL-1 Stripe todo; upgrades queue API or noop in dev |
 | **Hard limit enforcement** | **Not built** | PRICING.md: “MVP soft warnings”; do not promise hard cut-off unless owner restricts account |
+<<<<<<< Updated upstream
 | **Storage limits** | **Partial** | Tracked; PRICING.md says 2 GB Starter but code uses **5 GB** ([plan-limits.ts](../../src/shared/plan-limits.ts)) — align copy or code before enterprise deals |
+=======
+| **Storage limits** | **Done** | Aligned; max **50 MB** per GLB/USDZ on all plans; storage = models × 50 MB × 2.5 → Starter 625 MB · Launch 3.7 GB · Growth 12.2 GB · Scale ~1.2 TB ([plan-limits.ts](../../src/shared/plan-limits.ts)), matching PRICING.md |
+>>>>>>> Stashed changes
 
 ---
 

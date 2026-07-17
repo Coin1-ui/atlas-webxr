@@ -213,7 +213,11 @@ Optional **PATCH** on first request after expiry: clear `trialPlan`, leave `bill
 
 ### ENG-36
 
+<<<<<<< Updated upstream
 - [ ] Dev: create workspace → usage limits = **Growth** (100 models / 5000 sessions)  
+=======
+- [ ] Dev: create workspace → usage limits = **Growth** (100 models / 10,000 sessions · 100/model)
+>>>>>>> Stashed changes
 - [ ] Account shows trial countdown  
 - [ ] Admin banner shows trial  
 - [ ] Owner sets Launch/Growth → trial cleared; limits match owner tier  

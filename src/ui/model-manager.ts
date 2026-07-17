@@ -1,4 +1,5 @@
 import type { CustomModelRecord } from "../data/custom-model-store";
+import { checkModelUploadSizes, uploadSizeNoteHtml } from "../shared/upload-size-limits";
 
 export function renderModelManager(
   root: HTMLElement,
@@ -24,6 +25,7 @@ export function renderModelManager(
     <div class="ar-panel ar-panel-manage">
       <p class="ar-panel-title">Manage 3D models</p>
       <p class="ar-panel-hint">Upload a <strong>.glb</strong> file and a square <strong>icon</strong> (PNG/JPG).</p>
+      <p class="ar-panel-hint model-upload-size-note">${uploadSizeNoteHtml()}</p>
       <form class="model-upload-form" id="model-upload-form">
         <label class="field-label">Name</label>
         <input type="text" name="name" class="field-input" placeholder="Pump valve" required maxlength="40" />
@@ -31,6 +33,7 @@ export function renderModelManager(
         <input type="file" name="icon" accept="image/png,image/jpeg,image/webp,image/svg+xml" required />
         <label class="field-label">3D model (.glb)</label>
         <input type="file" name="glb" accept=".glb,model/gltf-binary" required />
+        <p class="upload-status camera-warning hidden" id="upload-size-warning" role="status" aria-live="polite"></p>
         <button type="submit" class="btn btn-primary btn-block">Upload model</button>
       </form>
       ${userModels.length ? `<ul class="model-manage-list">${list}</ul>` : ""}
@@ -39,6 +42,29 @@ export function renderModelManager(
   `;
 
   const form = root.querySelector("#model-upload-form") as HTMLFormElement;
+  const sizeWarningEl = root.querySelector("#upload-size-warning") as HTMLElement;
+
+  const previewUploadSizes = () => {
+    const glb = (form.elements.namedItem("glb") as HTMLInputElement).files?.[0];
+    const icon = (form.elements.namedItem("icon") as HTMLInputElement).files?.[0];
+    if (!glb) {
+      sizeWarningEl.classList.add("hidden");
+      sizeWarningEl.textContent = "";
+      return;
+    }
+    const check = checkModelUploadSizes({ glb, icon: icon ?? null, willAutoConvertUsdz: false });
+    if (check.error || check.warning) {
+      sizeWarningEl.classList.remove("hidden");
+      sizeWarningEl.textContent = check.error ?? check.warning ?? "";
+    } else {
+      sizeWarningEl.classList.add("hidden");
+      sizeWarningEl.textContent = "";
+    }
+  };
+
+  form.querySelector('input[name="glb"]')?.addEventListener("change", previewUploadSizes);
+  form.querySelector('input[name="icon"]')?.addEventListener("change", previewUploadSizes);
+
   form.onsubmit = (e) => {
     e.preventDefault();
     const fd = new FormData(form);
@@ -46,6 +72,12 @@ export function renderModelManager(
     const icon = fd.get("icon");
     const glb = fd.get("glb");
     if (!(icon instanceof File) || !(glb instanceof File)) return;
+    const sizeCheck = checkModelUploadSizes({ glb, icon, willAutoConvertUsdz: false });
+    if (sizeCheck.error || sizeCheck.warning) {
+      sizeWarningEl.classList.remove("hidden");
+      sizeWarningEl.textContent = sizeCheck.error ?? sizeCheck.warning ?? "";
+    }
+    if (sizeCheck.blocked) return;
     handlers.onSave(name, icon, glb);
     form.reset();
   };

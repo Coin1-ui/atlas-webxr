@@ -35,8 +35,13 @@ const TIERS = [
     description: "Try floor AR with a tiny catalog — perfect for first tests",
     features: [
       "1 workspace · 5 GLB models",
+<<<<<<< Updated upstream
       "100 AR sessions / month included",
       "2 GB storage",
+=======
+      "100 AR sessions / model / month (500 included)",
+      "625 MB storage",
+>>>>>>> Stashed changes
       "Unlimited shoppers & field reps",
       MKT.pricingFeatureAr,
       "Branded link `/w/your-brand`",
@@ -55,8 +60,13 @@ const TIERS = [
     description: "Single showroom or pilot team — live this week",
     features: [
       "1 workspace · 30 GLB models",
+<<<<<<< Updated upstream
       "1,000 AR sessions / month included",
       "5 GB storage",
+=======
+      "100 AR sessions / model / month (3,000 included)",
+      "3.7 GB storage",
+>>>>>>> Stashed changes
       "Unlimited field reps & shoppers",
       MKT.pricingFeatureAr,
       "Full white-label customer experience",
@@ -74,8 +84,13 @@ const TIERS = [
     description: "Regional retail & active field sales",
     features: [
       "1 workspace · 100 GLB models",
+<<<<<<< Updated upstream
       "5,000 AR sessions / month included",
       "25 GB storage",
+=======
+      "100 AR sessions / model / month (10,000 included)",
+      "12.2 GB storage",
+>>>>>>> Stashed changes
       "Full white-label customer experience",
       "Analytics export for sales ops",
       "Custom logo & accent color",
@@ -93,6 +108,7 @@ const TIERS = [
     description: "Multi-brand, SSO & compliance",
     features: [
       "Multiple workspaces & catalogs",
+      "Unlimited AR sessions",
       "Custom session tiers & SSO",
       "Dedicated success manager",
       "SLA + security review",
@@ -199,7 +215,7 @@ function marketLadderHtml(): string {
 const FAQ = [
   {
     q: "What is the $5 Starter plan?",
-    a: "Starter is for first tests: 5 models, 100 AR sessions per month, and your own /w/your-brand link. Upgrade to Launch when you need a full showroom catalog.",
+    a: "Starter is for first tests: 5 models, 100 AR sessions per model per month (500 included), 625 MB storage, and your own /w/your-brand link. Upgrade to Launch when you need a full showroom catalog.",
   },
   {
     q: "Is there really a free trial?",
@@ -218,8 +234,8 @@ const FAQ = [
     a: MKT.faqStoreEmbed,
   },
   {
-    q: "What happens after 1,000 or 5,000 sessions?",
-    a: "Soft notice in admin, then overage at $15 or $10 per additional 1,000 sessions — or upgrade to the next tier.",
+    q: "What happens when we exceed included AR sessions?",
+    a: "Each model includes 100 AR sessions per month on Starter, Launch, and Growth (500 / 3,000 / 10,000 totals at full catalog). Scale is unlimited. Soft notice in admin first, then overage billing or upgrade.",
   },
 ];
 

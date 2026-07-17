@@ -144,7 +144,11 @@ $env:ATLAS_TEST_ID_TOKEN = "<Cognito ID token or dev:you@company.com>"
 $env:ATLAS_TEST_WORKSPACE_ID = "<workspace uuid>"
 npm run test:batch28
 ```
+<<<<<<< Updated upstream
 **Pass:** active trial → Growth limits (`models 100`, `sessionsPerMonth 5000`).
+=======
+**Pass:** active trial → Growth limits (`models 100`, `sessionsPerMonth 10000`).
+>>>>>>> Stashed changes
 
 ---
 

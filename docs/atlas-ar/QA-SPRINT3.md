@@ -59,7 +59,11 @@ Use a **real workspace** on Amplify + deployed `atlas-api`.
 |------|--------|---------------|
 | 1 | Open `/signup` on desktop Chrome | Account created + email verified (Cognito) |
 | 2 | Complete `/onboard` | Workspace slug created |
+<<<<<<< Updated upstream
 | 3 | `/admin/models` → upload GLB (≤50 MB) | Model appears in list; USDZ status ready or processing |
+=======
+| 3 | `/admin/models` → upload GLB (≤50 MB; storage ~2.5× GLB per model) | Model appears in list; USDZ status ready or processing |
+>>>>>>> Stashed changes
 | 4 | Copy **direct AR link** from admin | URL form `/w/{slug}/ar/{modelId}` |
 | 5 | Open link on **Android Chrome** (HTTPS) | Start AR landing shows device line + model name |
 | 6 | Tap **Run camera + AR check** | Camera permission granted; checks pass |

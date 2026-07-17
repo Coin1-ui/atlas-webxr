@@ -27,8 +27,13 @@ column (max ~720px) on desktop.
 ├───────────────────────────────────────────────┤
 │  Usage (2026-07)                                │  ← admin-section "Usage (month)"
 │   Models        12 / 100                        │
+<<<<<<< Updated upstream
 │   AR sessions   842 / 5000                      │     usageStatHtml() progress rows
 │   Storage       0.4 / 5 GB                      │
+=======
+│   AR sessions   842 / 10000                     │     usageStatHtml() progress rows
+│   Storage       0.4 / 12.2 GB                   │
+>>>>>>> Stashed changes
 ├───────────────────────────────────────────────┤
 │  ┌───────────────┐ (primary action card)       │
 │  │ ▣  Models     │  Manage your 3D catalog      │  ← data-action="models"

@@ -55,7 +55,11 @@ Retailers and field sales teams need **accurate floor-scale AR** from existing 3
 
 ### 5.3 Model catalog (admin)
 
+<<<<<<< Updated upstream
 - FR-M1: Upload GLB (max size TBD, start 50MB); server generates USDZ for iOS
+=======
+- FR-M1: Upload GLB (max **50 MB** all plans); server generates USDZ for iOS (max **50 MB**); workspace storage budget = model slots × 50 MB × 2.5
+>>>>>>> Stashed changes
 - FR-M2: List, rename, delete models per workspace
 - FR-M3: Replace PC-only `#manage-models` with authenticated admin routes
 - FR-M4: Catalog API returns only current workspace models
