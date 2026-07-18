@@ -15,6 +15,11 @@ export type TrialWorkspace = {
   billingTier?: PlanTierId;
   /** Tier the customer has paid for (set on purchase, not at signup). */
   purchasedBillingTier?: PlanTierId | null;
+  /** Time-bounded tier projected from verified provider events. */
+  billingEntitlementTier?: PlanTierId | null;
+  /** Explicit non-financial tier assigned by the platform owner. */
+  manualBillingTier?: PlanTierId | null;
+  billingProvider?: "dodo" | "zoho" | null;
   trialEndsAt?: string | null;
   trialPlan?: PlanTierId | null;
 };
@@ -43,7 +48,7 @@ export type PlanActionVerb = "Subscribe" | "Upgrade";
  * No paid plan on file → "Subscribe"; already paying → "Upgrade".
  */
 export function planActionVerb(ws: TrialWorkspace): PlanActionVerb {
-  return ws.purchasedBillingTier ? "Upgrade" : "Subscribe";
+  return paidBillingTier(ws) ? "Upgrade" : "Subscribe";
 }
 
 /**
@@ -62,8 +67,9 @@ export function planActionVerb(ws: TrialWorkspace): PlanActionVerb {
  *   Growth trial → Starter/Launch/Growth = Subscribe · Scale = Upgrade
  */
 export function planActionVerbForTier(ws: TrialWorkspace, targetTier: PlanTierId): PlanActionVerb {
+  const paidTier = paidBillingTier(ws);
   const referenceTier: PlanTierId | null =
-    isTrialActive(ws) && ws.trialPlan ? ws.trialPlan : ws.purchasedBillingTier ?? null;
+    isTrialActive(ws) && ws.trialPlan ? ws.trialPlan : paidTier;
   if (!referenceTier) return "Subscribe";
   return TIER_ORDER.indexOf(targetTier) > TIER_ORDER.indexOf(referenceTier) ? "Upgrade" : "Subscribe";
 }
@@ -109,16 +115,33 @@ export function isTrialExpired(ws: { trialEndsAt?: string | null; trialPlan?: Pl
 
 const TIER_ORDER: PlanTierId[] = ["starter", "launch", "growth", "scale"];
 
+function paidBillingTier(ws: TrialWorkspace): PlanTierId | null {
+  const candidates = [
+    ws.manualBillingTier,
+    ws.billingEntitlementTier,
+    ...(ws.billingProvider ? [] : [ws.purchasedBillingTier]),
+  ].filter(
+    (tier): tier is PlanTierId => Boolean(tier)
+  );
+  return candidates.reduce<PlanTierId | null>(
+    (highest, tier) =>
+      !highest || TIER_ORDER.indexOf(tier) > TIER_ORDER.indexOf(highest) ? tier : highest,
+    null
+  );
+}
+
 export function hasPurchasedTrialFallback(ws: TrialWorkspace): boolean {
-  if (!ws.trialPlan || !ws.purchasedBillingTier) return false;
+  const paidTier = paidBillingTier(ws);
+  if (!ws.trialPlan || !paidTier) return false;
   const fallback = trialFallbackTier(ws.trialPlan);
   const fallbackIdx = TIER_ORDER.indexOf(fallback);
-  const purchasedIdx = TIER_ORDER.indexOf(ws.purchasedBillingTier);
+  const purchasedIdx = TIER_ORDER.indexOf(paidTier);
   return fallbackIdx >= 0 && purchasedIdx >= fallbackIdx;
 }
 
 /** Trial ended without purchasing the required fallback tier. */
 export function isTrialSuspended(ws: TrialWorkspace): boolean {
+  if (!isTrialActive(ws) && ws.billingProvider && !paidBillingTier(ws)) return true;
   return isTrialExpired(ws) && Boolean(ws.trialPlan) && !hasPurchasedTrialFallback(ws);
 }
 
@@ -154,7 +177,8 @@ export function formatTrialCountdown(parts: TrialCountdownParts): string {
 export function effectiveBillingTier(ws: TrialWorkspace): PlanTierId {
   if (isTrialActive(ws) && ws.trialPlan) return ws.trialPlan;
   if (isTrialSuspended(ws) && ws.trialPlan) return trialFallbackTier(ws.trialPlan);
-  if (ws.purchasedBillingTier) return ws.purchasedBillingTier;
+  const paidTier = paidBillingTier(ws);
+  if (paidTier) return paidTier;
   return billingTierFromWorkspace(ws);
 }
 
@@ -164,8 +188,9 @@ export function trialEndsAtIso(days = TRIAL_DURATION_DAYS): string {
 
 function trialAfterTrialMessage(ws: TrialWorkspace): string {
   if (!ws.trialPlan) return "";
-  if (hasPurchasedTrialFallback(ws) && ws.purchasedBillingTier) {
-    return `continues on ${planDisplayName(ws.plan, ws.purchasedBillingTier)} after trial`;
+  const paidTier = paidBillingTier(ws);
+  if (hasPurchasedTrialFallback(ws) && paidTier) {
+    return `continues on ${planDisplayName(ws.plan, paidTier)} after trial`;
   }
   return `${trialCtaSentence(ws).toLowerCase()} before trial ends or service pauses`;
 }
@@ -223,7 +248,8 @@ export function accountTrialBannerHtml(ws: TrialWorkspace): string {
   const countdown = parts ? formatTrialCountdown(parts) : `${trialDaysRemaining(ws)}d`;
   const trialName = planDisplayName(ws.plan, ws.trialPlan);
   const purchased = hasPurchasedTrialFallback(ws);
-  const purchasedName = ws.purchasedBillingTier ? planDisplayName(ws.plan, ws.purchasedBillingTier) : trialName;
+  const paidTier = paidBillingTier(ws);
+  const purchasedName = paidTier ? planDisplayName(ws.plan, paidTier) : trialName;
   return `<div class="account-trial-banner account-trial-banner--active" role="status" aria-live="polite" data-trial-banner>
     <p class="account-trial-eyebrow">${escapeHtml(trialName)} trial</p>
     <p class="account-trial-countdown" role="timer"><span data-trial-countdown>${escapeHtml(countdown)}</span> remaining</p>

@@ -2,7 +2,7 @@
 /** Extract VITE_* values baked into the live Amplify bundle (read-only). */
 const DEPLOY =
   process.env.ATLAS_DEPLOY_URL?.replace(/\/$/, "") ||
-  "https://main.d3t9wmef56h86w.amplifyapp.com";
+  "https://main.d7vfdpujdozkj.amplifyapp.com";
 
 const home = await fetch(`${DEPLOY}/`).then((r) => r.text());
 const scriptMatch = home.match(/src="(\/assets\/index-[^"]+\.js)"/);

@@ -1,6 +1,6 @@
 import type { Workspace } from "../shared/tenant";
 import { DEFAULT_TENANT_ACCENT } from "../shared/brand-defaults";
-import { brandedHeaderHtml, mountWorkspaceLogo } from "../branding/workspace-theme";
+import { brandedHeaderHtml, mountWorkspaceLogo, workspaceLogoUrl } from "../branding/workspace-theme";
 import { workspaceApiHint } from "../data/workspace-api";
 import { MKT_ASSETS } from "./marketing-assets";
 
@@ -18,7 +18,12 @@ export function renderAdminBranding(
   handlers: {
     error?: string;
     saved?: boolean;
-    onSubmit: (input: { name: string; logoUrl: string; primaryColor: string }) => void | Promise<void>;
+    onSubmit: (input: {
+      name: string;
+      logoUrl: string;
+      primaryColor: string;
+      logoFile: File | null;
+    }) => void | Promise<void>;
     onPreview: () => void;
     onBack: () => void;
   }
@@ -26,6 +31,7 @@ export function renderAdminBranding(
   const logoUrl = workspace.branding.logoUrl ?? "";
   const primaryColor = workspace.branding.primaryColor ?? DEFAULT_TENANT_ACCENT;
   const sharePath = `/w/${encodeURIComponent(workspace.slug)}`;
+  const previewLogo = workspaceLogoUrl(workspace.slug, workspace.branding);
 
   root.innerHTML = `
     <div class="admin-shell branding-shell">
@@ -63,13 +69,24 @@ export function renderAdminBranding(
             <label class="auth-label">Display name
               <input class="auth-input" type="text" name="name" maxlength="80" required value="${escapeHtml(workspace.name)}" />
             </label>
-            <label class="auth-label">Logo URL
-              <input class="auth-input" type="url" name="logoUrl" placeholder="https://yoursite.com/logo.png" value="${escapeHtml(logoUrl)}" />
-              <span class="auth-hint">HTTPS image URL · shown on admin and <code>${escapeHtml(sharePath)}</code></span>
+            <label class="auth-label">Logo image
+              <div class="branding-logo-upload-row">
+                ${
+                  previewLogo
+                    ? `<img class="branding-logo-preview" src="${escapeHtml(previewLogo)}" alt="" width="72" height="72" />`
+                    : `<div class="branding-logo-preview branding-logo-preview--empty" aria-hidden="true">No logo</div>`
+                }
+                <input class="auth-input" type="file" name="logoFile" accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml" />
+              </div>
+              <span class="auth-hint">Upload PNG, JPG, WebP, GIF, or SVG · max 5 MB · saved to your workspace on S3</span>
+            </label>
+            <label class="auth-label">Logo URL <span class="muted-id">(optional)</span>
+              <input class="auth-input" type="url" name="logoUrl" placeholder="https://yoursite.com/logo.png" value="${escapeHtml(logoUrl.startsWith("https://atlas-ar.app/") ? "" : logoUrl)}" />
+              <span class="auth-hint">Or paste an HTTPS image URL. File upload is preferred.</span>
             </label>
             <label class="auth-label">Primary color
               <input class="auth-input branding-color-input" type="color" name="primaryColor" value="${escapeHtml(primaryColor)}" />
-              <span class="auth-hint">Buttons and accents on your AR landing page</span>
+              <span class="auth-hint">Buttons and accents on your customer AR landing page (admin UI stays Atlas teal)</span>
             </label>
             <button type="submit" class="btn btn-primary btn-block">Save branding</button>
           </form>
@@ -91,6 +108,8 @@ export function renderAdminBranding(
     const name = (form.elements.namedItem("name") as HTMLInputElement).value.trim();
     const logoUrlInput = (form.elements.namedItem("logoUrl") as HTMLInputElement).value.trim();
     const primaryColorInput = (form.elements.namedItem("primaryColor") as HTMLInputElement).value;
-    void handlers.onSubmit({ name, logoUrl: logoUrlInput, primaryColor: primaryColorInput });
+    const logoFileInput = form.elements.namedItem("logoFile") as HTMLInputElement;
+    const logoFile = logoFileInput.files?.[0] ?? null;
+    void handlers.onSubmit({ name, logoUrl: logoUrlInput, primaryColor: primaryColorInput, logoFile });
   });
 }

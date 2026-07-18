@@ -2,7 +2,7 @@
 
 **Date:** 2026-07-04
 **Builds on:** [BATCH-28-DEPLOY.md](./BATCH-28-DEPLOY.md) (14-day trial base)
-**Live app:** https://main.d3t9wmef56h86w.amplifyapp.com
+**Live app:** https://main.d7vfdpujdozkj.amplifyapp.com
 **API:** `https://rusf3nnyu7.execute-api.ap-south-1.amazonaws.com` (Lambda `atlas-api`, region `ap-south-1`)
 
 > This ships the code developed **after** Batch 28: trial → **suspension** (not silent downgrade),
@@ -151,7 +151,7 @@ npm run test:batch28
 ## 5. ENG-19 sign-off (Amplify env)
 
 ```powershell
-$env:ATLAS_DEPLOY_URL="https://main.d3t9wmef56h86w.amplifyapp.com"
+$env:ATLAS_DEPLOY_URL="https://main.d7vfdpujdozkj.amplifyapp.com"
 npm run verify:amplify-env
 ```
 **Current result: 4/4 pass** — home 200, bundle references API Gateway URL, bundle includes Cognito

@@ -17,6 +17,10 @@ import {
 } from "../data/glb-to-usdz";
 import { USDZ_MIME } from "../xr/ios/quick-look-ar";
 import { validateGlbFile } from "../shared/glb-validate";
+import {
+  checkModelUploadSizes,
+  uploadSizeNoteHtml,
+} from "../shared/upload-size-limits";
 import { MKT_ASSETS } from "./marketing-assets";
 
 function escapeHtml(s: string): string {
@@ -113,6 +117,7 @@ export function renderAdminModels(
                 : `<p class="home-sub auth-hint">${uploadGate.used} / ${uploadGate.limit} models on your plan.</p>`
             }
             <form class="model-upload-form model-upload-form-card${uploadGate.blocked ? " model-upload-form--disabled" : ""}" id="model-upload-form">
+              <p class="home-sub auth-hint model-upload-size-note">${uploadSizeNoteHtml()}</p>
               <label class="field-label">Name</label>
               <input type="text" name="name" class="field-input" placeholder="Bar chair" required maxlength="40" ${uploadGate.blocked ? "disabled" : ""} />
               <label class="field-label">Icon image</label>
@@ -122,6 +127,7 @@ export function renderAdminModels(
               <label class="field-label">iOS AR model (.usdz) <span class="muted-id">optional — Safari Quick Look</span></label>
               <input type="file" name="usdz" accept=".usdz,model/vnd.usdz+zip" ${uploadGate.blocked ? "disabled" : ""} />
               <p class="home-sub">Auto-generate USDZ from GLB, or upload a Reality Converter USDZ for best iOS textures.</p>
+              <p class="upload-status camera-warning hidden" id="upload-size-warning" role="status" aria-live="polite"></p>
               <div class="upload-progress-wrap hidden" id="upload-progress-wrap">
                 <div class="upload-progress-bar"><div class="upload-progress-fill" id="upload-progress-fill"></div></div>
                 <p class="upload-progress-label" id="upload-progress-label">0%</p>
@@ -149,6 +155,7 @@ export function renderAdminModels(
   bindModelIconFallbacks(root);
 
   const statusEl = root.querySelector("#upload-status") as HTMLElement;
+  const sizeWarningEl = root.querySelector("#upload-size-warning") as HTMLElement;
   const exitUrlStatus = root.querySelector("#exit-url-status") as HTMLElement;
   const progressWrap = root.querySelector("#upload-progress-wrap") as HTMLElement;
   const progressFill = root.querySelector("#upload-progress-fill") as HTMLElement;
@@ -157,6 +164,45 @@ export function renderAdminModels(
   const form = root.querySelector("#model-upload-form") as HTMLFormElement;
 
   preloadGlbToUsdzModules();
+
+  const showSizeFeedback = (check: ReturnType<typeof checkModelUploadSizes>) => {
+    if (check.error) {
+      sizeWarningEl.classList.remove("hidden");
+      sizeWarningEl.textContent = check.error;
+      statusEl.textContent = check.error;
+      return;
+    }
+    if (check.warning) {
+      sizeWarningEl.classList.remove("hidden");
+      sizeWarningEl.textContent = check.warning;
+      return;
+    }
+    sizeWarningEl.classList.add("hidden");
+    sizeWarningEl.textContent = "";
+  };
+
+  const previewUploadSizes = () => {
+    const glb = (form.elements.namedItem("glb") as HTMLInputElement).files?.[0];
+    const icon = (form.elements.namedItem("icon") as HTMLInputElement).files?.[0];
+    const usdz = (form.elements.namedItem("usdz") as HTMLInputElement).files?.[0] ?? null;
+    if (!glb) {
+      sizeWarningEl.classList.add("hidden");
+      sizeWarningEl.textContent = "";
+      return;
+    }
+    showSizeFeedback(
+      checkModelUploadSizes({
+        glb,
+        icon: icon ?? null,
+        usdz,
+        willAutoConvertUsdz: !(usdz && usdz.size > 0),
+      }),
+    );
+  };
+
+  form.querySelector('input[name="glb"]')?.addEventListener("change", previewUploadSizes);
+  form.querySelector('input[name="usdz"]')?.addEventListener("change", previewUploadSizes);
+  form.querySelector('input[name="icon"]')?.addEventListener("change", previewUploadSizes);
 
   root.querySelector("#ar-exit-url-form")?.addEventListener("submit", (e) => {
     e.preventDefault();
@@ -203,6 +249,14 @@ export function renderAdminModels(
       const glb = fd.get("glb");
       const manualUsdz = fd.get("usdz");
       if (!(icon instanceof File) || !(glb instanceof File)) return;
+      const sizeCheck = checkModelUploadSizes({
+        glb,
+        icon,
+        usdz: manualUsdz instanceof File ? manualUsdz : null,
+        willAutoConvertUsdz: !(manualUsdz instanceof File && manualUsdz.size > 0),
+      });
+      showSizeFeedback(sizeCheck);
+      if (sizeCheck.blocked) return;
       const glbCheck = await validateGlbFile(glb);
       if (!glbCheck.ok) {
         statusEl.textContent = glbCheck.error;

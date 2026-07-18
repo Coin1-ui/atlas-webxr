@@ -10,7 +10,7 @@ import { chromium } from "playwright";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const outDir = path.join(root, "public", "mkt-3-storyboard", "assets", "thumbs");
-const baseUrl = process.env.ATLAS_CAPTURE_URL || "https://main.d3t9wmef56h86w.amplifyapp.com";
+const baseUrl = process.env.ATLAS_CAPTURE_URL || "https://main.d7vfdpujdozkj.amplifyapp.com";
 
 fs.mkdirSync(outDir, { recursive: true });
 

@@ -156,7 +156,7 @@ import {
   resetPassword,
   verifyEmail,
 } from "./auth/flow";
-import { fetchPublicWorkspaceConfig, PublicShowroomBlockedError, updateWorkspaceSettings } from "./data/workspace-api";
+import { fetchPublicWorkspaceConfig, PublicShowroomBlockedError, updateWorkspaceSettings, uploadWorkspaceLogo } from "./data/workspace-api";
 import { fetchWorkspaceUsage } from "./data/usage-api";
 import { acceptOverageCharge, isOveragePaidLocally, requestPlanUpgrade } from "./data/billing-api";
 import type { PlanTier } from "./shared/plan-display";
@@ -351,6 +351,8 @@ function pickerFocusModelId(): string | null {
 }
 
 function ensureDemoArCatalogContext(): void {
+  // Tenant /w/{slug} routes must keep the workspace catalog — never swap to live demo.
+  if (activeTenantSlug || parseTenantRoute()) return;
   if (!showFullCatalogInAr()) return;
   activeTenantSlug = null;
   const demoSlug = getDemoCatalogWorkspaceSlug();
@@ -691,6 +693,14 @@ function parseTenantRoute(): { slug: string; modelId?: string } | null {
   return null;
 }
 
+/** Open a tenant showroom — never the live-demo catalog. Clears demo landing context. */
+function openTenantShowroom(slug: string): void {
+  globalDemoLanding = false;
+  activeTenantSlug = slug;
+  setCatalogWorkspaceSlug(slug);
+  navigateTo(`/w/${encodeURIComponent(slug)}`, true);
+}
+
 async function afterAuthRoute(): Promise<void> {
   const next = await ensureWorkspaceAfterAuth();
   if (next === "onboard") {
@@ -704,8 +714,7 @@ async function afterAuthRoute(): Promise<void> {
   }
   activeTenantSlug = next.slug;
   setCatalogWorkspaceSlug(next.slug);
-  navigateTo(`/w/${encodeURIComponent(next.slug)}`, true);
-  void showTenantHome(next.slug);
+  openTenantShowroom(next.slug);
 }
 
 function showMobileAdminDesktopOnlyGate(): void {
@@ -736,10 +745,7 @@ async function showMobileAdminHub(): Promise<void> {
     modelCount: modelCountKnown,
     showOwnerLink: isPlatformOwner,
     onShowroom: () => {
-      activeTenantSlug = workspace.slug;
-      setCatalogWorkspaceSlug(workspace.slug);
-      navigateTo(`/w/${encodeURIComponent(workspace.slug)}`, true);
-      void showTenantHome(workspace.slug);
+      void openTenantShowroom(workspace.slug);
     },
     onBranding: () => navigateTo("/admin/branding", true),
     onAccount: () => navigateTo("/account", true),
@@ -1201,10 +1207,7 @@ async function showAccountScreen(opts?: {
         onBack: () => {
           const slug = activeWorkspace?.slug ?? activeTenantSlug;
           if (slug) {
-            activeTenantSlug = slug;
-            setCatalogWorkspaceSlug(slug);
-            navigateTo(`/w/${encodeURIComponent(slug)}`, true);
-            void showTenantHome(slug);
+            openTenantShowroom(slug);
             return;
           }
           goHome();
@@ -1276,15 +1279,18 @@ async function showOnboardingGetStartedScreen(): Promise<void> {
       },
       onOpenShowroom: () => {
         markOnboardingStep(workspace.id, "preview");
-        activeTenantSlug = workspace.slug;
-        navigateTo(`/w/${encodeURIComponent(workspace.slug)}`, true);
-        void showTenantHome(workspace.slug);
+        void openTenantShowroom(workspace.slug);
       },
       onPreviewAr: () => {
+        if (modelCount < 1) {
+          alert(
+            "Upload at least one 3D model before Preview AR. Your empty showroom will not open the live demo catalog.",
+          );
+          navigateTo("/admin/models");
+          return;
+        }
         markOnboardingStep(workspace.id, "preview");
-        activeTenantSlug = workspace.slug;
-        navigateTo(`/w/${encodeURIComponent(workspace.slug)}`, true);
-        void showTenantHome(workspace.slug);
+        void openTenantShowroom(workspace.slug);
       },
       onAdmin: () => navigateTo("/admin"),
       onHelp: () => navigateTo("/admin/help"),
@@ -1377,8 +1383,19 @@ async function showAdminScreen(): Promise<void> {
       onBranding: () => navigateTo("/admin/branding"),
       onHelp: () => navigateTo("/admin/help"),
       onOpenAr: () => {
-        activeTenantSlug = activeWorkspace?.slug ?? null;
-        navigateTo(activeTenantSlug ? `/w/${encodeURIComponent(activeTenantSlug)}` : "/", true);
+        const slug = activeWorkspace?.slug;
+        if (!slug) {
+          navigateTo("/", true);
+          return;
+        }
+        if (modelCount < 1) {
+          alert(
+            "Upload at least one 3D model before Preview AR. Your workspace catalog stays empty until you upload — it will not show another account’s demo models.",
+          );
+          navigateTo("/admin/models");
+          return;
+        }
+        void openTenantShowroom(slug);
       },
       onSignOut: () => {
         logout();
@@ -1420,11 +1437,31 @@ async function showAdminBrandingScreen(saved = false, error?: string): Promise<v
       },
       onSubmit: async (input) => {
         try {
-          activeWorkspace = await updateWorkspaceSettings(activeWorkspace!.id, {
-            name: input.name,
-            logoUrl: input.logoUrl || null,
-            primaryColor: input.primaryColor,
-          });
+          if (input.logoFile) {
+            activeWorkspace = await uploadWorkspaceLogo(activeWorkspace!.id, input.logoFile);
+            activeWorkspace = await updateWorkspaceSettings(activeWorkspace.id, {
+              name: input.name,
+              primaryColor: input.primaryColor,
+            });
+          } else {
+            const existingLogo = activeWorkspace!.branding.logoUrl ?? "";
+            const settings: {
+              name: string;
+              primaryColor: string;
+              logoUrl?: string | null;
+            } = {
+              name: input.name,
+              primaryColor: input.primaryColor,
+            };
+            if (input.logoUrl) {
+              settings.logoUrl = input.logoUrl;
+            } else if (existingLogo.startsWith("https://atlas-ar.app/")) {
+              /* keep S3-uploaded logo — omit logoUrl */
+            } else if (existingLogo) {
+              settings.logoUrl = null;
+            }
+            activeWorkspace = await updateWorkspaceSettings(activeWorkspace!.id, settings);
+          }
           applyWorkspaceTheme(activeWorkspace);
           void showAdminBrandingScreen(true);
         } catch (e) {
@@ -1444,6 +1481,7 @@ async function showAdminBrandingScreen(saved = false, error?: string): Promise<v
 async function showTenantHome(slug: string): Promise<void> {
   clearSession({ skipSessionLog: true });
   directArModelId = null;
+  globalDemoLanding = false;
   activeTenantSlug = slug;
   setCatalogWorkspaceSlug(slug);
   try {
@@ -2900,7 +2938,15 @@ async function enterArPlacementMode(): Promise<void> {
     void startIosQuickLookAr();
     return;
   }
-  ensureDemoArCatalogContext();
+  // Never replace a tenant catalog with the live-demo operator catalog.
+  if (activeTenantSlug || parseTenantRoute()?.slug) {
+    const slug = activeTenantSlug ?? parseTenantRoute()!.slug;
+    globalDemoLanding = false;
+    activeTenantSlug = slug;
+    setCatalogWorkspaceSlug(slug);
+  } else {
+    ensureDemoArCatalogContext();
+  }
   if (showFullCatalogInAr()) {
     const demoSlug = await ensureDemoCatalogReady();
     if (!demoSlug) {
@@ -2912,6 +2958,17 @@ async function enterArPlacementMode(): Promise<void> {
   if (activeTenantSlug && !tenantFeatures.startAr) {
     alert("AR access is disabled for this workspace. Contact your administrator.");
     return;
+  }
+  // Empty tenant catalog — do not fall through to demo models in the AR picker.
+  if (activeTenantSlug && !showFullCatalogInAr()) {
+    const records = await fetchCatalog({ bustCache: true });
+    if (!records.length) {
+      alert(
+        "This workspace has no models yet. Upload a GLB in Manage models, then try Preview AR again.",
+      );
+      navigateTo("/admin/models");
+      return;
+    }
   }
   invalidatePickerCache();
   const sessionFeatures = arSessionFeatures();

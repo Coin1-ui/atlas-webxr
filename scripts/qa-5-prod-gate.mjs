@@ -8,11 +8,11 @@
  *
  * Usage:
  *   npm run qa:5-prod
- *   ATLAS_DEPLOY_URL=https://main.d3t9wmef56h86w.amplifyapp.com npm run qa:5-prod
+ *   ATLAS_DEPLOY_URL=https://main.d7vfdpujdozkj.amplifyapp.com npm run qa:5-prod
  */
 const ORIGIN =
   process.env.ATLAS_DEPLOY_URL?.replace(/\/$/, "") ||
-  "https://main.d3t9wmef56h86w.amplifyapp.com";
+  "https://main.d7vfdpujdozkj.amplifyapp.com";
 const API =
   process.env.ATLAS_API_URL?.replace(/\/$/, "") ||
   "https://rusf3nnyu7.execute-api.ap-south-1.amazonaws.com";

@@ -15,7 +15,7 @@ Prospects need a **short, shareable product demo** showing real floor AR on phon
 - **No app store** narrative — browser only  
 - iOS: Quick Look only (no WebXR on iOS)  
 - Android: Chrome floor AR + optional 3D inspect  
-- Demo URL: `https://main.d3t9wmef56h86w.amplifyapp.com/demo`  
+- Demo URL: `https://main.d7vfdpujdozkj.amplifyapp.com/demo`
 - Win theme aligned with SAL-1 / MKT copy  
 
 ### Inputs

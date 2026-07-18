@@ -1,15 +1,16 @@
-import { limitsForWorkspace, limitsForBillingTier } from "./plan-limits.mjs";
-import { effectiveBillingTier } from "./trial.mjs";
+import { limitsForWorkspace } from "./plan-limits.mjs";
 import { readManifest } from "./models-store.mjs";
 import { safeModelId } from "./models-paths.mjs";
 
-/** Max single GLB/icon upload bytes per billing tier. */
-const MAX_ASSET_BYTES = {
-  starter: 50 * 1024 * 1024,
-  launch: 100 * 1024 * 1024,
-  growth: 200 * 1024 * 1024,
-  scale: 500 * 1024 * 1024,
-};
+/** Max single GLB / USDZ / icon upload — same for every billing tier. */
+export const MAX_ASSET_BYTES = 50 * 1024 * 1024;
+
+/**
+ * @param {import("./tenant-types.mjs").WorkspaceRecord} workspace
+ */
+export function maxAssetBytesForWorkspace(_workspace) {
+  return MAX_ASSET_BYTES;
+}
 
 /**
  * @param {import("./tenant-types.mjs").WorkspaceRecord} workspace
@@ -29,12 +30,4 @@ export async function assertModelUploadAllowed(workspace, body) {
     err.code = "MODEL_LIMIT_REACHED";
     throw err;
   }
-}
-
-/**
- * @param {import("./tenant-types.mjs").WorkspaceRecord} workspace
- */
-export function maxAssetBytesForWorkspace(workspace) {
-  const tier = effectiveBillingTier(workspace);
-  return MAX_ASSET_BYTES[tier] ?? MAX_ASSET_BYTES.starter;
 }

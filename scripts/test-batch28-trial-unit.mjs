@@ -42,6 +42,35 @@ assert.equal(isTrialSuspended(growthExpiredWithStarter), false);
 assert.equal(effectiveBillingTier(growthExpiredWithStarter), "starter");
 assert.equal(limitsForWorkspace(growthExpiredWithStarter).models, 5);
 
+const growthExpiredWithProviderEntitlement = {
+  ...growthExpiredNoPurchase,
+  billingEntitlementTier: "launch",
+};
+assert.equal(hasPurchasedTrialFallback(growthExpiredWithProviderEntitlement), true);
+assert.equal(isTrialSuspended(growthExpiredWithProviderEntitlement), false);
+assert.equal(effectiveBillingTier(growthExpiredWithProviderEntitlement), "launch");
+assert.equal(planActionVerb(growthExpiredWithProviderEntitlement), "Upgrade");
+
+const providerCannotDowngradeManualGrant = {
+  ...growthExpiredNoPurchase,
+  manualBillingTier: "growth",
+  billingEntitlementTier: "launch",
+  billingProvider: "zoho",
+};
+assert.equal(effectiveBillingTier(providerCannotDowngradeManualGrant), "growth");
+
+const expiredProviderCannotFallBackToLegacyPurchase = {
+  plan: "pro",
+  billingTier: "growth",
+  purchasedBillingTier: "growth",
+  billingEntitlementTier: null,
+  billingProvider: "dodo",
+  trialPlan: null,
+  trialEndsAt: null,
+};
+assert.equal(isTrialSuspended(expiredProviderCannotFallBackToLegacyPurchase), true);
+assert.equal(limitsForWorkspace(expiredProviderCannotFallBackToLegacyPurchase).models, 0);
+
 const launchTrialWs = {
   plan: "starter",
   billingTier: "launch",

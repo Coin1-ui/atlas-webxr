@@ -136,6 +136,87 @@ export async function updateWorkspaceSettings(
   return data.workspace;
 }
 
+type LogoPresignResponse = {
+  url: string;
+  key: string;
+  ext: string;
+  contentType: string;
+};
+
+async function putLogoFile(url: string, file: File, contentType: string): Promise<void> {
+  const res = await fetch(url, {
+    method: "PUT",
+    headers: { "Content-Type": contentType },
+    body: file,
+  });
+  if (!res.ok) {
+    throw new Error(`Logo upload failed (HTTP ${res.status})`);
+  }
+}
+
+/** Upload workspace logo image directly to tenant S3 (presign → PUT → complete). */
+export async function uploadWorkspaceLogo(workspaceId: string, file: File): Promise<Workspace> {
+  const uploadUrl = saasApiUrl(`/v2/workspaces/${encodeURIComponent(workspaceId)}/branding/logo`);
+  const presignRes = await fetch(uploadUrl, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({
+      action: "presign",
+      contentType: file.type || "image/png",
+      filename: file.name,
+    }),
+  });
+  const presignText = await presignRes.text();
+  if (!presignRes.ok) {
+    let message = presignText.slice(0, 200) || `HTTP ${presignRes.status}`;
+    try {
+      const errJson = JSON.parse(presignText) as { error?: string };
+      if (errJson.error) message = errJson.error;
+    } catch {
+      /* use raw */
+    }
+    throw new Error(message);
+  }
+  let session: LogoPresignResponse;
+  try {
+    session = JSON.parse(presignText) as LogoPresignResponse;
+  } catch {
+    throw new Error("Invalid logo presign response");
+  }
+
+  await putLogoFile(session.url, file, session.contentType || file.type || "image/png");
+
+  const completeRes = await fetch(uploadUrl, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({
+      action: "complete",
+      ext: session.ext,
+    }),
+  });
+  const completeText = await completeRes.text();
+  if (!completeRes.ok) {
+    let message = completeText.slice(0, 200) || `HTTP ${completeRes.status}`;
+    try {
+      const errJson = JSON.parse(completeText) as { error?: string };
+      if (errJson.error) message = errJson.error;
+    } catch {
+      /* use raw */
+    }
+    throw new Error(message);
+  }
+  let data: { workspace?: Workspace; error?: string } = {};
+  try {
+    data = JSON.parse(completeText) as { workspace?: Workspace; error?: string };
+  } catch {
+    data = { error: completeText };
+  }
+  if (!data.workspace) {
+    throw new Error(data.error || "Invalid logo upload response");
+  }
+  return data.workspace;
+}
+
 /** Admin UI hint — never expose production API hostnames. */
 export function workspaceApiHint(): string {
   return getApiBase()

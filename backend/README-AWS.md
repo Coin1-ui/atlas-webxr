@@ -14,7 +14,7 @@ Private repo: [Coin1-ui/atlas-webxr](https://github.com/Coin1-ui/atlas-webxr)
 | `VITE_ATLAS_API_URL` | `https://abc123.execute-api.us-east-1.amazonaws.com/prod` | Model upload + manifest API |
 | `VITE_BASE_PATH` | `/` | Use `/` for Amplify; `/atlas-webxr/` for GitHub Pages |
 
-Live app: https://main.d3sslgxfippyqn.amplifyapp.com/
+Live app: https://main.d7vfdpujdozkj.amplifyapp.com/
 
 ## Backend (Lambda + S3)
 
@@ -32,6 +32,9 @@ Deploy `backend/lambda/atlas-api` for **Atlas AR SaaS v2** (Sprint 1+):
 | GET | `/v2/workspaces/{workspaceId}/models/manifest` | Cognito JWT + admin | Admin model list |
 | POST | `/v2/workspaces/{workspaceId}/models/upload` | Cognito JWT + admin | `{ action: "presign" \| "complete" }` |
 | DELETE | `/v2/workspaces/{workspaceId}/models/{modelId}` | Cognito JWT + admin | Remove model |
+| GET | `/v2/workspaces/{workspaceId}/billing/status` | Cognito JWT + admin | Provider subscription and current entitlement |
+| POST | `/v2/workspaces/{workspaceId}/billing/checkout` | Cognito JWT + admin | Routed hosted checkout; requires `Idempotency-Key` |
+| POST | `/v2/billing/webhooks/dodo` | Dodo signature | Public Dodo event trigger; no Cognito authorizer |
 
 S3 layout: `tenants/{workspaceId}/models/` (legacy workspace can use `models/` when `ATLAS_LEGACY_USE_ROOT_PREFIX=true`).
 
@@ -58,12 +61,34 @@ Lambda environment (atlas-api):
 |----------|---------|---------|
 | `ATLAS_WORKSPACES_TABLE` | `atlas-workspaces` | DynamoDB workspaces + slug index |
 | `ATLAS_MEMBERS_TABLE` | `atlas-members` | User ↔ workspace membership |
+| `ATLAS_USAGE_TABLE` | `atlas-usage` | Monthly usage and session deduplication |
+| `ATLAS_BILLING_TABLE` | `atlas-billing` | Immutable provider events and subscription projection |
+| `ATLAS_BILLING_ENABLED` | `false` until sandbox approval | Enables hosted checkout creation |
+| `ATLAS_ZOHO_CHECKOUT_ENABLED` | `false` until Zoho reconciliation approval | Independently enables India checkout |
+| `ATLAS_DODO_WEBHOOK_ENABLED` | `false` until sandbox approval | Enables signed Dodo webhook reconciliation |
+| `ATLAS_BILLING_APP_ORIGIN` | Exact HTTPS Amplify origin | Allowlist for all billing return URLs |
+| `ATLAS_BILLING_RETURN_URL` | Account return URL | Hosted checkout and portal return |
+| `ATLAS_BILLING_CANCEL_URL` | Account cancellation URL | Dodo checkout cancellation return |
+| `DODO_PAYMENTS_ENV` | `test_mode` or `live_mode` | Explicit Dodo API environment |
+| `DODO_PAYMENTS_API_KEY` | secret | Dodo server API credential |
+| `DODO_PAYMENTS_WEBHOOK_SECRET` | secret | Standard Webhooks signing secret |
+| `DODO_PAYMENTS_BUSINESS_ID` | Dodo business ID | Reject events for another business |
+| `DODO_PRODUCT_*_MONTHLY` | Dodo product IDs | Environment-specific tier mapping |
+| `ZOHO_CLIENT_ID` / `ZOHO_CLIENT_SECRET` / `ZOHO_REFRESH_TOKEN` | secrets | India Zoho OAuth |
+| `ZOHO_BILLING_ORGANIZATION_ID` | Zoho organization ID | Billing API organization |
+| `ZOHO_PLAN_*_MONTHLY` | Zoho plan codes | India tier mapping |
 | `COGNITO_USER_POOL_ID` | `ap-south-1_xxxxx` | JWT validation |
 | `COGNITO_CLIENT_ID` | `xxxxxxxx` | JWT audience |
 | `COGNITO_REGION` | `ap-south-1` | Cognito region |
 | `ATLAS_CORS_ORIGIN` | `https://main.dxxx.amplifyapp.com` | CORS allow origin |
 | `ATLAS_PLATFORM_OWNER_EMAILS` | `you@company.com` | Owner dashboard + sales deck toggle |
 | `ATLAS_DEV_MODE` | `false` | Set `true` only in local dev stacks |
+
+Billing ledger IAM for the `atlas-api` Lambda role:
+
+- `dynamodb:GetItem`, `dynamodb:PutItem`, and `dynamodb:UpdateItem` on the `ATLAS_BILLING_TABLE` ARN.
+- `dynamodb:UpdateItem` on the `ATLAS_WORKSPACES_TABLE` ARN.
+- Keep both table resources in the same account and region so the ledger append and workspace entitlement projection can use one DynamoDB transaction.
 
 **Platform routes** (add in API Gateway → same Lambda):
 
@@ -135,22 +160,22 @@ HTTP API must allow your Amplify origin or the browser blocks manifest/upload re
 
 1. Open [API Gateway → your HTTP API → CORS](https://ap-south-1.console.aws.amazon.com/apigateway/main/apis?region=ap-south-1).
 2. **Configure CORS**:
-   - **Access-Control-Allow-Origin**: `https://main.d3t9wmef56h86w.amplifyapp.com` (**no trailing slash** — the browser sends the origin without `/`)
+   - **Access-Control-Allow-Origin**: `https://main.d7vfdpujdozkj.amplifyapp.com` (**no trailing slash** — the browser sends the origin without `/`)
    - **Access-Control-Allow-Methods**: `GET, POST, DELETE, OPTIONS`
-   - **Access-Control-Allow-Headers**: `content-type` (or `Content-Type`)
+   - **Access-Control-Allow-Headers**: `content-type, authorization, idempotency-key`
 3. Save, wait ~1 minute, then verify (see below).
 
 **Important:** When API Gateway CORS is enabled, it **ignores** CORS headers from Lambda. If the allowed origin does not **exactly** match the browser `Origin` header, API Gateway adds **no** `Access-Control-Allow-Origin` at all — and the browser shows “Failed to fetch”.
 
-Common mistake: setting origin to `https://main.d3t9wmef56h86w.amplifyapp.com/` (with trailing slash). That does **not** match the browser origin and CORS will fail silently.
+Common mistake: setting origin to `https://main.d7vfdpujdozkj.amplifyapp.com/` (with trailing slash). That does **not** match the browser origin and CORS will fail silently.
 
 **Verify CORS is working** (must show `access-control-allow-origin` in output):
 
 ```powershell
-node -e "fetch('https://rusf3nnyu7.execute-api.ap-south-1.amazonaws.com/models/manifest',{headers:{Origin:'https://main.d3t9wmef56h86w.amplifyapp.com'}}).then(r=>{console.log('acao',r.headers.get('access-control-allow-origin')); return r.json()}).then(console.log)"
+node -e "fetch('https://rusf3nnyu7.execute-api.ap-south-1.amazonaws.com/models/manifest',{headers:{Origin:'https://main.d7vfdpujdozkj.amplifyapp.com'}}).then(r=>{console.log('acao',r.headers.get('access-control-allow-origin')); return r.json()}).then(console.log)"
 ```
 
-Expected: `acao https://main.d3t9wmef56h86w.amplifyapp.com`
+Expected: `acao https://main.d7vfdpujdozkj.amplifyapp.com`
 
 If `acao null`, CORS is still wrong — fix origin (no slash) or temporarily set origin to `*` to test.
 
@@ -168,7 +193,7 @@ API Gateway limits request bodies to **~10 MB**. The app uploads GLB/USDZ **dire
   {
     "AllowedHeaders": ["*"],
     "AllowedMethods": ["PUT", "GET", "HEAD"],
-    "AllowedOrigins": ["https://main.d3t9wmef56h86w.amplifyapp.com"],
+    "AllowedOrigins": ["https://main.d7vfdpujdozkj.amplifyapp.com"],
     "ExposeHeaders": ["ETag"],
     "MaxAgeSeconds": 3000
   }

@@ -14,6 +14,7 @@
     "@aws-sdk/client-s3": "^3.758.0",
     "@aws-sdk/lib-dynamodb": "^3.758.0",
     "@aws-sdk/s3-request-presigner": "^3.758.0",
-    "jose": "^6.0.10"
+    "jose": "^6.0.10",
+    "standardwebhooks": "^1.0.0"
   }
 }

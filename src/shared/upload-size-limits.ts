@@ -97,5 +97,5 @@ export function checkModelUploadSizes(opts: {
 /** Short note for upload forms (all plans). */
 export function uploadSizeNoteHtml(): string {
   const maxMb = maxAssetBytesMb();
-  return `Max <strong>${maxMb} MB</strong> per GLB or USDZ (all plans). Workspace storage budgets ~<strong>${MODEL_STORAGE_MULTIPLIER}×</strong> GLB size per model (GLB + iOS USDZ). ${autoUsdzGlbPreferenceHint()}`;
+  return `Max <strong>${maxMb} MB</strong> per GLB or USDZ (all plans). Workspace storage budgets ~<strong>${MODEL_STORAGE_MULTIPLIER}×</strong> GLB size per model (GLB + iOS USDZ + icon). ${autoUsdzGlbPreferenceHint()}`;
 }

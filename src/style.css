@@ -1287,7 +1287,45 @@ body.xr-session-active.ios-webxr-viewer .ar-dimension-hud--dock {
   font-size: 0.9rem;
 }
 
+.model-admin-pc {
+  /* Owner demo model manager — same fixed admin accent as tenant admin */
+  --accent: var(--tenant-accent-default);
+  --accent-press: #14b8a6;
+  --accent-secondary: #38bdf8;
+  --accent-glow: rgba(45, 212, 191, 0.4);
+}
+
+.model-upload-size-note {
+  margin: 0 0 12px;
+  line-height: 1.45;
+}
+
+.branding-logo-upload-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.branding-logo-preview {
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.branding-logo-preview--empty {
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
 .model-admin-shell .admin-shell-card {
+  max-width: 720px;
+}
   max-width: 720px;
 }
 
@@ -1922,6 +1960,11 @@ body.ar-object-mode-active .ar-dom-panel {
 .admin-shell {
   min-height: 100%;
   background: var(--bg);
+  /* Keep admin chrome on Atlas accent — tenant branding applies on customer /w/{slug} only */
+  --accent: var(--tenant-accent-default);
+  --accent-press: #14b8a6;
+  --accent-secondary: #38bdf8;
+  --accent-glow: rgba(45, 212, 191, 0.4);
 }
 
 .admin-shell-hero {
@@ -4266,6 +4309,11 @@ body.ar-object-mode-active .ar-dom-panel {
 
 /* ─── Account page ─── */
 .account-shell .admin-shell-card {
+  /* Account & billing — fixed platform accent (not tenant primary) */
+  --accent: var(--tenant-accent-default);
+  --accent-press: #14b8a6;
+  --accent-secondary: #38bdf8;
+  --accent-glow: rgba(45, 212, 191, 0.4);
   max-width: 720px;
 }
 

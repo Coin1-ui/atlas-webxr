@@ -3,6 +3,7 @@ import { resolveWorkspaceBySlug } from "../lib/authz.mjs";
 import {
   cacheWorkspaceLogoFromUrl,
   fetchRemoteLogoBytes,
+  LOGO_UPLOAD_MARKER_URL,
   readWorkspaceLogoBytes,
 } from "../lib/branding-store.mjs";
 
@@ -21,7 +22,7 @@ export async function handleWorkspaceLogo(event, slug) {
     }
 
     let payload = await readWorkspaceLogoBytes(workspace.id);
-    if (!payload && sourceUrl.startsWith("http")) {
+    if (!payload && sourceUrl.startsWith("http") && sourceUrl !== LOGO_UPLOAD_MARKER_URL) {
       payload = await fetchRemoteLogoBytes(sourceUrl);
       if (payload) {
         try {

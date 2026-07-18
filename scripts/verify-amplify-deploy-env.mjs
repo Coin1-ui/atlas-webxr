@@ -3,7 +3,7 @@
  * ENG-19 — Verify a deployed Amplify build has SaaS env vars baked in.
  *
  * Env:
- *   ATLAS_DEPLOY_URL — default https://main.d3t9wmef56h86w.amplifyapp.com
+ *   ATLAS_DEPLOY_URL — default https://main.d7vfdpujdozkj.amplifyapp.com
  *   ATLAS_API_URL    — optional; defaults to rusf3nnyu7 prod API
  */
 import { writeFileSync, mkdirSync } from "node:fs";
@@ -12,7 +12,7 @@ import { fileURLToPath } from "node:url";
 
 const DEPLOY =
   process.env.ATLAS_DEPLOY_URL?.replace(/\/$/, "") ||
-  "https://main.d3t9wmef56h86w.amplifyapp.com";
+  "https://main.d7vfdpujdozkj.amplifyapp.com";
 const API =
   process.env.ATLAS_API_URL?.replace(/\/$/, "") ||
   "https://rusf3nnyu7.execute-api.ap-south-1.amazonaws.com";

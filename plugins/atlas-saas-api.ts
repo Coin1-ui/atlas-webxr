@@ -780,10 +780,10 @@ export function atlasSaasApiPlugin(): Plugin {
 
         const billingUpgradeMatch = /^\/v2\/workspaces\/([^/]+)\/billing\/upgrade$/.exec(pathname);
         if (billingUpgradeMatch && req.method === "POST") {
-          if (process.env.ATLAS_ALLOW_STUB_BILLING === "false") {
+          if (process.env.ATLAS_ALLOW_STUB_BILLING !== "true") {
             sendJson(res, 501, {
               error: "Billing upgrade stub disabled",
-              hint: "Unset ATLAS_ALLOW_STUB_BILLING=false or set ATLAS_ALLOW_STUB_BILLING=true for local tier upgrades.",
+              hint: "Set ATLAS_ALLOW_STUB_BILLING=true only for explicit local billing tests.",
             });
             return;
           }

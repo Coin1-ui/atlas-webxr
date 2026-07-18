@@ -11,7 +11,7 @@ export function jsonResponse(status, body, extraHeaders = {}) {
     headers: {
       "Content-Type": "application/json",
       "Access-Control-Allow-Origin": DEFAULT_CORS,
-      "Access-Control-Allow-Headers": "content-type,authorization",
+      "Access-Control-Allow-Headers": "content-type,authorization,idempotency-key",
       "Access-Control-Allow-Methods": "GET,POST,PUT,PATCH,DELETE,OPTIONS",
       ...extraHeaders,
     },
@@ -33,6 +33,17 @@ export function parseJsonBody(event) {
   } catch {
     return null;
   }
+}
+
+/**
+ * Exact request body required for webhook signature verification.
+ * @param {import("aws-lambda").APIGatewayProxyEventV2} event
+ */
+export function rawRequestBody(event) {
+  if (typeof event.body !== "string") return "";
+  return event.isBase64Encoded
+    ? Buffer.from(event.body, "base64").toString("utf8")
+    : event.body;
 }
 
 /**

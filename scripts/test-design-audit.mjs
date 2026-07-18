@@ -75,6 +75,12 @@ const checks = [
   ["usdz mr factor bake", read("src/data/glb-to-usdz.ts").includes("bakeMetalRoughFactors")],
   ["optional manual usdz upload", read("src/ui/model-manager-pc.ts").includes('name="usdz"')],
   ["hero png only no webp", !read("src/ui/marketing-landing.ts").includes("image/webp")],
+  ["admin models upload size note", read("src/ui/admin-models.ts").includes("uploadSizeNoteHtml")],
+  ["admin shell locks accent", read("src/style.css").includes("Keep admin chrome on Atlas accent")],
+  ["branding logo file upload", read("src/ui/admin-branding.ts").includes('name="logoFile"')],
+  ["branding logo upload API", read("src/data/workspace-api.ts").includes("uploadWorkspaceLogo")],
+  ["sales deck uses local fonts", read("public/sales-deck/deck.css").includes("./fonts/dm-sans-latin-wght-normal.woff2")],
+  ["sales deck has no Google Fonts", !["index", "training", "outreach"].some((page) => read(`public/sales-deck/${page}.html`).includes("fonts.googleapis.com"))],
 ];
 
 let failed = 0;

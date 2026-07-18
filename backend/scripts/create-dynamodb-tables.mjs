@@ -48,6 +48,18 @@ const tables = [
     ],
     BillingMode: "PAY_PER_REQUEST",
   },
+  {
+    TableName: process.env.ATLAS_BILLING_TABLE || "atlas-billing",
+    KeySchema: [
+      { AttributeName: "pk", KeyType: "HASH" },
+      { AttributeName: "sk", KeyType: "RANGE" },
+    ],
+    AttributeDefinitions: [
+      { AttributeName: "pk", AttributeType: "S" },
+      { AttributeName: "sk", AttributeType: "S" },
+    ],
+    BillingMode: "PAY_PER_REQUEST",
+  },
 ];
 
 async function ensureTable(def) {
@@ -66,4 +78,6 @@ for (const def of tables) {
   await ensureTable(def);
 }
 
-console.log("Done. Set Lambda env: ATLAS_WORKSPACES_TABLE, ATLAS_MEMBERS_TABLE");
+console.log(
+  "Done. Set Lambda env: ATLAS_WORKSPACES_TABLE, ATLAS_MEMBERS_TABLE, ATLAS_USAGE_TABLE, ATLAS_BILLING_TABLE"
+);

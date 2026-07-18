@@ -22,6 +22,16 @@ export type Workspace = {
   trialPlan?: PlanTierId | null;
   /** Paid tier — set when customer purchases a plan (not at signup). */
   purchasedBillingTier?: PlanTierId | null;
+  /** Time-bounded tier projected only from verified provider events. */
+  billingEntitlementTier?: PlanTierId | null;
+  /** Explicit non-financial tier assigned by the platform owner. */
+  manualBillingTier?: PlanTierId | null;
+  billingProvider?: "dodo" | "zoho" | null;
+  billingStatus?: "pending" | "active" | "past_due" | "canceled" | "expired" | null;
+  billingSubscriptionId?: string | null;
+  billingCurrentPeriodEnd?: string | null;
+  billingGraceUntil?: string | null;
+  billingCancelAtPeriodEnd?: boolean;
   branding: WorkspaceBranding;
   /** Optional URL/path opened when viewer taps Exit AR (https://… or /path). */
   arExitUrl?: string | null;

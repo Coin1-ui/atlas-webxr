@@ -2,7 +2,7 @@
 
 Browser AR for placing custom 3D models on the floor. Private repo: [Coin1-ui/atlas-webxr](https://github.com/Coin1-ui/atlas-webxr).
 
-**Production:** [AWS Amplify](https://main.d3sslgxfippyqn.amplifyapp.com/)  
+**Production:** [AWS Amplify](https://main.d7vfdpujdozkj.amplifyapp.com/)
 **Models backend:** AWS Lambda + S3 (see [backend/README-AWS.md](./backend/README-AWS.md))
 
 ## Home screen

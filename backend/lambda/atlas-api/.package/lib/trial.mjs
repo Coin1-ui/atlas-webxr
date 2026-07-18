@@ -8,6 +8,21 @@ export const SUSPENDED_LIMITS = {
   storageBytes: 0,
 };
 
+const TIER_ORDER = ["starter", "launch", "growth", "scale"];
+
+function paidBillingTier(ws) {
+  const candidates = [
+    ws.manualBillingTier,
+    ws.billingEntitlementTier,
+    ...(ws.billingProvider ? [] : [ws.purchasedBillingTier]),
+  ].filter(Boolean);
+  return candidates.reduce(
+    (highest, tier) =>
+      TIER_ORDER.indexOf(tier) > TIER_ORDER.indexOf(highest) ? tier : highest,
+    null
+  );
+}
+
 /**
  * Universal paid floor after any trial — Starter. Subscribing to any paid plan
  * (Starter+) keeps a workspace live regardless of trial type.
@@ -21,25 +36,25 @@ export function trialFallbackTier(_trialPlan) {
 /**
  * Workspace-level Subscribe vs Upgrade (mirror of src/shared/trial.ts).
  * No paid plan on file → "Subscribe"; already paying → "Upgrade".
- * @param {{ purchasedBillingTier?: string | null }} ws
+ * @param {{ purchasedBillingTier?: string | null; billingEntitlementTier?: string | null }} ws
  * @returns {"Subscribe" | "Upgrade"}
  */
 export function planActionVerb(ws) {
-  return ws.purchasedBillingTier ? "Upgrade" : "Subscribe";
+  return paidBillingTier(ws) ? "Upgrade" : "Subscribe";
 }
 
 /**
  * Per-tier Subscribe vs Upgrade matrix (mirror of src/shared/trial.ts).
  * Reference = active trial plan, else purchased tier. target > reference → Upgrade, else Subscribe.
- * @param {{ trialEndsAt?: string | null; trialPlan?: BillingTierId | null; purchasedBillingTier?: BillingTierId | null }} ws
+ * @param {{ trialEndsAt?: string | null; trialPlan?: BillingTierId | null; purchasedBillingTier?: BillingTierId | null; billingEntitlementTier?: BillingTierId | null }} ws
  * @param {BillingTierId} targetTier
  * @returns {"Subscribe" | "Upgrade"}
  */
 export function planActionVerbForTier(ws, targetTier) {
-  const order = ["starter", "launch", "growth", "scale"];
-  const reference = isTrialActive(ws) && ws.trialPlan ? ws.trialPlan : ws.purchasedBillingTier ?? null;
+  const paidTier = paidBillingTier(ws);
+  const reference = isTrialActive(ws) && ws.trialPlan ? ws.trialPlan : paidTier;
   if (!reference) return "Subscribe";
-  return order.indexOf(targetTier) > order.indexOf(reference) ? "Upgrade" : "Subscribe";
+  return TIER_ORDER.indexOf(targetTier) > TIER_ORDER.indexOf(reference) ? "Upgrade" : "Subscribe";
 }
 
 /**
@@ -63,21 +78,22 @@ export function isTrialExpired(ws) {
 }
 
 /**
- * @param {{ trialPlan?: BillingTierId | null; purchasedBillingTier?: BillingTierId | null }} ws
+ * @param {{ trialPlan?: BillingTierId | null; purchasedBillingTier?: BillingTierId | null; billingEntitlementTier?: BillingTierId | null }} ws
  */
 export function hasPurchasedTrialFallback(ws) {
-  if (!ws.trialPlan || !ws.purchasedBillingTier) return false;
-  const order = ["starter", "launch", "growth", "scale"];
+  const paidTier = paidBillingTier(ws);
+  if (!ws.trialPlan || !paidTier) return false;
   const fallback = trialFallbackTier(ws.trialPlan);
-  const fallbackIdx = order.indexOf(fallback);
-  const purchasedIdx = order.indexOf(ws.purchasedBillingTier);
+  const fallbackIdx = TIER_ORDER.indexOf(fallback);
+  const purchasedIdx = TIER_ORDER.indexOf(paidTier);
   return fallbackIdx >= 0 && purchasedIdx >= fallbackIdx;
 }
 
 /**
- * @param {{ trialEndsAt?: string | null; trialPlan?: BillingTierId | null; purchasedBillingTier?: BillingTierId | null }} ws
+ * @param {{ trialEndsAt?: string | null; trialPlan?: BillingTierId | null; purchasedBillingTier?: BillingTierId | null; billingEntitlementTier?: BillingTierId | null }} ws
  */
 export function isTrialSuspended(ws) {
+  if (!isTrialActive(ws) && ws.billingProvider && !paidBillingTier(ws)) return true;
   return isTrialExpired(ws) && Boolean(ws.trialPlan) && !hasPurchasedTrialFallback(ws);
 }
 
@@ -89,13 +105,14 @@ export function trialEndsAtIso(days = TRIAL_DURATION_DAYS) {
 }
 
 /**
- * @param {{ plan: string; billingTier?: BillingTierId; purchasedBillingTier?: BillingTierId | null; trialEndsAt?: string | null; trialPlan?: BillingTierId | null }} ws
+ * @param {{ plan: string; billingTier?: BillingTierId; purchasedBillingTier?: BillingTierId | null; billingEntitlementTier?: BillingTierId | null; trialEndsAt?: string | null; trialPlan?: BillingTierId | null }} ws
  * @returns {BillingTierId}
  */
 export function effectiveBillingTier(ws) {
   if (isTrialActive(ws) && ws.trialPlan) return ws.trialPlan;
   if (isTrialSuspended(ws) && ws.trialPlan) return trialFallbackTier(ws.trialPlan);
-  if (ws.purchasedBillingTier) return ws.purchasedBillingTier;
+  const paidTier = paidBillingTier(ws);
+  if (paidTier) return paidTier;
   if (ws.billingTier) return ws.billingTier;
   if (ws.plan === "pro") return "growth";
   if (ws.plan === "enterprise") return "scale";

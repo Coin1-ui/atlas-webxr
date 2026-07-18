@@ -3,6 +3,7 @@ import { handlePublicConfig } from "./handlers/v2-public-config.mjs";
 import { handleCreateWorkspace, handleListMyWorkspaces } from "./handlers/v2-workspaces.mjs";
 import { handleUpdateWorkspaceSettings } from "./handlers/v2-workspace-settings.mjs";
 import { handleWorkspaceLogo } from "./handlers/v2-branding-logo.mjs";
+import { handleBrandingLogoUpload } from "./handlers/v2-branding-logo-upload.mjs";
 import { handleDeleteAccount } from "./handlers/v2-account.mjs";
 import {
   handleAdminManifest,
@@ -14,7 +15,9 @@ import {
 } from "./handlers/v2-models.mjs";
 import { handleAnalyticsEvents } from "./handlers/v2-analytics.mjs";
 import { handleWorkspaceUsage } from "./handlers/v2-usage.mjs";
-import { handleBillingUpgrade } from "./handlers/v2-billing.mjs";
+import { handleBillingStatus, handleBillingUpgrade } from "./handlers/v2-billing.mjs";
+import { handleDodoWebhook } from "./handlers/v2-billing-webhooks.mjs";
+import { handleBillingCheckout } from "./handlers/v2-billing-checkout.mjs";
 import {
   handleCreatePlatformCoupon,
   handleDeletePlatformCoupon,
@@ -62,6 +65,20 @@ export async function handler(event) {
       return await handleBillingUpgrade(event, decodeURIComponent(billingUpgradeMatch[1]));
     }
 
+    const billingCheckoutMatch = /^\/v2\/workspaces\/([^/]+)\/billing\/checkout$/.exec(rawPath);
+    if (billingCheckoutMatch && method === "POST") {
+      return await handleBillingCheckout(event, decodeURIComponent(billingCheckoutMatch[1]));
+    }
+
+    const billingStatusMatch = /^\/v2\/workspaces\/([^/]+)\/billing\/status$/.exec(rawPath);
+    if (billingStatusMatch && method === "GET") {
+      return await handleBillingStatus(event, decodeURIComponent(billingStatusMatch[1]));
+    }
+
+    if (rawPath === "/v2/billing/webhooks/dodo" && method === "POST") {
+      return await handleDodoWebhook(event);
+    }
+
     const logoMatch = /^\/v2\/workspaces\/([^/]+)\/logo$/.exec(rawPath);
     if (logoMatch && method === "GET") {
       return await handleWorkspaceLogo(event, decodeURIComponent(logoMatch[1]));
@@ -89,6 +106,11 @@ export async function handler(event) {
     const settingsMatch = /^\/v2\/workspaces\/([^/]+)\/settings$/.exec(rawPath);
     if (settingsMatch && method === "PATCH") {
       return await handleUpdateWorkspaceSettings(event, decodeURIComponent(settingsMatch[1]));
+    }
+
+    const brandingLogoUploadMatch = /^\/v2\/workspaces\/([^/]+)\/branding\/logo$/.exec(rawPath);
+    if (brandingLogoUploadMatch && method === "POST") {
+      return await handleBrandingLogoUpload(event, decodeURIComponent(brandingLogoUploadMatch[1]));
     }
 
     const deleteMatch = /^\/v2\/workspaces\/([^/]+)\/models\/([^/]+)$/.exec(rawPath);

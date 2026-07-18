@@ -1,8 +1,14 @@
-import { GetObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { GetObjectCommand, PutObjectCommand, S3Client, HeadObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { modelsPrefixForWorkspace } from "./models-paths.mjs";
 import { assertSafeRemoteUrl } from "./safe-url.mjs";
 
 const s3 = new S3Client({});
+
+/** Stored in Dynamo when logo was uploaded directly to tenant S3 (not a remote URL). */
+export const LOGO_UPLOAD_MARKER_URL = "https://atlas-ar.app/branding/uploaded";
+
+export const LOGO_MAX_BYTES = 5 * 1024 * 1024;
 
 function bucket() {
   return process.env.ATLAS_MODELS_BUCKET;
@@ -100,4 +106,60 @@ export async function fetchRemoteLogoBytes(sourceUrl) {
   const bytes = await res.arrayBuffer();
   const contentType = res.headers.get("content-type") || "image/jpeg";
   return { bytes, contentType: contentType.split(";")[0] };
+}
+
+async function assertLogoObject(key) {
+  const b = bucket();
+  const head = await s3.send(new HeadObjectCommand({ Bucket: b, Key: key }));
+  const size = Number(head.ContentLength ?? 0);
+  if (!size) {
+    const err = new Error("Logo upload missing — try again");
+    err.statusCode = 400;
+    throw err;
+  }
+  if (size > LOGO_MAX_BYTES) {
+    const err = new Error(`Logo exceeds max size (${Math.round(LOGO_MAX_BYTES / (1024 * 1024))} MB)`);
+    err.statusCode = 400;
+    throw err;
+  }
+  return size;
+}
+
+/**
+ * Presign PUT for a direct logo upload.
+ * @param {string} workspaceId
+ * @param {{ contentType?: string; filename?: string }} input
+ */
+export async function presignLogoUpload(workspaceId, input) {
+  const b = bucket();
+  if (!b) {
+    const err = new Error("ATLAS_MODELS_BUCKET not configured");
+    err.statusCode = 500;
+    throw err;
+  }
+  const contentType = String(input.contentType || "image/png").split(";")[0];
+  const ext = extFromContentType(contentType) || extFromUrl(input.filename || "") || ".png";
+  const key = `${brandingLogoKey(workspaceId)}${ext}`;
+  const url = await getSignedUrl(
+    s3,
+    new PutObjectCommand({
+      Bucket: b,
+      Key: key,
+      ContentType: contentType,
+    }),
+    { expiresIn: 900 },
+  );
+  return { url, key, ext, contentType };
+}
+
+/**
+ * Verify uploaded logo exists in S3.
+ * @param {string} workspaceId
+ * @param {string} ext e.g. ".png"
+ */
+export async function assertLogoUploadComplete(workspaceId, ext) {
+  const normalized = ext.startsWith(".") ? ext : `.${ext}`;
+  const key = `${brandingLogoKey(workspaceId)}${normalized}`;
+  await assertLogoObject(key);
+  return key;
 }

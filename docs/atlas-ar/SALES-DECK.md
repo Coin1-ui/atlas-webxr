@@ -3,7 +3,7 @@
 **SAL-1 · Batch 23**  
 **Win theme:** Same floor AR outcome as showroom incumbents — self-serve in an afternoon, from $5/mo, no per-seat tax on field reps.  
 **Design spec:** [sales-deck/DESIGN-SYSTEM.md](./sales-deck/DESIGN-SYSTEM.md)  
-**Playbook:** [SALES-PLAYBOOK.md](./SALES-PLAYBOOK.md) · **Presenter script:** [sales-deck/PRESENTER-SCRIPT.md](./sales-deck/PRESENTER-SCRIPT.md) · **Sales training (SAL-3):** [sales-deck/training.html](../../public/sales-deck/training.html) · **Live demo:** https://main.d3t9wmef56h86w.amplifyapp.com/demo
+**Playbook:** [SALES-PLAYBOOK.md](./SALES-PLAYBOOK.md) · **Presenter script:** [sales-deck/PRESENTER-SCRIPT.md](./sales-deck/PRESENTER-SCRIPT.md) · **Sales training (SAL-3):** [sales-deck/training.html](../../public/sales-deck/training.html) · **Live demo:** https://main.d7vfdpujdozkj.amplifyapp.com/demo
 
 ---
 
@@ -165,7 +165,7 @@
 3. **Design partner** — 3 slots · 90-day Growth @ $59/mo · ≥50 sessions/mo · biweekly feedback
 4. **Founding 10** — Growth @ Launch price ($59/mo) × 12 months
 
-**Contact:** [your sales email] · https://main.d3t9wmef56h86w.amplifyapp.com
+**Contact:** [your sales email] · https://main.d7vfdpujdozkj.amplifyapp.com
 
 **Visual:** `sales-deck/assets/slide-10-cta.png` (background) + Template I CTA panel + demo QR
 
@@ -177,7 +177,7 @@
 
 **URL (local):** `npm run deck` → https://localhost:5173/sales-deck/index.html  
 **Alt local URL:** https://localhost:5173/sales-deck.html  
-**URL (production, after deploy):** https://main.d3t9wmef56h86w.amplifyapp.com/sales-deck/index.html
+**URL (production, after deploy):** https://main.d7vfdpujdozkj.amplifyapp.com/sales-deck/index.html
 
 Built with HTML, CSS, JS, and Three.js WebGL backgrounds on slides 1, 3, 9, and 10.
 

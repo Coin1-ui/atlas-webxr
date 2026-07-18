@@ -2,7 +2,7 @@
 
 **Batch 27 · Sales Outreach + Account Strategist + Discovery Coach**  
 **Status:** Confirmed ✅ (2026-05-21) · Interactive module at [outreach.html](../../public/sales-deck/outreach.html)  
-**Live product:** https://main.d3t9wmef56h86w.amplifyapp.com  
+**Live product:** https://main.d7vfdpujdozkj.amplifyapp.com
 **Sources:** [MiroFish PREDICTION-REPORT.md](./mirofish/PREDICTION-REPORT.md) · [LIVE-REPORT-EN.md](./mirofish/LIVE-REPORT-EN.md) · [SALES-PLAYBOOK.md](./SALES-PLAYBOOK.md) · [ICP.md](./ICP.md) · [PRICING.md](./PRICING.md) · design-partner best practices (DoWhatMatter, Allston Labs, 2025–2026)
 
 ---

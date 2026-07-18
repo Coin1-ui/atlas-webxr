@@ -61,6 +61,19 @@ export async function getWorkspaceById(workspaceId) {
 }
 
 /** @param {Record<string, unknown>} item */
+function currentBillingEntitlementTier(item) {
+  const tier = item.billingEntitlementTier ? String(item.billingEntitlementTier) : null;
+  if (!tier) return null;
+  const status = String(item.billingStatus || "");
+  const endValue = status === "past_due" ? item.billingGraceUntil : item.billingCurrentPeriodEnd;
+  const end = endValue ? Date.parse(String(endValue)) : Number.NaN;
+  if (!["active", "past_due", "canceled"].includes(status) || Number.isNaN(end) || Date.now() >= end) {
+    return null;
+  }
+  return tier;
+}
+
+/** @param {Record<string, unknown>} item */
 function workspaceTierContext(item) {
   return {
     plan: item.plan || "starter",
@@ -68,6 +81,9 @@ function workspaceTierContext(item) {
     trialEndsAt: item.trialEndsAt,
     trialPlan: item.trialPlan,
     purchasedBillingTier: item.purchasedBillingTier,
+    billingEntitlementTier: currentBillingEntitlementTier(item),
+    manualBillingTier: item.manualBillingTier,
+    billingProvider: item.billingProvider,
   };
 }
 
@@ -101,6 +117,7 @@ function workspaceFeatureCameraCheck(item) {
 
 /** @param {Record<string, unknown>} item */
 function workspaceFromItem(item) {
+  const billingEntitlementTier = currentBillingEntitlementTier(item);
   return {
     id: String(item.id),
     slug: String(item.slug),
@@ -112,6 +129,20 @@ function workspaceFromItem(item) {
     purchasedBillingTier: item.purchasedBillingTier
       ? /** @type {import("./plan-limits.mjs").BillingTierId} */ (String(item.purchasedBillingTier))
       : null,
+    billingEntitlementTier: billingEntitlementTier
+      ? /** @type {import("./plan-limits.mjs").BillingTierId} */ (billingEntitlementTier)
+      : null,
+    manualBillingTier: item.manualBillingTier
+      ? /** @type {import("./plan-limits.mjs").BillingTierId} */ (String(item.manualBillingTier))
+      : null,
+    billingProvider: item.billingProvider ? String(item.billingProvider) : null,
+    billingStatus: item.billingStatus ? String(item.billingStatus) : null,
+    billingSubscriptionId: item.billingSubscriptionId ? String(item.billingSubscriptionId) : null,
+    billingCurrentPeriodEnd: item.billingCurrentPeriodEnd
+      ? String(item.billingCurrentPeriodEnd)
+      : null,
+    billingGraceUntil: item.billingGraceUntil ? String(item.billingGraceUntil) : null,
+    billingCancelAtPeriodEnd: item.billingCancelAtPeriodEnd === true,
     branding: {
       logoUrl: item.logoUrl ? String(item.logoUrl) : undefined,
       primaryColor: item.primaryColor ? String(item.primaryColor) : "#2dd4bf",
@@ -563,8 +594,10 @@ export async function updatePlatformWorkspace(workspaceId, patch) {
   if (patch.billingTier !== undefined) {
     parts.push("billingTier = :billingTier");
     values[":billingTier"] = patch.billingTier;
+    parts.push("manualBillingTier = :manualBillingTier");
+    values[":manualBillingTier"] = patch.billingTier;
     parts.push("purchasedBillingTier = :purchasedBillingTier");
-    values[":purchasedBillingTier"] = patch.billingTier;
+    values[":purchasedBillingTier"] = null;
     const tier = String(patch.billingTier);
     parts.push("#plan = :plan");
     if (tier === "growth") values[":plan"] = "pro";

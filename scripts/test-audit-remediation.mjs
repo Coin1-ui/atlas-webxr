@@ -12,10 +12,17 @@ const root = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const read = (rel) => fs.readFileSync(path.join(root, rel), "utf8");
 
 const billing = read("backend/lambda/atlas-api/handlers/v2-billing.mjs");
-assert.match(billing, /ATLAS_ALLOW_STUB_BILLING/, "billing upgrade must gate on ATLAS_ALLOW_STUB_BILLING");
+assert.match(billing, /Direct tier upgrades are retired/, "billing upgrade must remain fail-closed");
+assert.doesNotMatch(
+  billing,
+  /recordWorkspacePurchase|incrementPlatformCouponUse/,
+  "customer billing must not directly mutate tiers or coupons",
+);
 
 const auth = read("backend/lambda/atlas-api/lib/auth.mjs");
 assert.match(auth, /ATLAS_ALLOW_DEV_AUTH/, "dev auth must require ATLAS_ALLOW_DEV_AUTH");
+const http = read("backend/lambda/atlas-api/lib/http.mjs");
+assert.match(http, /idempotency-key/, "billing checkout CORS must allow Idempotency-Key");
 
 const legacy = read("backend/lambda/models-api/index.mjs");
 assert.match(legacy, /410|ATLAS_LEGACY_MODELS_API/, "legacy models-api must return 410 when disabled");
@@ -28,6 +35,51 @@ assert.doesNotMatch(
   billingApi,
   /res\.status === 404[\s\S]*markPurchasedTierLocally/,
   "billing-api must not fall back to localStorage on 404 when API is configured",
+);
+
+const billingStore = read("backend/lambda/atlas-api/lib/billing-store.mjs");
+assert.match(
+  billingStore,
+  /resolveBillingWorkspace/,
+  "verified events must resolve workspace ownership from server billing mappings",
+);
+assert.match(
+  billingStore,
+  /workspaceId: "unresolved"/,
+  "verified events must ignore provider-supplied workspace IDs before mapping",
+);
+assert.match(
+  billingStore,
+  /LOCK#\$\{provider\}#SUBSCRIPTION/,
+  "reconciliation locks must not share the subscription-binding item",
+);
+
+const billingCheckout = read("backend/lambda/atlas-api/handlers/v2-billing-checkout.mjs");
+assert.match(
+  billingCheckout,
+  /ATLAS_BILLING_ENABLED/,
+  "provider checkout must remain disabled until the rollout gate is enabled",
+);
+assert.match(
+  billingCheckout,
+  /ATLAS_ZOHO_CHECKOUT_ENABLED/,
+  "Zoho checkout must remain independently disabled until reconciliation is approved",
+);
+assert.match(
+  billingCheckout,
+  /requestHash/,
+  "idempotency keys must bind to the full canonical checkout request",
+);
+const billingWebhooks = read("backend/lambda/atlas-api/handlers/v2-billing-webhooks.mjs");
+assert.match(
+  billingWebhooks,
+  /ATLAS_DODO_WEBHOOK_ENABLED/,
+  "Dodo webhook ingestion must have an explicit rollout gate",
+);
+assert.match(
+  billingWebhooks,
+  /Date\.parse\(String\(webhook\.timestamp/,
+  "Dodo ordering must use the provider event timestamp, not local arrival order",
 );
 
 const platformApi = read("src/data/platform-api.ts");

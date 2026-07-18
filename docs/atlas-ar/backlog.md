@@ -1,12 +1,15 @@
 # Atlas AR — Product backlog
 
-**Last updated:** 2026-07-06 (Batch 36 design audit · QA-5 on hold)
+**Last updated:** 2026-07-17 (branding logo + manage-models note)
+
+**Latest orchestration batch (2026-07-17):** Preview AR tenant isolation · sales deck Starter “100 sessions / model”
+
 **Sprint cadence:** 2-week sprints  
-**Phase 0:** Complete → **Phase 1:** COMPLETE ✅ (QA-3b/4b signed · ENG-19 verified 4/4 · DES-1/DES-2 shipped) → **Post-28: DEPLOYED + verified live** (prod FE bundle hash matches Post-28 build; Lambda returns `promo` field; platform routes healthy — authenticated coupon→banner / suspension E2E pending owner token) → **Phase 2:** ENG-23–31 + MF-1 MiroFish conversion (2026-06-18)
+**Phase 0:** Complete → **Phase 1:** COMPLETE ✅ (QA-3b/4b signed · ENG-19 verified 4/4 · DES-1/DES-2 shipped) → **Post-28: DEPLOYED + verified live** → **Phase 2:** ENG-23–31 + MF-1 MiroFish conversion (2026-06-18)
 
-**Orchestration (NEXUS-Sprint):** Agents Orchestrator → PM backlog → Frontend/DevOps implement → Evidence Collector / `npm run test:sprint3` QA gate → backlog update → **user confirmation** before next batch. See [strategy/QUICKSTART.md](../../strategy/QUICKSTART.md) (NEXUS-Sprint mode).
+**Orchestration (NEXUS-Sprint):** Agents Orchestrator → PM backlog → Frontend/DevOps implement → Evidence Collector / QA gate → backlog update → **user confirmation** before next batch. See [strategy/QUICKSTART.md](../../strategy/QUICKSTART.md) (NEXUS-Sprint mode).
 
-**Latest orchestration batch (2026-07-06):** Batch 36b–e — **DES-3–11 design audit fixes** ✅ · model icon slug fix · mobile admin hub · `npm run test:design-audit`
+**Previous batch (2026-07-06):** Batch 36b–e — **DES-3–11 design audit fixes** ✅ · model icon slug fix · mobile admin hub · `npm run test:design-audit`
 
 **Previous batch (2026-07-06):** Batch 36 — Graphics / UI / UX design audit ✅
 
@@ -141,7 +144,7 @@
 | **MKT-7** | **Analytics story alignment** — “basic” vs “export” vs owner JSON toggle; per-model analytics deferred | P2 | Marketing | todo |
 | **SAL-4** | **Design partner ops runbook** — owner workflow for $59 Growth, coupons, session log, slot tracking | P2 | Sales/Ops | todo |
 | **ENG-39** | **Owner dashboard: customer owner emails in Customers table** | P1 | Full-stack | **done** ✅ (Batch 34) |
-| **QA-5** | **SAL-3 QA gate on prod:** sign-up → upload → floor placement ≤15 min (Android + iOS) | P1 | QA | **on_hold** · `qa:5-prod` pre-flight 13/0/0 ✅ · device E2E deferred |
+| **QA-5** | **SAL-3 QA gate on prod:** sign-up → upload → floor placement ≤15 min (Android + iOS) | P1 | QA | **confirmed** ✅ (2026-07-17) · user: first placement smooth in under ~15 min |
 | **DES-AUD** | **Graphics / UI / UX design audit** (Batch 36) | P1 | Design | **done** · 14 findings (3 P0, 7 P1, 4 P2) · canvas: `atlas-design-audit` |
 | **DES-3** | Design token + button unification (mkt / app / catalog / AR) | P1 | Design | **done** ✅ (Batch 36b) |
 | **DES-4** | Accessibility foundation: zoom, focus rings, reduced motion | P0 | Design | **done** ✅ (Batch 36a) |
@@ -205,7 +208,7 @@ Full matrix: [PRICING-FEATURE-READINESS.md](./PRICING-FEATURE-READINESS.md)
 | Batch | Theme | Scope | Unblocks |
 |-------|-------|-------|----------|
 | **28** | **LEG-1 + trial automation** | Privacy/Terms + **ENG-36** auto Growth trial | **confirmed** ✅ [BATCH-28-CONFIRMED.md](./BATCH-28-CONFIRMED.md) |
-| **29** | **Billing MVP** ⏸ | **BILL-1** checkout · **BILL-3** overage · **ENG-37** plan-gated JSON log | **on hold** — user decision pending (Dodo vs Razorpay) |
+| **29** | **Billing MVP** ▶ | **BILL-1** Dodo international + Zoho India checkout · **BILL-3** overage · **ENG-37** plan-gated JSON log | **in progress** — provider-neutral ledger foundation passed QA |
 | **30** | ~~Limits & copy truth~~ → **33** | See Batch 33 below | Merged into Batch 33 |
 | **31** | **MKT-3 production** | Record A1/B1 · **MKT-3b** landing embed | Marketing hero · SAL-3 “watch demo” follow-up |
 | **32** | **SAL-4 ops** | Design partner tracker · owner checklist UI · CRM export optional | Scale SAL-2 outbound without founder bottlenecks |
@@ -221,7 +224,7 @@ Full matrix: [PRICING-FEATURE-READINESS.md](./PRICING-FEATURE-READINESS.md)
 
 | ID | Task | Priority | Owner | Status |
 |----|------|----------|-------|--------|
-| BILL-1 | Stripe / Dodo / Razorpay checkout (Starter/Launch/Growth) | **P1** ↑ | Backend | **on_hold** · user will request when ready · [readiness audit](./PRICING-FEATURE-READINESS.md) |
+| BILL-1 | Dodo international + Zoho India checkout (Starter/Launch/Growth) | **P1** ↑ | Backend | **in_progress** · ledger/state foundation complete; provider adapters next |
 | BILL-2 | Hard enforce plan limits (upload + session + storage) | **P1** ↑ | Backend | todo · pairs with **ENG-38** (Batch 33) |
 | SEC-2 | External pen test | P2 | Security | todo |
 | ENG-20 | Custom domain per workspace (Scale) | P2 | DevOps | todo · do not promise in SAL-3 |
@@ -236,7 +239,7 @@ Full matrix: [PRICING-FEATURE-READINESS.md](./PRICING-FEATURE-READINESS.md)
 1. **Deploy Batch 36a–e** — Amplify push (a11y + design audit fixes + model icons)
 2. **Deploy Lambda** — default accent `#2dd4bf` in `dynamodb.mjs` (optional `package:atlas-api`)
 3. **Batch 35 — QA-5** ⏸ **ON HOLD**
-4. **Batch 29 — Billing MVP** ⏸ **ON HOLD**
+4. **Batch 29 — Billing MVP** ▶ **IN PROGRESS** — Dodo/Zoho adapters and server-owned checkout mapping next
 
 ---
 
@@ -581,7 +584,7 @@ Full matrix: [PRICING-FEATURE-READINESS.md](./PRICING-FEATURE-READINESS.md)
 
 | Variable | Production | Staging |
 |----------|------------|---------|
-| `ATLAS_ALLOW_STUB_BILLING` | **unset** (501 on upgrade) | `true` if testing upgrades |
+| `ATLAS_ALLOW_STUB_BILLING` | **unset** (direct Lambda upgrade retired) | `true` only for explicit local Vite-plugin tests |
 | `ATLAS_ALLOW_DEV_AUTH` | **unset** | optional |
 | `ATLAS_LEGACY_MODELS_API` | **unset** (410 on `/models/*`) | **unset** |
 | `ATLAS_CORS_ORIGIN` | exact Amplify URL | same |
@@ -701,6 +704,88 @@ Full matrix: [PRICING-FEATURE-READINESS.md](./PRICING-FEATURE-READINESS.md)
 | 4 | **Product Manager** | Pricing page, FAQ, PRICING.md, PRICING-RESEARCH, feature readiness |
 | 5 | **QA** | `test:batch33` + `test-batch28-trial-smoke` session asserts · `tsc` ✅ |
 | 6 | **Memory steward** | Rule #12 + changelog |
+
+---
+
+## NEXUS-Sprint orchestration log (2026-07-17) — Upload note · branding logo · admin colors
+
+### Batch — Manage models note + logo S3 upload + button color fix
+
+| Step | Agent / gate | Result |
+|------|----------------|--------|
+| 1 | **Agents Orchestrator** | Scoped: missing note on Manage models; branding logo file→S3; admin button color drift |
+| 2 | **Frontend Developer** | `admin-models.ts` — `uploadSizeNoteHtml` + size preflight; CSS admin accent lock |
+| 3 | **Backend Architect** | `POST /v2/workspaces/{id}/branding/logo` presign/complete; `uploadWorkspaceLogo` client |
+| 4 | **Frontend Developer** | Branding UI file input; optional URL kept |
+| 5 | **QA** | `test:design-audit` 72 ✅ · `test:batch33` ✅ · `test:des4` ✅ · `tsc` ✅ · `build` ✅ |
+| 6 | **Memory steward** | Rules #16–18 + placement confirmed |
+
+**Deploy:** Amplify FE from push repo + **Lambda redeploy** (new branding logo route).
+
+---
+
+## NEXUS-Sprint orchestration log (2026-07-17) — Preview AR isolation + sales deck Starter
+
+### Batch — Empty catalog must not show demo; Starter sessions copy
+
+| Step | Agent / gate | Result |
+|------|----------------|--------|
+| 1 | **Agents Orchestrator** | User: slide 8 “100 sessions”; trial Preview AR → another account’s AR |
+| 2 | **Content / Sales** | `slides.js` + `training-slides.js` → 100 sessions **/ model** |
+| 3 | **Frontend Developer** | Gate Preview AR when 0 models; `openTenantShowroom`; block empty tenant AR enter |
+| 4 | **QA** | `tsc --noEmit` ✅ |
+| 5 | **Memory steward** | Rules #19–20 |
+
+**Deploy:** copy → push `main` (FE only for this batch).
+
+---
+
+## NEXUS-Sprint orchestration log (2026-07-18) — Production domain migration
+
+### Batch — Amplify production URL → `d7vfdpujdozkj`
+
+| Step | Agent / gate | Result |
+|------|----------------|--------|
+| 1 | **Agents Orchestrator** | Scoped active production URL references; preserved historical AR session evidence |
+| 2 | **DevOps Automator** | Deploy/QA script defaults + current deployment docs → `https://main.d7vfdpujdozkj.amplifyapp.com` |
+| 3 | **Evidence Collector** | `verify:amplify-env` **4/4** · `qa:5-prod` **13/0/0** · `audit:aws-live` **9/1/0** |
+| 4 | **Build gate** | `npm run build` ✅ |
+| 5 | **User gate** | Sign-in confirmed working on the new domain |
+
+---
+
+## NEXUS-Sprint orchestration log (2026-07-18) — Sales deck font/CSP remediation
+
+| Step | Agent / gate | Result |
+|------|----------------|--------|
+| 1 | **Agents Orchestrator** | Selected highest-priority independent P1 after domain migration |
+| 2 | **Frontend Developer** | Self-hosted DM Sans + Instrument Serif; removed Google Fonts from deck, training, and outreach |
+| 3 | **Security Engineer** | Preserved strict `font-src 'self' data:` CSP; added remote-font regression check |
+| 4 | **QA** | `test:design-audit` **74/74** · `npm run build` ✅ |
+
+---
+
+## NEXUS-Sprint orchestration log (2026-07-18) — Billing ledger foundation
+
+| Step | Agent / gate | Result |
+|------|----------------|--------|
+| 1 | **Agents Orchestrator** | Confirmed Dodo for international and existing Zoho Billing Premium + Books Standard for India |
+| 2 | **Backend Architect** | Provider-neutral normalized events, monotonic ordering, global subscription binding, transactional ledger and entitlement projection |
+| 3 | **Security Engineer** | Retired direct Lambda tier mutation; provider expiry suppresses legacy paid fallback; strict identifiers, timestamps, and integer money |
+| 4 | **QA** | Billing state, ledger, trial/suspension, audit remediation, TypeScript build, and Lambda package ✅ |
+| 5 | **Activation gate** | Checkout and webhook routes remain disabled until server-owned checkout/customer mapping and signed provider adapters pass sandbox QA |
+
+---
+
+## NEXUS-Sprint orchestration log (2026-07-18) — Dodo/Zoho adapter foundation
+
+| Step | Agent / gate | Result |
+|------|----------------|--------|
+| 1 | **Provider research** | Official Dodo + Zoho India checkout, lifecycle, OAuth, webhook, portal, cancellation, and refund contracts mapped |
+| 2 | **Backend Architect** | Routed hosted checkout with full-request idempotency binding; Dodo signed webhook reconciliation; Zoho hosted checkout/OAuth client; provider preflight and at-most-once call boundary |
+| 3 | **Security Engineer** | Server-owned tenant mapping, business binding, isolated reconciliation locks, URL/origin allowlists, strict inputs, provider-time ordering, independent fail-closed rollout flags |
+| 4 | **QA** | Billing state, ledger, provider, suspension, and audit suites ✅ · build ✅ · Lambda package ✅ · ZIP/source parity verified |
+| 5 | **Activation gate** | Keep all billing rollout flags disabled until credentials, product mappings, API Gateway CORS/routes, and sandbox evidence are complete |
 
 ---
 

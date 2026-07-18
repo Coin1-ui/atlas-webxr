@@ -15,7 +15,7 @@
 ## Before you start (60 seconds)
 
 1. **Know your persona** — Retail (Elena) → emphasize slides 5, 7, 8. Field (Marcus) → slides 6, 7, 8. IT in room → linger slide 9.
-2. **Open tabs:** Interactive deck · [Live demo `/demo`](https://main.d3t9wmef56h86w.amplifyapp.com/demo) · your workspace `/w/{slug}` if you have one.
+2. **Open tabs:** Interactive deck · [Live demo `/demo`](https://main.d7vfdpujdozkj.amplifyapp.com/demo) · your workspace `/w/{slug}` if you have one.
 3. **Set the frame:** “I’ll walk through ten slides — about fifteen minutes — then we’ll place one product on your floor if you’re on your phone. Sound good?”
 4. **Press N** in the web deck to show speaker notes if needed.
 

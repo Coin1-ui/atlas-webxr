@@ -2,7 +2,7 @@
 
 **Batch 26 · Video Optimization Specialist + Visual Storyteller + Content Creator**  
 **Status:** Draft — awaiting Batch 26 user confirmation  
-**Live demo:** https://main.d3t9wmef56h86w.amplifyapp.com/demo  
+**Live demo:** https://main.d7vfdpujdozkj.amplifyapp.com/demo
 **Product truth:** Android = Chrome WebXR floor AR + 3D toggle · iOS = Safari Quick Look (USDZ)
 
 ---
@@ -180,7 +180,7 @@ Edit order for **single embed** on marketing page:
 ```
 Atlas AR turns your GLB catalog into a branded link — shoppers place products on the real floor in Chrome (Android) or View in AR in Safari (iPhone). No app store.
 
-Try the live demo: https://main.d3t9wmef56h86w.amplifyapp.com/demo
+Try the live demo: https://main.d7vfdpujdozkj.amplifyapp.com/demo
 Pricing from $5/mo: [landing URL]
 
 Chapters:

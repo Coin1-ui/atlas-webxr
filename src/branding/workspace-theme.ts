@@ -19,7 +19,7 @@ export function workspaceLogoUrl(
   if (!branding?.logoUrl?.trim()) return undefined;
   const base = getApiBase();
   if (base) {
-    return `${base}/v2/workspaces/${encodeURIComponent(slug)}/logo`;
+    return `${base}/v2/workspaces/${encodeURIComponent(slug)}/logo?t=${Date.now()}`;
   }
   return branding.logoUrl.trim();
 }

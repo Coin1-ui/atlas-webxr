@@ -40,7 +40,7 @@ async function loadCognitoConfig() {
     return { poolId, clientId, region: region || "ap-south-1" };
   }
 
-  const deploy = process.env.ATLAS_DEPLOY_URL?.replace(/\/$/, "") || "https://main.d3t9wmef56h86w.amplifyapp.com";
+  const deploy = process.env.ATLAS_DEPLOY_URL?.replace(/\/$/, "") || "https://main.d7vfdpujdozkj.amplifyapp.com";
   const home = await fetch(`${deploy}/`).then((r) => r.text());
   const scriptMatch = home.match(/src="(\/assets\/main-[^"]+\.js)"/) || home.match(/src="(\/assets\/index-[^"]+\.js)"/);
   if (!scriptMatch) throw new Error("Could not read Cognito config from deploy bundle");
@@ -72,7 +72,7 @@ const session = await new Promise((resolve, reject) => {
   const code = err?.code || err?.name || "";
   if (code === "NotAuthorizedException") {
     console.error("\nCognito rejected email/password.");
-    console.error("If you are already signed in on https://main.d3t9wmef56h86w.amplifyapp.com , skip CLI login:");
+    console.error("If you are already signed in on https://main.d7vfdpujdozkj.amplifyapp.com , skip CLI login:");
     console.error("  1. Open the site (stay logged in)");
     console.error("  2. DevTools → Console, run:");
     console.error("     JSON.parse(localStorage.getItem('atlas-auth-session')).idToken");

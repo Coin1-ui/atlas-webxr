@@ -111,7 +111,7 @@ async function main() {
   console.log(`  Password: ${password}`);
   console.log("");
   console.log("Sign in at:");
-  console.log("  Live:  https://main.d3t9wmef56h86w.amplifyapp.com/login");
+  console.log("  Live:  https://main.d7vfdpujdozkj.amplifyapp.com/login");
   console.log("  Local: npm run dev → https://localhost:5173/login");
   console.log("");
   console.log("Owner dashboard: /owner (desktop only, after sign-in)");

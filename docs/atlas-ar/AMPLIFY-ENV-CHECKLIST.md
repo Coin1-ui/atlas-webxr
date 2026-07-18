@@ -29,10 +29,11 @@ Ensure `atlas-api` Lambda has:
 | `COGNITO_REGION` | Match pool region |
 | `COGNITO_USER_POOL_ID` | JWT validation |
 | `COGNITO_CLIENT_ID` | JWT audience |
-| `ATLAS_CORS_ORIGIN` | Amplify URL(s), comma-separated if multiple branches |
-| `ATLAS_S3_BUCKET` | `atlas-xr-models` (or your bucket) |
+| `ATLAS_CORS_ORIGIN` | One exact Amplify origin (no trailing slash) |
+| `ATLAS_MODELS_BUCKET` | `atlas-xr-models` (or your bucket) |
 | `ATLAS_PLATFORM_OWNER_EMAILS` | `director@omnimanual.com` | Platform operator API auth for `/v2/platform/*` |
-| DynamoDB table names | `atlas-workspaces`, `atlas-members`, `atlas-usage` |
+| DynamoDB table names | `atlas-workspaces`, `atlas-members`, `atlas-usage`, `atlas-billing` |
+| Billing rollout flags | Keep `ATLAS_BILLING_ENABLED`, `ATLAS_DODO_WEBHOOK_ENABLED`, and `ATLAS_ZOHO_CHECKOUT_ENABLED` unset until sandbox approval |
 
 ---
 
@@ -65,8 +66,8 @@ Repeat for `staging.*` if used. Local dev: `http://localhost:5173` (see `backend
 From repo root:
 
 ```powershell
-# Default: https://main.d3t9wmef56h86w.amplifyapp.com
-$env:ATLAS_DEPLOY_URL = "https://main.d3t9wmef56h86w.amplifyapp.com"
+# Default: https://main.d7vfdpujdozkj.amplifyapp.com
+$env:ATLAS_DEPLOY_URL = "https://main.d7vfdpujdozkj.amplifyapp.com"
 npm run verify:amplify-env
 ```
 

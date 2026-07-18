@@ -10,7 +10,7 @@ const API =
   "https://rusf3nnyu7.execute-api.ap-south-1.amazonaws.com";
 const ORIGIN =
   process.env.ATLAS_DEPLOY_URL?.replace(/\/$/, "") ||
-  "https://main.d3t9wmef56h86w.amplifyapp.com";
+  "https://main.d7vfdpujdozkj.amplifyapp.com";
 
 async function probe(path, method = "GET") {
   const res = await fetch(`${API}${path}`, {
