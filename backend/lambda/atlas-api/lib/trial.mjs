@@ -10,10 +10,23 @@ export const SUSPENDED_LIMITS = {
 
 const TIER_ORDER = ["starter", "launch", "growth", "scale"];
 
+function providerBillingTier(ws, now = Date.now()) {
+  if (!ws.billingProvider || !ws.billingEntitlementTier) return null;
+  const periodEnd = Date.parse(String(ws.billingCurrentPeriodEnd || ""));
+  const graceUntil = Date.parse(String(ws.billingGraceUntil || ""));
+  if (ws.billingStatus === "past_due") {
+    return Number.isFinite(graceUntil) && now < graceUntil ? ws.billingEntitlementTier : null;
+  }
+  if (["active", "canceled"].includes(String(ws.billingStatus))) {
+    return Number.isFinite(periodEnd) && now < periodEnd ? ws.billingEntitlementTier : null;
+  }
+  return null;
+}
+
 function paidBillingTier(ws) {
   const candidates = [
     ws.manualBillingTier,
-    ws.billingEntitlementTier,
+    providerBillingTier(ws),
     ...(ws.billingProvider ? [] : [ws.purchasedBillingTier]),
   ].filter(Boolean);
   return candidates.reduce(

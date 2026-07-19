@@ -52,6 +52,22 @@ assert.equal(writes[3].Put.ConditionExpression, "attribute_not_exists(pk)");
 assert.match(writes[4].Update.UpdateExpression, /billingEntitlementTier = :entitlementTier/);
 assert.equal(writes[4].Update.ExpressionAttributeValues[":entitlementTier"], "launch");
 
+const paidEvent = normalizeBillingEvent({
+  ...event,
+  eventId: "evt_zoho_payment_1",
+  providerPaymentId: "pay_zoho_1",
+});
+const paidWrites = buildBillingTransactionItems(
+  paidEvent,
+  applyBillingEvent(null, paidEvent),
+  receivedAt
+);
+const accountingJob = paidWrites.find(
+  (write) => write.Update?.Key?.pk === "ACCOUNTING#ZOHO_BOOKS"
+);
+assert.equal(accountingJob.Update.ExpressionAttributeValues[":pending"], "pending");
+assert.equal(accountingJob.Update.ExpressionAttributeValues[":paymentId"], "pay_zoho_1");
+
 const crossWorkspaceKeys = billingLedgerKeys({ ...event, workspaceId: "ws_other" });
 assert.deepEqual(crossWorkspaceKeys.binding, keys.binding);
 

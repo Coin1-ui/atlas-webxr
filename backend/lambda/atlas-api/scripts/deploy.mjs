@@ -17,6 +17,7 @@ import { setTimeout as sleep } from "node:timers/promises";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const lambdaRoot = path.join(__dirname, "..");
 const zipPath = path.join(lambdaRoot, "..", "atlas-api-deploy.zip");
+const billingValidator = path.join(lambdaRoot, "..", "..", "..", "scripts", "verify-billing-env.mjs");
 
 function argValue(flag) {
   const i = process.argv.indexOf(flag);
@@ -60,6 +61,21 @@ if (!hasAwsCli()) {
     ),
   );
   process.exit(2);
+}
+
+const remoteEnvironment = JSON.parse(
+  execSync(
+    `aws lambda get-function-configuration --function-name "${functionName}" --region "${region}" --query Environment.Variables --output json`,
+    { encoding: "utf8", shell: true }
+  ) || "{}"
+);
+const validation = spawnSync(process.execPath, [billingValidator], {
+  stdio: "inherit",
+  env: { ...process.env, ...remoteEnvironment },
+});
+if (validation.status !== 0) {
+  console.error("Billing environment validation failed; deployment aborted.");
+  process.exit(1);
 }
 
 console.log(`Uploading ${zipPath} → ${functionName} (${region})…`);

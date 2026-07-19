@@ -45,6 +45,9 @@ assert.equal(limitsForWorkspace(growthExpiredWithStarter).models, 5);
 const growthExpiredWithProviderEntitlement = {
   ...growthExpiredNoPurchase,
   billingEntitlementTier: "launch",
+  billingProvider: "dodo",
+  billingStatus: "active",
+  billingCurrentPeriodEnd: future,
 };
 assert.equal(hasPurchasedTrialFallback(growthExpiredWithProviderEntitlement), true);
 assert.equal(isTrialSuspended(growthExpiredWithProviderEntitlement), false);
@@ -56,8 +59,17 @@ const providerCannotDowngradeManualGrant = {
   manualBillingTier: "growth",
   billingEntitlementTier: "launch",
   billingProvider: "zoho",
+  billingStatus: "active",
+  billingCurrentPeriodEnd: future,
 };
 assert.equal(effectiveBillingTier(providerCannotDowngradeManualGrant), "growth");
+
+const missedExpiryWebhookFailsClosed = {
+  ...growthExpiredWithProviderEntitlement,
+  billingCurrentPeriodEnd: past,
+};
+assert.equal(hasPurchasedTrialFallback(missedExpiryWebhookFailsClosed), false);
+assert.equal(isTrialSuspended(missedExpiryWebhookFailsClosed), true);
 
 const expiredProviderCannotFallBackToLegacyPurchase = {
   plan: "pro",

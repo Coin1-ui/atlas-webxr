@@ -27,6 +27,13 @@ function checkoutKey(operationId) {
   return { pk: `CHECKOUT#${operationId}`, sk: "OPERATION" };
 }
 
+function refundKey(provider, paymentId, idempotencyKey) {
+  return {
+    pk: `REFUND#${provider}#PAYMENT#${paymentId}`,
+    sk: `REQUEST#${idempotencyKey}`,
+  };
+}
+
 function checkoutRequestKey(workspaceId, idempotencyKey) {
   return {
     pk: `WORKSPACE#${workspaceId}`,
@@ -34,12 +41,23 @@ function checkoutRequestKey(workspaceId, idempotencyKey) {
   };
 }
 
-function providerCustomerKey(provider, customerId) {
-  return { pk: `PROVIDER#${provider}#CUSTOMER#${customerId}`, sk: "BINDING" };
+function checkoutLeaseKey(workspaceId) {
+  return { pk: `WORKSPACE#${workspaceId}`, sk: "CHECKOUT#ACTIVE" };
+}
+
+function providerCustomerKey(provider, customerId, workspaceId) {
+  return {
+    pk: `PROVIDER#${provider}#CUSTOMER#${customerId}`,
+    sk: `WORKSPACE#${workspaceId}`,
+  };
 }
 
 function providerSubscriptionKey(provider, subscriptionId) {
   return { pk: `PROVIDER#${provider}#SUBSCRIPTION#${subscriptionId}`, sk: "BINDING" };
+}
+
+function providerPaymentKey(provider, paymentId) {
+  return { pk: `PROVIDER#${provider}#PAYMENT#${paymentId}`, sk: "PAYMENT" };
 }
 
 function reconciliationLockKey(provider, subscriptionId) {
@@ -103,6 +121,7 @@ export async function createBillingCheckoutOperation(input) {
 
   const operationId = randomUUID();
   const now = new Date().toISOString();
+  const nowEpoch = Math.floor(Date.now() / 1000);
   const item = {
     ...checkoutKey(operationId),
     entityType: "billing_checkout_operation",
@@ -143,6 +162,22 @@ export async function createBillingCheckoutOperation(input) {
               ConditionExpression: "attribute_not_exists(pk)",
             },
           },
+          {
+            Update: {
+              TableName: billingTable(),
+              Key: checkoutLeaseKey(workspaceId),
+              UpdateExpression:
+                "SET operationId = :operationId, leaseUntil = :leaseUntil, updatedAt = :now",
+              ConditionExpression:
+                "attribute_not_exists(leaseUntil) OR leaseUntil < :nowEpoch",
+              ExpressionAttributeValues: {
+                ":operationId": operationId,
+                ":leaseUntil": nowEpoch + 15 * 60,
+                ":nowEpoch": nowEpoch,
+                ":now": now,
+              },
+            },
+          },
         ],
       })
     );
@@ -155,7 +190,33 @@ export async function createBillingCheckoutOperation(input) {
         ConsistentRead: true,
       })
     );
-    if (!winner.Item?.operationId) throw error;
+    if (!winner.Item?.operationId) {
+      const lease = await client.send(
+        new GetCommand({
+          TableName: billingTable(),
+          Key: checkoutLeaseKey(workspaceId),
+          ConsistentRead: true,
+        })
+      );
+      if (lease.Item?.operationId) {
+        const leasedOperation = await client.send(
+          new GetCommand({
+            TableName: billingTable(),
+            Key: checkoutKey(String(lease.Item.operationId)),
+            ConsistentRead: true,
+          })
+        );
+        if (
+          leasedOperation.Item?.requestHash === requestHash &&
+          leasedOperation.Item?.workspaceId === workspaceId
+        ) {
+          return { ...leasedOperation.Item, reused: true };
+        }
+      }
+      throw Object.assign(new Error("Another checkout is already in progress"), {
+        statusCode: 409,
+      });
+    }
     const existingOperation = await client.send(
       new GetCommand({
         TableName: billingTable(),
@@ -214,13 +275,26 @@ export async function recordProviderCheckout(input) {
         },
       },
     },
+    {
+      Update: {
+        TableName: billingTable(),
+        Key: checkoutLeaseKey(operation.workspaceId),
+        UpdateExpression: "SET leaseUntil = :leaseUntil, updatedAt = :now",
+        ConditionExpression: "operationId = :operationId",
+        ExpressionAttributeValues: {
+          ":operationId": operationId,
+          ":leaseUntil": Math.floor(Date.now() / 1000) + 30 * 60,
+          ":now": now,
+        },
+      },
+    },
   ];
   if (customerId) {
     writes.push({
       Put: {
         TableName: billingTable(),
         Item: {
-          ...providerCustomerKey(provider, customerId),
+          ...providerCustomerKey(provider, customerId, operation.workspaceId),
           entityType: "billing_customer_binding",
           provider,
           providerCustomerId: customerId,
@@ -288,6 +362,175 @@ export async function markBillingCheckoutProviderCallStarted(operationId, provid
   }
 }
 
+export async function markBillingCheckoutReconciliationFailed(operationId) {
+  const normalizedOperationId = mappingId(operationId, "operationId");
+  const cutoff = new Date(Date.now() - 15 * 60_000).toISOString();
+  try {
+    await client.send(
+      new UpdateCommand({
+        TableName: billingTable(),
+        Key: checkoutKey(normalizedOperationId),
+        UpdateExpression: "SET #status = :failed, updatedAt = :now",
+        ConditionExpression:
+          "#status = :started AND providerCallStartedAt <= :cutoff",
+        ExpressionAttributeNames: { "#status": "status" },
+        ExpressionAttributeValues: {
+          ":started": "provider_call_started",
+          ":failed": "reconciliation_failed",
+          ":cutoff": cutoff,
+          ":now": new Date().toISOString(),
+        },
+      })
+    );
+    return true;
+  } catch (error) {
+    if (error?.name === "ConditionalCheckFailedException") return false;
+    throw error;
+  }
+}
+
+export async function createBillingRefundOperation(input) {
+  const provider = String(input.provider || "").toLowerCase();
+  if (!["dodo", "zoho"].includes(provider)) throw new Error("Invalid billing provider");
+  const paymentId = mappingId(input.paymentId, "paymentId");
+  const idempotencyKey = mappingId(input.idempotencyKey, "idempotencyKey");
+  const amountMinor = Number(input.amountMinor);
+  if (!Number.isSafeInteger(amountMinor) || amountMinor <= 0) {
+    throw new Error("amountMinor must be a positive integer");
+  }
+  const key = refundKey(provider, paymentId, idempotencyKey);
+  const existing = await client.send(
+    new GetCommand({ TableName: billingTable(), Key: key, ConsistentRead: true })
+  );
+  if (existing.Item) {
+    if (
+      existing.Item.amountMinor !== amountMinor ||
+      existing.Item.provider !== provider
+    ) {
+      throw Object.assign(new Error("Idempotency key was reused with different refund data"), {
+        statusCode: 409,
+      });
+    }
+    return { ...existing.Item, reused: true };
+  }
+  const paymentRow = await client.send(
+    new GetCommand({
+      TableName: billingTable(),
+      Key: providerPaymentKey(provider, paymentId),
+      ConsistentRead: true,
+    })
+  );
+  const payment = paymentRow.Item;
+  if (!payment || payment.status !== "succeeded") {
+    throw Object.assign(new Error("Refund payment is not a captured Atlas payment"), {
+      statusCode: 404,
+    });
+  }
+  const capturedAmountMinor = Number(payment.capturedAmountMinor);
+  const refundedMinor = Number(payment.refundedMinor || 0);
+  if (
+    !Number.isSafeInteger(capturedAmountMinor) ||
+    amountMinor > capturedAmountMinor - refundedMinor
+  ) {
+    throw Object.assign(new Error("Refund exceeds the remaining captured amount"), {
+      statusCode: 409,
+    });
+  }
+  const item = {
+    ...key,
+    entityType: "billing_refund_operation",
+    operationId: randomUUID(),
+    provider,
+    paymentId,
+    amountMinor,
+    reason: String(input.reason || "").slice(0, 500),
+    status: "approved",
+    approvedBy: String(input.approvedBy || "platform-owner"),
+    createdAt: new Date().toISOString(),
+  };
+  try {
+    await client.send(
+      new TransactWriteCommand({
+        TransactItems: [
+          {
+            Put: {
+              TableName: billingTable(),
+              Item: item,
+              ConditionExpression: "attribute_not_exists(pk)",
+            },
+          },
+          {
+            Update: {
+              TableName: billingTable(),
+              Key: providerPaymentKey(provider, paymentId),
+              UpdateExpression: "ADD refundedMinor :amount",
+              ConditionExpression:
+                "#status = :succeeded AND refundedMinor <= :remainingLimit",
+              ExpressionAttributeNames: { "#status": "status" },
+              ExpressionAttributeValues: {
+                ":succeeded": "succeeded",
+                ":amount": amountMinor,
+                ":remainingLimit": capturedAmountMinor - amountMinor,
+              },
+            },
+          },
+        ],
+      })
+    );
+    return { ...item, reused: false };
+  } catch (error) {
+    if (error?.name !== "TransactionCanceledException") throw error;
+    const winner = await client.send(
+      new GetCommand({ TableName: billingTable(), Key: key, ConsistentRead: true })
+    );
+    if (
+      !winner.Item ||
+      winner.Item.amountMinor !== amountMinor ||
+      winner.Item.provider !== provider
+    ) {
+      throw Object.assign(new Error("Refund exceeds the remaining captured amount"), {
+        statusCode: 409,
+      });
+    }
+    return { ...winner.Item, reused: true };
+  }
+}
+
+export async function markBillingRefundStarted(operation) {
+  await client.send(
+    new UpdateCommand({
+      TableName: billingTable(),
+      Key: { pk: operation.pk, sk: operation.sk },
+      UpdateExpression: "SET #status = :started, providerCallStartedAt = :now",
+      ConditionExpression: "#status = :approved",
+      ExpressionAttributeNames: { "#status": "status" },
+      ExpressionAttributeValues: {
+        ":approved": "approved",
+        ":started": "provider_call_started",
+        ":now": new Date().toISOString(),
+      },
+    })
+  );
+}
+
+export async function markBillingRefundCompleted(operation, providerRefundId) {
+  await client.send(
+    new UpdateCommand({
+      TableName: billingTable(),
+      Key: { pk: operation.pk, sk: operation.sk },
+      UpdateExpression: "SET #status = :completed, providerRefundId = :refundId, completedAt = :now",
+      ConditionExpression: "#status = :started",
+      ExpressionAttributeNames: { "#status": "status" },
+      ExpressionAttributeValues: {
+        ":started": "provider_call_started",
+        ":completed": "completed",
+        ":refundId": mappingId(providerRefundId, "providerRefundId"),
+        ":now": new Date().toISOString(),
+      },
+    })
+  );
+}
+
 export function billingLedgerKeys(event) {
   return {
     event: {
@@ -314,6 +557,7 @@ function subscriptionFromItem(item) {
     workspaceId: String(item.workspaceId),
     provider: String(item.provider),
     providerSubscriptionId: String(item.providerSubscriptionId),
+    providerCustomerId: item.providerCustomerId ? String(item.providerCustomerId) : null,
     tier: String(item.tier),
     status: String(item.status),
     currentPeriodEnd: item.currentPeriodEnd ? String(item.currentPeriodEnd) : null,
@@ -375,18 +619,6 @@ async function resolveBillingWorkspace(input) {
     ) {
       candidates.push(String(operationRow.Item.workspaceId));
     }
-  }
-
-  if (input.providerCustomerId) {
-    const customerId = mappingId(input.providerCustomerId, "providerCustomerId");
-    const customerRow = await client.send(
-      new GetCommand({
-        TableName: billingTable(),
-        Key: providerCustomerKey(input.provider, customerId),
-        ConsistentRead: true,
-      })
-    );
-    if (customerRow.Item?.workspaceId) candidates.push(String(customerRow.Item.workspaceId));
   }
 
   const unique = [...new Set(candidates)];
@@ -491,6 +723,8 @@ export function buildBillingTransactionItems(event, transition, receivedAt) {
     eventType: event.eventType,
     workspaceId: event.workspaceId,
     providerSubscriptionId: event.providerSubscriptionId,
+    providerCustomerId: event.providerCustomerId,
+    providerPaymentId: event.providerPaymentId,
     tier: event.tier,
     status: event.status,
     occurredAt: event.occurredAt,
@@ -533,6 +767,80 @@ export function buildBillingTransactionItems(event, transition, receivedAt) {
       },
     },
   ];
+  if (event.providerCustomerId) {
+    eventWrites.push({
+      Put: {
+        TableName: billingTable(),
+        Item: {
+          ...providerCustomerKey(
+            event.provider,
+            event.providerCustomerId,
+            event.workspaceId
+          ),
+          entityType: "billing_customer_binding",
+          provider: event.provider,
+          providerCustomerId: event.providerCustomerId,
+          workspaceId: event.workspaceId,
+          updatedAt: receivedAt,
+        },
+        ConditionExpression: "attribute_not_exists(pk) OR workspaceId = :workspaceId",
+        ExpressionAttributeValues: { ":workspaceId": event.workspaceId },
+      },
+    });
+  }
+  if (event.amountMinor != null && event.providerPaymentId) {
+    eventWrites.push({
+      Update: {
+        TableName: billingTable(),
+        Key: providerPaymentKey(event.provider, event.providerPaymentId),
+        UpdateExpression:
+          "SET entityType = if_not_exists(entityType, :entityType), provider = if_not_exists(provider, :provider), providerPaymentId = if_not_exists(providerPaymentId, :paymentId), workspaceId = if_not_exists(workspaceId, :workspaceId), firstEventId = if_not_exists(firstEventId, :eventId), #status = if_not_exists(#status, :succeeded), capturedAmountMinor = if_not_exists(capturedAmountMinor, :amount), refundedMinor = if_not_exists(refundedMinor, :zero), currency = if_not_exists(currency, :currency), occurredAt = if_not_exists(occurredAt, :occurredAt)",
+        ConditionExpression:
+          "attribute_not_exists(capturedAmountMinor) OR (capturedAmountMinor = :amount AND currency = :currency AND workspaceId = :workspaceId)",
+        ExpressionAttributeNames: { "#status": "status" },
+        ExpressionAttributeValues: {
+          ":entityType": "billing_payment",
+          ":provider": event.provider,
+          ":paymentId": event.providerPaymentId,
+          ":workspaceId": event.workspaceId,
+          ":eventId": event.eventId,
+          ":succeeded": "succeeded",
+          ":amount": event.amountMinor,
+          ":zero": 0,
+          ":currency": event.currency,
+          ":occurredAt": event.occurredAt,
+        },
+      },
+    });
+    eventWrites.push({
+      Update: {
+        TableName: billingTable(),
+        Key: {
+          pk: "ACCOUNTING#ZOHO_BOOKS",
+          sk: `PAYMENT#${event.provider}#${event.providerPaymentId}`,
+        },
+        UpdateExpression:
+          "SET entityType = if_not_exists(entityType, :entityType), #status = if_not_exists(#status, :pending), attempts = if_not_exists(attempts, :zero), provider = if_not_exists(provider, :provider), eventId = if_not_exists(eventId, :eventId), workspaceId = if_not_exists(workspaceId, :workspaceId), providerCustomerId = if_not_exists(providerCustomerId, :customerId), providerPaymentId = if_not_exists(providerPaymentId, :paymentId), amountMinor = if_not_exists(amountMinor, :amount), currency = if_not_exists(currency, :currency), occurredAt = if_not_exists(occurredAt, :occurredAt), createdAt = if_not_exists(createdAt, :createdAt)",
+        ConditionExpression:
+          "attribute_not_exists(amountMinor) OR (amountMinor = :amount AND currency = :currency AND workspaceId = :workspaceId)",
+        ExpressionAttributeNames: { "#status": "status" },
+        ExpressionAttributeValues: {
+          ":entityType": "billing_accounting_job",
+          ":pending": "pending",
+          ":zero": 0,
+          ":provider": event.provider,
+          ":eventId": event.eventId,
+          ":workspaceId": event.workspaceId,
+          ":customerId": event.providerCustomerId,
+          ":paymentId": event.providerPaymentId,
+          ":amount": event.amountMinor,
+          ":currency": event.currency,
+          ":occurredAt": event.occurredAt,
+          ":createdAt": receivedAt,
+        },
+      },
+    });
+  }
   if (!transition.applied) return eventWrites;
 
   const subscription = transition.subscription;
@@ -542,6 +850,7 @@ export function buildBillingTransactionItems(event, transition, receivedAt) {
     "billingProvider = :provider",
     "billingStatus = :status",
     "billingSubscriptionId = :subscriptionId",
+    "billingCustomerId = :customerId",
     "billingCurrentPeriodEnd = :periodEnd",
     "billingGraceUntil = :graceUntil",
     "billingCancelAtPeriodEnd = :cancelAtPeriodEnd",
@@ -584,6 +893,7 @@ export function buildBillingTransactionItems(event, transition, receivedAt) {
           ":provider": event.provider,
           ":status": subscription.status,
           ":subscriptionId": event.providerSubscriptionId,
+          ":customerId": subscription.providerCustomerId,
           ":periodEnd": subscription.currentPeriodEnd,
           ":graceUntil": subscription.graceUntil,
           ":cancelAtPeriodEnd": subscription.cancelAtPeriodEnd,

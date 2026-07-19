@@ -83,6 +83,14 @@ export function normalizeBillingEvent(input) {
       input.providerSubscriptionId,
       "providerSubscriptionId"
     ),
+    providerCustomerId:
+      input.providerCustomerId == null || input.providerCustomerId === ""
+        ? null
+        : requiredIdentifier(input.providerCustomerId, "providerCustomerId"),
+    providerPaymentId:
+      input.providerPaymentId == null || input.providerPaymentId === ""
+        ? null
+        : requiredIdentifier(input.providerPaymentId, "providerPaymentId"),
     tier,
     status,
     occurredAt,
@@ -150,6 +158,7 @@ export function applyBillingEvent(current, input) {
       workspaceId: event.workspaceId,
       provider: event.provider,
       providerSubscriptionId: event.providerSubscriptionId,
+      providerCustomerId: event.providerCustomerId,
       tier: event.tier,
       status: event.status,
       currentPeriodEnd: event.currentPeriodEnd,

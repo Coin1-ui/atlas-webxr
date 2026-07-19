@@ -789,6 +789,45 @@ Full matrix: [PRICING-FEATURE-READINESS.md](./PRICING-FEATURE-READINESS.md)
 
 ---
 
+## NEXUS-Sprint orchestration log (2026-07-19) — Billing lifecycle and Dodo evidence
+
+| Step | Agent / gate | Result |
+|------|----------------|--------|
+| 1 | **Backend Architect** | Added customer portal, immediate upgrade / renewal downgrade, period-end cancellation, owner-approved idempotent refunds, and signed Zoho Payments reconciliation |
+| 2 | **Accounting** | Added Zoho Books invoice/payment mirror with currency clearing contacts, retry backoff, and dead-letter state |
+| 3 | **Frontend Developer** | Replaced local purchased-tier stub with routed hosted checkout and provider-backed account management |
+| 4 | **Security / QA** | Fixed USD/INR provider policy, fail-closed flags, strict redirect hosts, provider-call boundaries, environment validator; billing policy/state/ledger/provider/audit suites and build ✅ |
+| 5 | **Dodo sandbox evidence** | Successful USD 5 Starter payment and active subscription; Atlas operation ID preserved; live unsigned webhook probe returns `400` and status route requires auth (`401`) |
+| 6 | **Release blockers** | Dodo product reports yearly subscription period with monthly payment frequency; record webhook HTTP `2xx`, authenticated Atlas `billing/status=active`, duplicate replay, and add/deploy new API Gateway management routes |
+
+---
+
+### Billing rollout update — 2026-07-19 11:28 IST
+
+- Dodo Starter corrected to payment frequency `1 Month` and subscription period `1 Month`.
+- Hardened Lambda package uploaded.
+- API Gateway routes verified live: portal, plan, cancel, refund, and status return `401`
+  without JWT; Dodo unsigned webhook returns `400`; disabled Zoho webhook returns `503`.
+- Remaining Dodo gate: perform a fresh disposable checkout because the prior subscription keeps
+  its original annual period; capture signed webhook `2xx`, authenticated `billing/status=active`,
+  Month/Month subscription payload, and duplicate replay evidence.
+
+### Billing rollout update — 2026-07-19 16:10 IST
+
+- Fresh USD 5 Starter checkout verified for workspace `1ee2cb65-6252-4679-ab53-84ea36b2518f`.
+- Dodo payment `pay_0NjVduFke9QpJiCmQvgYQ` succeeded; subscription
+  `sub_0NjVduFvyLgtljNZmXMoU` is active with Month/Month frequency and period.
+- Signed `payment.succeeded` and `subscription.active` replays completed without Lambda errors;
+  duplicate replay preserved the subscription projection.
+- Authenticated Atlas billing status now returns provider `dodo`, tier/status
+  `starter`/`active`, entitlement `starter`, and period end `2026-08-19T08:12:37.451Z`.
+- Runtime corrected to 256 MB / 15 seconds after evidence showed a 3-second timeout and
+  near-exhausted 128 MB allocation.
+- Sandbox security follow-up: rotate the test Dodo API key exposed during diagnostics and update
+  the Lambda environment before further provider testing.
+
+---
+
 ## Dependency graph (Sprint 1)
 
 ```

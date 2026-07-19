@@ -47,6 +47,7 @@ async function dodoRequest(path, options = {}) {
     headers: {
       Authorization: `Bearer ${requiredEnv("DODO_PAYMENTS_API_KEY")}`,
       "Content-Type": "application/json",
+      ...(options.headers || {}),
     },
     body: options.body === undefined ? undefined : JSON.stringify(options.body),
     signal: AbortSignal.timeout(12_000),
@@ -82,6 +83,7 @@ export function preflightDodoCheckout(tier) {
 export async function createDodoCheckout(operation, input) {
   const result = await dodoRequest("/checkouts", {
     method: "POST",
+    headers: { "Idempotency-Key": String(operation.operationId) },
     body: {
       product_cart: [{ product_id: productIdForTier(operation.tier), quantity: 1 }],
       customer: {
@@ -122,7 +124,15 @@ export async function createDodoPortalSession(customerId) {
     { method: "POST" }
   );
   if (!result?.link) throw new Error("Dodo Payments did not return a portal link");
-  return { portalUrl: String(result.link) };
+  const portalUrl = new URL(String(result.link));
+  const host = portalUrl.hostname.toLowerCase();
+  if (
+    portalUrl.protocol !== "https:" ||
+    !(host === "dodopayments.com" || host.endsWith(".dodopayments.com"))
+  ) {
+    throw new Error("Dodo Payments returned a non-allowlisted portal link");
+  }
+  return { portalUrl: portalUrl.toString() };
 }
 
 export async function cancelDodoSubscription(subscriptionId) {
@@ -142,6 +152,21 @@ export async function changeDodoPlan(subscriptionId, tier, effectiveAt = "next_b
         effectiveAt === "immediately" ? "difference_immediately" : "full_immediately",
       effective_at: effectiveAt,
       on_payment_failure: "prevent_change",
+    },
+  });
+}
+
+export async function createDodoRefund(paymentId, amountMinor, reason, operationId) {
+  return dodoRequest("/refunds", {
+    method: "POST",
+    headers: { "Idempotency-Key": String(operationId) },
+    body: {
+      payment_id: String(paymentId),
+      amount: amountMinor,
+      reason: String(reason || "Approved Atlas refund").slice(0, 3000),
+      metadata: {
+        atlas_billing_operation_id: String(operationId),
+      },
     },
   });
 }
@@ -167,8 +192,11 @@ export function normalizeDodoSubscriptionSnapshot(input) {
     expired: "expired",
   }[status];
   if (!normalizedStatus) throw new Error("Unsupported Dodo subscription status");
-  const periodEnd =
+  const providerPeriodEnd =
     subscription.next_billing_date || subscription.expires_at || subscription.cancelled_at || null;
+  const periodEnd = providerPeriodEnd
+    ? new Date(String(providerPeriodEnd)).toISOString()
+    : null;
   const occurredAt = new Date(input.occurredAt).toISOString();
   const graceUntil =
     normalizedStatus === "past_due"
@@ -182,6 +210,7 @@ export function normalizeDodoSubscriptionSnapshot(input) {
     providerCustomerId: subscription.customer?.customer_id
       ? String(subscription.customer.customer_id)
       : undefined,
+    providerPaymentId: input.providerPaymentId || undefined,
     checkoutOperationId: subscription.metadata?.atlas_billing_operation_id
       ? String(subscription.metadata.atlas_billing_operation_id)
       : undefined,
@@ -192,7 +221,7 @@ export function normalizeDodoSubscriptionSnapshot(input) {
     currentPeriodEnd: ["active", "past_due"].includes(normalizedStatus) ? periodEnd : null,
     graceUntil,
     cancelAtPeriodEnd: subscription.cancel_at_next_billing_date === true,
-    amountMinor: null,
-    currency: null,
+    amountMinor: input.amountMinor ?? null,
+    currency: input.currency ?? null,
   };
 }

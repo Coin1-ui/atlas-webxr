@@ -34,7 +34,12 @@ Deploy `backend/lambda/atlas-api` for **Atlas AR SaaS v2** (Sprint 1+):
 | DELETE | `/v2/workspaces/{workspaceId}/models/{modelId}` | Cognito JWT + admin | Remove model |
 | GET | `/v2/workspaces/{workspaceId}/billing/status` | Cognito JWT + admin | Provider subscription and current entitlement |
 | POST | `/v2/workspaces/{workspaceId}/billing/checkout` | Cognito JWT + admin | Routed hosted checkout; requires `Idempotency-Key` |
+| POST | `/v2/workspaces/{workspaceId}/billing/portal` | Cognito JWT + admin | Provider customer portal |
+| POST | `/v2/workspaces/{workspaceId}/billing/plan` | Cognito JWT + admin | Immediate upgrade or renewal downgrade |
+| POST | `/v2/workspaces/{workspaceId}/billing/cancel` | Cognito JWT + admin | Cancel at renewal |
 | POST | `/v2/billing/webhooks/dodo` | Dodo signature | Public Dodo event trigger; no Cognito authorizer |
+| POST | `/v2/billing/webhooks/zoho-payments` | Zoho Payments signature | Public Zoho event trigger; no Cognito authorizer |
+| POST | `/v2/platform/billing/refunds` | Platform owner JWT | Manual approved refund; requires `Idempotency-Key` |
 
 S3 layout: `tenants/{workspaceId}/models/` (legacy workspace can use `models/` when `ATLAS_LEGACY_USE_ROOT_PREFIX=true`).
 
@@ -66,6 +71,9 @@ Lambda environment (atlas-api):
 | `ATLAS_BILLING_ENABLED` | `false` until sandbox approval | Enables hosted checkout creation |
 | `ATLAS_ZOHO_CHECKOUT_ENABLED` | `false` until Zoho reconciliation approval | Independently enables India checkout |
 | `ATLAS_DODO_WEBHOOK_ENABLED` | `false` until sandbox approval | Enables signed Dodo webhook reconciliation |
+| `ATLAS_ZOHO_WEBHOOK_ENABLED` | `false` until Zoho sandbox approval | Enables signed Zoho Payments reconciliation |
+| `ATLAS_ZOHO_BOOKS_SYNC_ENABLED` | `false` until accounting approval | Enables scheduled Zoho Books invoice/payment mirror |
+| `ATLAS_BILLING_DLQ_URL` | SQS queue URL | Receives exhausted accounting jobs |
 | `ATLAS_BILLING_APP_ORIGIN` | Exact HTTPS Amplify origin | Allowlist for all billing return URLs |
 | `ATLAS_BILLING_RETURN_URL` | Account return URL | Hosted checkout and portal return |
 | `ATLAS_BILLING_CANCEL_URL` | Account cancellation URL | Dodo checkout cancellation return |
@@ -74,9 +82,17 @@ Lambda environment (atlas-api):
 | `DODO_PAYMENTS_WEBHOOK_SECRET` | secret | Standard Webhooks signing secret |
 | `DODO_PAYMENTS_BUSINESS_ID` | Dodo business ID | Reject events for another business |
 | `DODO_PRODUCT_*_MONTHLY` | Dodo product IDs | Environment-specific tier mapping |
-| `ZOHO_CLIENT_ID` / `ZOHO_CLIENT_SECRET` / `ZOHO_REFRESH_TOKEN` | secrets | India Zoho OAuth |
+| `ZOHO_CLIENT_ID` / `ZOHO_CLIENT_SECRET` / `ZOHO_BILLING_REFRESH_TOKEN` | secrets | India Zoho Billing OAuth |
 | `ZOHO_BILLING_ORGANIZATION_ID` | Zoho organization ID | Billing API organization |
+| `ZOHO_BILLING_PORTAL_URL` | Zoho customer portal HTTPS URL | India subscription management |
+| `ZOHO_PAYMENTS_WEBHOOK_SECRET` | secret | Zoho Payments webhook HMAC |
 | `ZOHO_PLAN_*_MONTHLY` | Zoho plan codes | India tier mapping |
+| `ZOHO_BOOKS_REFRESH_TOKEN` | secret | Zoho Books OAuth |
+| `ZOHO_BOOKS_ORGANIZATION_ID` | Zoho Books organization ID | Accounting destination |
+| `ZOHO_BOOKS_SUBSCRIPTION_ITEM_ID` | Zoho Books item ID | Invoice line item |
+| `ZOHO_BOOKS_CLEARING_CONTACT_<CURRENCY>` | Zoho Books contact ID | One clearing contact per accepted currency |
+| `ZOHO_BOOKS_INVOICE_UNIQUE_FIELD_API_NAME` / `_ID` | Unique custom field | Crash-safe invoice upsert |
+| `ZOHO_BOOKS_PAYMENT_UNIQUE_FIELD_API_NAME` / `_ID` | Unique custom field | Crash-safe customer-payment upsert |
 | `COGNITO_USER_POOL_ID` | `ap-south-1_xxxxx` | JWT validation |
 | `COGNITO_CLIENT_ID` | `xxxxxxxx` | JWT audience |
 | `COGNITO_REGION` | `ap-south-1` | Cognito region |
@@ -86,9 +102,15 @@ Lambda environment (atlas-api):
 
 Billing ledger IAM for the `atlas-api` Lambda role:
 
-- `dynamodb:GetItem`, `dynamodb:PutItem`, and `dynamodb:UpdateItem` on the `ATLAS_BILLING_TABLE` ARN.
-- `dynamodb:UpdateItem` on the `ATLAS_WORKSPACES_TABLE` ARN.
+- `dynamodb:GetItem`, `dynamodb:PutItem`, `dynamodb:UpdateItem`, `dynamodb:Query`, and `dynamodb:TransactWriteItems` on the `ATLAS_BILLING_TABLE` ARN.
+- `dynamodb:UpdateItem` and `dynamodb:TransactWriteItems` on the `ATLAS_WORKSPACES_TABLE` ARN.
+- `sqs:SendMessage` on the queue referenced by `ATLAS_BILLING_DLQ_URL`.
 - Keep both table resources in the same account and region so the ledger append and workspace entitlement projection can use one DynamoDB transaction.
+
+Create an EventBridge Scheduler rule (for example, every five minutes) targeting the same
+`atlas-api` Lambda. The scheduled event runs the Zoho Books accounting worker. Configure a
+Lambda destination or SQS DLQ for failed asynchronous invocations; jobs also move to the
+`dead_letter` state after five provider failures for operator reconciliation.
 
 **Platform routes** (add in API Gateway → same Lambda):
 

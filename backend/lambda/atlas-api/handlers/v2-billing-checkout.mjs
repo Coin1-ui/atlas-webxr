@@ -2,7 +2,9 @@ import { requireWorkspaceAdmin } from "../lib/authz.mjs";
 import { jsonResponse, parseJsonBody } from "../lib/http.mjs";
 import {
   createBillingCheckoutOperation,
+  getBillingSubscription,
   markBillingCheckoutProviderCallStarted,
+  markBillingCheckoutReconciliationFailed,
   recordProviderCheckout,
 } from "../lib/billing-store.mjs";
 import {
@@ -11,9 +13,12 @@ import {
 } from "../lib/billing-provider-dodo.mjs";
 import {
   createZohoHostedCheckout,
+  findZohoHostedPageByReference,
   preflightZohoCheckout,
 } from "../lib/billing-provider-zoho.mjs";
 import { createHash } from "node:crypto";
+import { providerForBillingCountry } from "../lib/billing-policy.mjs";
+import { billingEntitlementTier } from "../lib/billing-state.mjs";
 
 function header(event, name) {
   const target = name.toLowerCase();
@@ -93,6 +98,20 @@ export async function handleBillingCheckout(event, workspaceId) {
   try {
     await requireWorkspaceAdmin(event, workspaceId, { allowSuspended: true });
     const input = checkoutInput(parseJsonBody(event));
+    const current = await getBillingSubscription(workspaceId);
+    const pendingUpdatedAt = current?.updatedAt ? Date.parse(current.updatedAt) : Number.NaN;
+    const pendingIsFresh =
+      current?.status === "pending" &&
+      Number.isFinite(pendingUpdatedAt) &&
+      Date.now() - pendingUpdatedAt < 30 * 60 * 1000;
+    if (
+      current &&
+      (pendingIsFresh || billingEntitlementTier(current) !== null)
+    ) {
+      return jsonResponse(409, {
+        error: "An existing subscription must be managed instead of creating another checkout",
+      });
+    }
     const idempotencyKey = header(event, "idempotency-key");
     if (
       typeof idempotencyKey !== "string" ||
@@ -100,7 +119,7 @@ export async function handleBillingCheckout(event, workspaceId) {
     ) {
       return jsonResponse(400, { error: "A valid Idempotency-Key header is required" });
     }
-    const provider = input.billingCountry === "IN" ? "zoho" : "dodo";
+    const provider = providerForBillingCountry(input.billingCountry);
     if (provider === "zoho" && process.env.ATLAS_ZOHO_CHECKOUT_ENABLED !== "true") {
       return jsonResponse(503, { error: "Zoho checkout is not enabled" });
     }
@@ -132,7 +151,42 @@ export async function handleBillingCheckout(event, workspaceId) {
         reused: true,
       });
     }
-    if (operation.reused && operation.status !== "pending_provider") {
+    if (
+      operation.reused &&
+      operation.status === "provider_call_started" &&
+      provider === "zoho"
+    ) {
+      const existing = await findZohoHostedPageByReference(operation.operationId);
+      if (existing?.hostedpage_id && existing?.url) {
+        const reconciled = await recordProviderCheckout({
+          operationId: operation.operationId,
+          provider,
+          providerCheckoutId: existing.hostedpage_id,
+          checkoutUrl: existing.url,
+        });
+        return jsonResponse(200, {
+          operationId: operation.operationId,
+          provider,
+          checkoutUrl: reconciled.checkoutUrl,
+          reused: true,
+          reconciled: true,
+        });
+      }
+      const failed = await markBillingCheckoutReconciliationFailed(operation.operationId);
+      if (failed) {
+        return jsonResponse(409, {
+          error:
+            "The prior Zoho checkout did not create a hosted page. Start a new checkout request.",
+          operationId: operation.operationId,
+          retryWithNewIdempotencyKey: true,
+        });
+      }
+    }
+    if (
+      operation.reused &&
+      operation.status !== "pending_provider" &&
+      !(operation.status === "provider_call_started" && provider === "dodo")
+    ) {
       return jsonResponse(409, {
         error: "Checkout creation is pending reconciliation",
         operationId: operation.operationId,
@@ -141,7 +195,9 @@ export async function handleBillingCheckout(event, workspaceId) {
 
     if (provider === "zoho") await preflightZohoCheckout(input.tier);
     else preflightDodoCheckout(input.tier);
-    await markBillingCheckoutProviderCallStarted(operation.operationId, provider);
+    if (operation.status === "pending_provider") {
+      await markBillingCheckoutProviderCallStarted(operation.operationId, provider);
+    }
     const providerResult =
       provider === "zoho"
         ? await createZohoHostedCheckout(operation, input)

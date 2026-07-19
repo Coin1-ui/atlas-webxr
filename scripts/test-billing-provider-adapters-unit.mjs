@@ -3,18 +3,28 @@ import assert from "node:assert/strict";
 import { createHmac } from "node:crypto";
 import { Webhook } from "../backend/lambda/atlas-api/node_modules/standardwebhooks/dist/index.js";
 import {
+  createDodoCheckout,
+  createDodoRefund,
   normalizeDodoSubscriptionSnapshot,
   verifyDodoWebhook,
 } from "../backend/lambda/atlas-api/lib/billing-provider-dodo.mjs";
 import {
+  createZohoHostedCheckout,
+  createZohoPortalSession,
   normalizeZohoSubscriptionSnapshot,
   verifyZohoPaymentsWebhook,
 } from "../backend/lambda/atlas-api/lib/billing-provider-zoho.mjs";
 import { handleBillingCheckout } from "../backend/lambda/atlas-api/handlers/v2-billing-checkout.mjs";
-import { handleDodoWebhook } from "../backend/lambda/atlas-api/handlers/v2-billing-webhooks.mjs";
+import {
+  handleDodoWebhook,
+  handleZohoPaymentsWebhook,
+} from "../backend/lambda/atlas-api/handlers/v2-billing-webhooks.mjs";
+import { handleBillingPortal } from "../backend/lambda/atlas-api/handlers/v2-billing-manage.mjs";
+import { handlePlatformBillingRefund } from "../backend/lambda/atlas-api/handlers/v2-billing-refunds.mjs";
 
 delete process.env.ATLAS_BILLING_ENABLED;
 delete process.env.ATLAS_DODO_WEBHOOK_ENABLED;
+delete process.env.ATLAS_ZOHO_WEBHOOK_ENABLED;
 assert.equal(
   (await handleBillingCheckout({ requestContext: { http: { method: "POST" } } }, "ws_1"))
     .statusCode,
@@ -22,6 +32,20 @@ assert.equal(
 );
 assert.equal(
   (await handleDodoWebhook({ requestContext: { http: { method: "POST" } } })).statusCode,
+  503
+);
+assert.equal(
+  (await handleZohoPaymentsWebhook({ requestContext: { http: { method: "POST" } } })).statusCode,
+  503
+);
+assert.equal(
+  (await handleBillingPortal({ requestContext: { http: { method: "POST" } } }, "ws_1"))
+    .statusCode,
+  503
+);
+assert.equal(
+  (await handlePlatformBillingRefund({ requestContext: { http: { method: "POST" } } }))
+    .statusCode,
   503
 );
 
@@ -51,7 +75,7 @@ const dodoEvent = normalizeDodoSubscriptionSnapshot({
     subscription_id: "sub_1",
     product_id: "prod_growth",
     status: "active",
-    next_billing_date: "2026-08-18T10:00:00.000Z",
+    next_billing_date: "2026-08-18T10:00:00.451503Z",
     cancel_at_next_billing_date: false,
     customer: { customer_id: "cus_1" },
     metadata: { atlas_billing_operation_id: "op_1" },
@@ -60,6 +84,98 @@ const dodoEvent = normalizeDodoSubscriptionSnapshot({
 assert.equal(dodoEvent.tier, "growth");
 assert.equal(dodoEvent.status, "active");
 assert.equal(dodoEvent.checkoutOperationId, "op_1");
+assert.equal(dodoEvent.currentPeriodEnd, "2026-08-18T10:00:00.451Z");
+
+const dodoPaymentEvent = normalizeDodoSubscriptionSnapshot({
+  eventId: "evt_payment_1",
+  eventType: "payment.succeeded",
+  occurredAt: "2026-07-19T04:19:14.627Z",
+  providerSequence: 2,
+  providerPaymentId: "pay_0NjUvFmb396Bs88Nt7sXu",
+  amountMinor: 500,
+  currency: "USD",
+  subscription: {
+    subscription_id: "sub_0NjUvFmfYUyK21QpBF2AL",
+    product_id: "prod_growth",
+    status: "active",
+    next_billing_date: "2026-08-19T04:19:14.655Z",
+    cancel_at_next_billing_date: false,
+    customer: { customer_id: "cus_0NjUvFmQSrwEVxMsaLu15" },
+    metadata: { atlas_billing_operation_id: "74875648-441e-4118-8655-cdb28af8c295" },
+  },
+});
+assert.equal(dodoPaymentEvent.providerPaymentId, "pay_0NjUvFmb396Bs88Nt7sXu");
+assert.equal(dodoPaymentEvent.amountMinor, 500);
+assert.equal(dodoPaymentEvent.currency, "USD");
+
+const originalFetch = globalThis.fetch;
+process.env.DODO_PAYMENTS_ENV = "test_mode";
+process.env.DODO_PAYMENTS_API_KEY = "test_api_key";
+process.env.DODO_PRODUCT_STARTER_MONTHLY = "prod_starter";
+process.env.ATLAS_BILLING_APP_ORIGIN = "https://main.example.com";
+process.env.ATLAS_BILLING_RETURN_URL = "https://main.example.com/account?billing=return";
+process.env.ATLAS_BILLING_CANCEL_URL = "https://main.example.com/account?billing=cancel";
+let capturedDodoRequest;
+globalThis.fetch = async (url, init) => {
+  capturedDodoRequest = { url: String(url), init };
+  return new Response(
+    JSON.stringify({ session_id: "cks_1", checkout_url: "https://test.checkout.dodopayments.com/1" }),
+    { status: 200, headers: { "content-type": "application/json" } }
+  );
+};
+await createDodoCheckout(
+  {
+    operationId: "op_checkout_12345678",
+    tier: "starter",
+    billingCountry: "US",
+    couponCode: null,
+  },
+  { email: "buyer@example.com", billingAddress: {} }
+);
+assert.equal(capturedDodoRequest.init.headers["Idempotency-Key"], "op_checkout_12345678");
+assert.equal(
+  JSON.parse(capturedDodoRequest.init.body).metadata.atlas_billing_operation_id,
+  "op_checkout_12345678"
+);
+
+await createDodoRefund("pay_1", 250, "partial refund", "op_refund_12345678");
+assert.equal(capturedDodoRequest.init.headers["Idempotency-Key"], "op_refund_12345678");
+assert.equal(JSON.parse(capturedDodoRequest.init.body).amount, 250);
+
+process.env.ZOHO_CLIENT_ID = "client_1";
+process.env.ZOHO_CLIENT_SECRET = "secret_1";
+process.env.ZOHO_BILLING_REFRESH_TOKEN = "refresh_1";
+process.env.ZOHO_BILLING_ORGANIZATION_ID = "org_1";
+process.env.ZOHO_PLAN_STARTER_MONTHLY = "atlas-starter-monthly";
+let capturedZohoBody;
+globalThis.fetch = async (url, init) => {
+  if (String(url).includes("/oauth/v2/token")) {
+    assert.match(String(init.body), /refresh_token=refresh_1/);
+    return new Response(JSON.stringify({ access_token: "access_1", expires_in: 3600 }), {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    });
+  }
+  capturedZohoBody = JSON.parse(init.body);
+  return new Response(
+    JSON.stringify({
+      code: 0,
+      hostedpage: { hostedpage_id: "hp_1", url: "https://billing.zoho.in/hostedpage/1" },
+    }),
+    { status: 200, headers: { "content-type": "application/json" } }
+  );
+};
+await createZohoHostedCheckout(
+  { operationId: "op_zoho_12345678", tier: "starter", couponCode: null },
+  { email: "india@example.com", name: "India Test", billingAddress: {} }
+);
+assert.equal(capturedZohoBody.reference_id, "op_zoho_12345678");
+assert.equal(capturedZohoBody.plan.plan_code, "atlas-starter-monthly");
+process.env.ZOHO_BILLING_PORTAL_URL = "https://billing.zoho.in/portal/atlas";
+assert.equal(createZohoPortalSession().portalUrl, "https://billing.zoho.in/portal/atlas");
+process.env.ZOHO_BILLING_PORTAL_URL = "https://evil.zoho.in/portal/atlas";
+assert.throws(() => createZohoPortalSession());
+globalThis.fetch = originalFetch;
 
 process.env.ZOHO_PAYMENTS_WEBHOOK_SECRET = "zoho-payments-test-secret";
 const zohoPaymentPayload = JSON.stringify({ event_id: "zp_evt_1" });
