@@ -20,6 +20,10 @@ export type TrialWorkspace = {
   /** Explicit non-financial tier assigned by the platform owner. */
   manualBillingTier?: PlanTierId | null;
   billingProvider?: "dodo" | "zoho" | null;
+  billingSubscriptionId?: string | null;
+  billingStatus?: "pending" | "active" | "past_due" | "canceled" | "expired" | null;
+  billingCurrentPeriodEnd?: string | null;
+  billingGraceUntil?: string | null;
   trialEndsAt?: string | null;
   trialPlan?: PlanTierId | null;
 };
@@ -115,10 +119,23 @@ export function isTrialExpired(ws: { trialEndsAt?: string | null; trialPlan?: Pl
 
 const TIER_ORDER: PlanTierId[] = ["starter", "launch", "growth", "scale"];
 
+function providerBillingTier(ws: TrialWorkspace, now = Date.now()): PlanTierId | null {
+  if (!ws.billingProvider || !ws.billingEntitlementTier) return null;
+  const periodEnd = Date.parse(String(ws.billingCurrentPeriodEnd || ""));
+  const graceUntil = Date.parse(String(ws.billingGraceUntil || ""));
+  if (ws.billingStatus === "past_due") {
+    return Number.isFinite(graceUntil) && now < graceUntil ? ws.billingEntitlementTier : null;
+  }
+  if (ws.billingStatus === "active" || ws.billingStatus === "canceled") {
+    return Number.isFinite(periodEnd) && now < periodEnd ? ws.billingEntitlementTier : null;
+  }
+  return null;
+}
+
 function paidBillingTier(ws: TrialWorkspace): PlanTierId | null {
   const candidates = [
     ws.manualBillingTier,
-    ws.billingEntitlementTier,
+    providerBillingTier(ws),
     ...(ws.billingProvider ? [] : [ws.purchasedBillingTier]),
   ].filter(
     (tier): tier is PlanTierId => Boolean(tier)

@@ -223,3 +223,88 @@ export function workspaceApiHint(): string {
     ? "Workspace API: connected (tenant catalog & branding)"
     : "Workspace API: local dev (/v2/*)";
 }
+
+async function billingRequest<T>(
+  workspaceId: string,
+  action: string,
+  init: RequestInit = {},
+): Promise<T> {
+  const res = await fetch(
+    saasApiUrl(`/v2/workspaces/${encodeURIComponent(workspaceId)}/billing/${action}`),
+    {
+      ...init,
+      headers: { ...authHeaders(), ...(init.headers ?? {}) },
+    },
+  );
+  const text = await res.text();
+  let data: unknown = {};
+  try {
+    data = text ? JSON.parse(text) : {};
+  } catch {
+    data = { error: text };
+  }
+  if (!res.ok) {
+    throw new Error(
+      typeof data === "object" &&
+        data !== null &&
+        "error" in data &&
+        typeof data.error === "string"
+        ? data.error
+        : `HTTP ${res.status}`,
+    );
+  }
+  return data as T;
+}
+
+export type BillingStatus = {
+  entitlementTier: string | null;
+  subscription: {
+    provider: "dodo" | "zoho";
+    tier: "starter" | "launch" | "growth";
+    status: string;
+    currentPeriodEnd: string | null;
+    graceUntil: string | null;
+    cancelAtPeriodEnd: boolean;
+  } | null;
+};
+
+export function getBillingStatus(workspaceId: string): Promise<BillingStatus> {
+  return billingRequest(workspaceId, "status");
+}
+
+export function createBillingCheckout(
+  workspaceId: string,
+  body: {
+    tier: "starter" | "launch" | "growth";
+    billingCountry: string;
+    email: string;
+    name?: string;
+    couponCode?: string;
+  },
+): Promise<{ checkoutUrl: string; provider: "dodo" | "zoho"; reused: boolean }> {
+  return billingRequest(workspaceId, "checkout", {
+    method: "POST",
+    headers: { "Idempotency-Key": crypto.randomUUID() },
+    body: JSON.stringify(body),
+  });
+}
+
+export function createBillingPortal(
+  workspaceId: string,
+): Promise<{ portalUrl: string }> {
+  return billingRequest(workspaceId, "portal", { method: "POST" });
+}
+
+export async function cancelBillingSubscription(workspaceId: string): Promise<void> {
+  await billingRequest(workspaceId, "cancel", { method: "POST" });
+}
+
+export async function changeBillingPlan(
+  workspaceId: string,
+  tier: "starter" | "launch" | "growth",
+): Promise<void> {
+  await billingRequest(workspaceId, "plan", {
+    method: "POST",
+    body: JSON.stringify({ tier }),
+  });
+}

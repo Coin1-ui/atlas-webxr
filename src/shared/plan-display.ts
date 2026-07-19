@@ -53,6 +53,10 @@ export function tierOptionLabel(tier: PlanTier): string {
 export const CUSTOMER_BILLING_TIERS = PLAN_TIERS.filter((t) => t.id !== "scale");
 
 export function upgradeOptions(ws: TrialWorkspace): PlanTier[] {
+  if (ws.billingSubscriptionId) {
+    const current = effectiveBillingTier(ws);
+    return CUSTOMER_BILLING_TIERS.filter((tier) => tier.id !== current);
+  }
   if (isTrialSuspended(ws) && ws.trialPlan) {
     // Suspended: offer every self-serve tier so the customer can resubscribe at any level.
     return CUSTOMER_BILLING_TIERS;

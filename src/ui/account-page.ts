@@ -41,7 +41,12 @@ export function renderAccountPage(
   },
   handlers: {
     onChangePassword: (current: string, next: string) => void | Promise<void>;
-    onUpgradePlan: (tier: PlanTier) => void | Promise<void>;
+    onUpgradePlan: (
+      tier: PlanTier,
+      checkout: { billingCountry: string; couponCode?: string },
+    ) => void | Promise<void>;
+    onManageBilling?: () => void | Promise<void>;
+    onCancelBilling?: () => void | Promise<void>;
     onPayOverage: (amountUsd: number) => void | Promise<void>;
     onAdmin: () => void;
     onBranding?: () => void;
@@ -163,7 +168,26 @@ export function renderAccountPage(
             <h2 class="admin-section-title">Plan &amp; billing</h2>
             ${data.billingError ? `<div class="camera-warning" role="alert">${escapeHtml(data.billingError)}</div>` : ""}
             ${data.billingSuccess ? `<div class="camera-success" role="status">${escapeHtml(data.billingSuccess)}</div>` : ""}
+            ${
+              workspace.billingSubscriptionId
+                ? `<dl class="account-dl">
+                    <div><dt>Status</dt><dd><strong>${escapeHtml(workspace.billingStatus ?? "pending")}</strong></dd></div>
+                    <div><dt>Provider</dt><dd>${escapeHtml(workspace.billingProvider === "zoho" ? "Zoho (India)" : "Dodo Payments")}</dd></div>
+                    ${workspace.billingCurrentPeriodEnd ? `<div><dt>Current period ends</dt><dd>${escapeHtml(formatDate(workspace.billingCurrentPeriodEnd))}</dd></div>` : ""}
+                  </dl>`
+                : `<div class="account-checkout-fields">
+                    <label class="auth-label">Billing country (2-letter code)
+                      <input class="auth-input" name="billingCountry" maxlength="2" value="US" autocomplete="country" />
+                    </label>
+                    <label class="auth-label">Coupon (optional)
+                      <input class="auth-input" name="couponCode" maxlength="64" autocomplete="off" />
+                    </label>
+                  </div>`
+            }
             ${upgradeHtml}
+            ${handlers.onManageBilling && workspace.billingSubscriptionId ? `<button type="button" class="mkt-btn mkt-btn-primary account-secondary-btn" data-action="manage-billing">Manage payment method &amp; invoices</button>` : ""}
+            ${handlers.onCancelBilling && workspace.billingSubscriptionId && !workspace.billingCancelAtPeriodEnd ? `<button type="button" class="mkt-btn mkt-btn-ghost account-secondary-btn" data-action="cancel-billing">Cancel at renewal</button>` : ""}
+            ${workspace.billingCancelAtPeriodEnd ? `<p class="auth-hint">Cancellation is scheduled for the end of the current billing period.</p>` : ""}
             <button type="button" class="mkt-btn mkt-btn-ghost account-secondary-btn" data-action="pricing">Compare all plans</button>
           </section>
 
@@ -222,7 +246,16 @@ export function renderAccountPage(
     btn.addEventListener("click", () => {
       const tierId = btn.getAttribute("data-tier");
       const tier = upgrades.find((t) => t.id === tierId);
-      if (tier) void handlers.onUpgradePlan(tier);
+      if (tier) {
+        const country =
+          (root.querySelector("[name=billingCountry]") as HTMLInputElement | null)?.value
+            .trim()
+            .toUpperCase() ?? "";
+        const couponCode =
+          (root.querySelector("[name=couponCode]") as HTMLInputElement | null)?.value.trim() ||
+          undefined;
+        void handlers.onUpgradePlan(tier, { billingCountry: country, couponCode });
+      }
     });
   });
 
@@ -234,6 +267,8 @@ export function renderAccountPage(
   root.querySelector("[data-action=admin]")?.addEventListener("click", handlers.onAdmin);
   root.querySelector("[data-action=branding]")?.addEventListener("click", () => handlers.onBranding?.());
   root.querySelector("[data-action=owner]")?.addEventListener("click", () => handlers.onOwner?.());
+  root.querySelector("[data-action=manage-billing]")?.addEventListener("click", () => void handlers.onManageBilling?.());
+  root.querySelector("[data-action=cancel-billing]")?.addEventListener("click", () => void handlers.onCancelBilling?.());
   root.querySelector("[data-action=pricing]")?.addEventListener("click", handlers.onPricing);
   root.querySelector("[data-action=back]")?.addEventListener("click", handlers.onBack);
   root.querySelector("[data-action=signout]")?.addEventListener("click", handlers.onSignOut);

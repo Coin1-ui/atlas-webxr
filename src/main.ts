@@ -156,9 +156,18 @@ import {
   resetPassword,
   verifyEmail,
 } from "./auth/flow";
-import { fetchPublicWorkspaceConfig, PublicShowroomBlockedError, updateWorkspaceSettings, uploadWorkspaceLogo } from "./data/workspace-api";
+import {
+  cancelBillingSubscription,
+  changeBillingPlan,
+  createBillingCheckout,
+  createBillingPortal,
+  fetchPublicWorkspaceConfig,
+  PublicShowroomBlockedError,
+  updateWorkspaceSettings,
+  uploadWorkspaceLogo,
+} from "./data/workspace-api";
 import { fetchWorkspaceUsage } from "./data/usage-api";
-import { acceptOverageCharge, isOveragePaidLocally, requestPlanUpgrade } from "./data/billing-api";
+import { acceptOverageCharge, isOveragePaidLocally } from "./data/billing-api";
 import type { PlanTier } from "./shared/plan-display";
 import { planDisplayName } from "./shared/plan-display";
 import { isTrialSuspended, trialFallbackTier, planActionVerb } from "./shared/trial";
@@ -1164,25 +1173,53 @@ async function showAccountScreen(opts?: {
             void showAccountScreen({ passwordError: e instanceof Error ? e.message : String(e) });
           }
         },
-        onUpgradePlan: async (tier: PlanTier) => {
+        onUpgradePlan: async (tier: PlanTier, checkout) => {
           try {
-            await requestPlanUpgrade(activeWorkspace!.id, tier.id);
-            const workspaces = await fetchMyWorkspaces();
-            const refreshed = workspaces.find((w) => w.id === activeWorkspace!.id);
-            activeWorkspace = applyPlatformOverrides(
-              refreshed ?? {
-                ...activeWorkspace!,
-                purchasedBillingTier: tier.id,
-                billingTier: tier.id,
-              },
-            );
-            void showAccountScreen({
-              billingSuccess: `Subscribed to ${tier.name} (${tier.price}). Your workspace is active.`,
+            if (tier.id === "scale") throw new Error("Scale requires a sales-assisted contract");
+            if (activeWorkspace!.billingSubscriptionId) {
+              await changeBillingPlan(activeWorkspace!.id, tier.id);
+              void showAccountScreen({
+                billingSuccess: `Your ${tier.name} plan change is pending provider confirmation.`,
+              });
+              return;
+            }
+            if (!/^[A-Z]{2}$/.test(checkout.billingCountry)) {
+              throw new Error("Enter a valid 2-letter billing country code");
+            }
+            const result = await createBillingCheckout(activeWorkspace!.id, {
+              tier: tier.id,
+              billingCountry: checkout.billingCountry,
+              email: user.email,
+              couponCode: checkout.couponCode,
             });
+            window.location.assign(result.checkoutUrl);
           } catch (e) {
             void showAccountScreen({ billingError: e instanceof Error ? e.message : String(e) });
           }
         },
+        onManageBilling: activeWorkspace.billingSubscriptionId
+          ? async () => {
+              try {
+                const session = await createBillingPortal(activeWorkspace!.id);
+                window.location.assign(session.portalUrl);
+              } catch (e) {
+                void showAccountScreen({ billingError: e instanceof Error ? e.message : String(e) });
+              }
+            }
+          : undefined,
+        onCancelBilling: activeWorkspace.billingSubscriptionId
+          ? async () => {
+              if (!window.confirm("Cancel this subscription at the end of its billing period?")) return;
+              try {
+                await cancelBillingSubscription(activeWorkspace!.id);
+                void showAccountScreen({
+                  billingSuccess: "Cancellation requested. Access continues through the paid period.",
+                });
+              } catch (e) {
+                void showAccountScreen({ billingError: e instanceof Error ? e.message : String(e) });
+              }
+            }
+          : undefined,
         onPayOverage: async (amountUsd) => {
           if (!usage) return;
           try {
