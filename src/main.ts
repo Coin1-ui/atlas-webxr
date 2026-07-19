@@ -68,6 +68,7 @@ import {
   platformSetWorkspaceRestriction,
   platformSetWorkspaceFeatures,
   platformDeleteCustomerAccount,
+  platformRefundPayment,
   fetchPlatformSettings,
   fetchPublicPromo,
   platformSetSalesDeckActive,
@@ -2196,6 +2197,16 @@ async function showOwnerScreen(tab: OwnerTab = ownerTab): Promise<void> {
         try {
           await platformDeleteCustomerAccount(workspaceId);
           ownerStatus = `Deleted customer account “${name}”.`;
+          await showOwnerScreen("customers");
+        } catch (e) {
+          ownerError = e instanceof Error ? e.message : String(e);
+          await showOwnerScreen("customers");
+        }
+      },
+      onRefund: async (input) => {
+        try {
+          const result = await platformRefundPayment(input);
+          ownerStatus = `Refund ${result.providerRefundId} issued for ${input.paymentId}.`;
           await showOwnerScreen("customers");
         } catch (e) {
           ownerError = e instanceof Error ? e.message : String(e);

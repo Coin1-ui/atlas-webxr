@@ -5,7 +5,6 @@ import type { PlanTierId } from "../shared/plan-display";
 import { backendPlanFromBillingTier } from "../shared/plan-display";
 import type { Workspace } from "../shared/tenant";
 import type { WorkspaceFeatures } from "../shared/workspace-features";
-import { getPurchasedTierLocally } from "./billing-api";
 
 export type PlatformSettings = {
   salesDeckActive: boolean;
@@ -103,28 +102,19 @@ function parsePlatformError(status: number, text: string): string {
   return text || `HTTP ${status}`;
 }
 
-/** Merge legacy localStorage overrides only in local dev (no remote API). */
+/** Merge local development restriction overrides only. */
 export function applyPlatformOverrides(workspace: Workspace): Workspace {
   if (workspace.restricted) return workspace;
   if (getApiBase()) return workspace;
-  let merged = workspace;
-  try {
-    const purchased = getPurchasedTierLocally(workspace.id);
-    if (purchased && !workspace.purchasedBillingTier) {
-      merged = { ...merged, purchasedBillingTier: purchased as Workspace["purchasedBillingTier"] };
-    }
-  } catch {
-    /* ignore */
-  }
   try {
     const raw = localStorage.getItem("atlas-platform-restrictions");
-    if (!raw) return merged;
+    if (!raw) return workspace;
     const list = JSON.parse(raw) as Array<{ workspaceId: string; reason: string }>;
     const hit = list.find((r) => r.workspaceId === workspace.id);
-    if (!hit) return merged;
-    return { ...merged, restricted: true, restrictionReason: hit.reason };
+    if (!hit) return workspace;
+    return { ...workspace, restricted: true, restrictionReason: hit.reason };
   } catch {
-    return merged;
+    return workspace;
   }
 }
 
@@ -238,6 +228,28 @@ export async function platformDeleteCustomerAccount(workspaceId: string): Promis
     throw new Error(text.includes("cannot be deleted") ? "Platform operator accounts cannot be deleted" : text || "Forbidden");
   }
   if (!res.ok) throw new Error(parsePlatformError(res.status, await res.text()));
+}
+
+export async function platformRefundPayment(input: {
+  provider: "dodo" | "zoho";
+  paymentId: string;
+  amountMinor: number;
+  reason: string;
+}): Promise<{ providerRefundId: string }> {
+  const headers = new Headers(authHeaders());
+  headers.set("Idempotency-Key", crypto.randomUUID());
+  const res = await platformFetch(saasApiUrl("/v2/platform/billing/refunds"), {
+    method: "POST",
+    headers,
+    body: JSON.stringify({
+      provider: input.provider,
+      paymentId: input.paymentId,
+      amountMinor: input.amountMinor,
+      reason: input.reason,
+    }),
+  });
+  if (!res.ok) throw new Error(parsePlatformError(res.status, await res.text()));
+  return (await res.json()) as { providerRefundId: string };
 }
 
 export async function fetchPlatformCoupons(): Promise<PlatformCoupon[]> {

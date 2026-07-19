@@ -52,6 +52,13 @@ export function renderOwnerDashboard(
     ) => void | Promise<void>;
     onRestrict: (workspaceId: string, restricted: boolean, reason: string, slug?: string) => void | Promise<void>;
     onDeleteCustomer: (workspaceId: string, name: string, slug: string) => void | Promise<void>;
+    onRefund: (input: {
+      workspaceId: string;
+      provider: "dodo" | "zoho";
+      paymentId: string;
+      amountMinor: number;
+      reason: string;
+    }) => void | Promise<void>;
     onCreateCoupon: (input: {
       offerType?: "fixed" | "percent";
       code: string;
@@ -193,6 +200,11 @@ export function renderOwnerDashboard(
                    </td>
                    <td class="owner-row-actions">
                      <button type="button" class="btn btn-ghost btn-sm" data-save-plan="${escapeHtml(w.id)}">Save plan</button>
+                     ${
+                       w.billingProvider
+                         ? `<button type="button" class="btn btn-ghost btn-sm owner-btn-danger" data-refund="${escapeHtml(w.id)}" data-provider="${escapeHtml(w.billingProvider)}">Issue refund</button>`
+                         : ""
+                     }
                      ${
                        w.restricted
                          ? `<button type="button" class="btn btn-ghost btn-sm" data-unrestrict="${escapeHtml(w.id)}">Lift restriction</button>`
@@ -486,6 +498,28 @@ export function renderOwnerDashboard(
       );
       if (!ok) return;
       void handlers.onDeleteCustomer(id, name, slug);
+    });
+  });
+
+  root.querySelectorAll<HTMLElement>("[data-refund]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const workspaceId = btn.getAttribute("data-refund");
+      const provider = btn.getAttribute("data-provider");
+      if (!workspaceId || (provider !== "dodo" && provider !== "zoho")) return;
+      const paymentId = window.prompt("Provider payment ID to refund:")?.trim();
+      if (!paymentId) return;
+      const amount = window.prompt("Refund amount (for example, 5.00):")?.trim();
+      if (!amount || !/^\d+(?:\.\d{1,2})?$/.test(amount)) {
+        window.alert("Enter a valid positive amount with no more than two decimal places.");
+        return;
+      }
+      const [whole, fraction = ""] = amount.split(".");
+      const amountMinor = Number(whole) * 100 + Number(fraction.padEnd(2, "0"));
+      if (!Number.isSafeInteger(amountMinor) || amountMinor <= 0) return;
+      const reason = window.prompt("Refund reason:")?.trim();
+      if (!reason) return;
+      if (!window.confirm(`Issue a ${provider.toUpperCase()} refund of ${amount} for ${paymentId}?`)) return;
+      void handlers.onRefund({ workspaceId, provider, paymentId, amountMinor, reason });
     });
   });
 
