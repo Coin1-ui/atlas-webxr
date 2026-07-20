@@ -57,17 +57,38 @@ export function planActionVerb(ws) {
 }
 
 /**
- * Per-tier Subscribe vs Upgrade matrix (mirror of src/shared/trial.ts).
- * Reference = active trial plan, else purchased tier. target > reference → Upgrade, else Subscribe.
- * @param {{ trialEndsAt?: string | null; trialPlan?: BillingTierId | null; purchasedBillingTier?: BillingTierId | null; billingEntitlementTier?: BillingTierId | null }} ws
+ * Per-tier CTA matrix (mirror of src/shared/trial.ts).
+ * Paid entitlement is the reference when present; otherwise active trial plan.
+ * @param {{ trialEndsAt?: string | null; trialPlan?: BillingTierId | null; purchasedBillingTier?: BillingTierId | null; billingEntitlementTier?: BillingTierId | null; billingProvider?: string | null; billingStatus?: string | null; billingCurrentPeriodEnd?: string | null; billingGraceUntil?: string | null; manualBillingTier?: BillingTierId | null }} ws
  * @param {BillingTierId} targetTier
- * @returns {"Subscribe" | "Upgrade"}
+ * @returns {"Subscribe" | "Upgrade" | "Downgrade" | "Current"}
  */
 export function planActionVerbForTier(ws, targetTier) {
   const paidTier = paidBillingTier(ws);
-  const reference = isTrialActive(ws) && ws.trialPlan ? ws.trialPlan : paidTier;
+  const reference = paidTier ?? (isTrialActive(ws) && ws.trialPlan ? ws.trialPlan : null);
   if (!reference) return "Subscribe";
-  return TIER_ORDER.indexOf(targetTier) > TIER_ORDER.indexOf(reference) ? "Upgrade" : "Subscribe";
+  const cmp = TIER_ORDER.indexOf(targetTier) - TIER_ORDER.indexOf(reference);
+  if (cmp > 0) return "Upgrade";
+  if (cmp < 0) return "Downgrade";
+  return "Current";
+}
+
+/**
+ * Paid-plan change matrix (mirror of src/shared/trial.ts).
+ * @param {{ purchasedBillingTier?: BillingTierId | null; billingEntitlementTier?: BillingTierId | null; billingProvider?: string | null; billingStatus?: string | null; billingCurrentPeriodEnd?: string | null; billingGraceUntil?: string | null; manualBillingTier?: BillingTierId | null }} ws
+ */
+export function planChangeMatrix(ws) {
+  const current = paidBillingTier(ws);
+  if (!current) {
+    return { current: null, upgrades: [], downgrades: [] };
+  }
+  const idx = TIER_ORDER.indexOf(current);
+  const selfServe = TIER_ORDER.filter((t) => t !== "scale");
+  return {
+    current,
+    upgrades: selfServe.filter((t) => TIER_ORDER.indexOf(t) > idx),
+    downgrades: selfServe.filter((t) => TIER_ORDER.indexOf(t) < idx),
+  };
 }
 
 /**

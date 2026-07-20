@@ -172,8 +172,15 @@ import {
 import { fetchWorkspaceUsage } from "./data/usage-api";
 import { acceptOverageCharge, isOveragePaidLocally } from "./data/billing-api";
 import type { PlanTier } from "./shared/plan-display";
-import { planDisplayName } from "./shared/plan-display";
-import { isTrialSuspended, trialFallbackTier, planActionVerb } from "./shared/trial";
+import { planChangeScheduledMessage, planDisplayName } from "./shared/plan-display";
+import {
+  hasLiveBillingSubscription,
+  isTrialSuspended,
+  planActionVerb,
+  planActionVerbForTier,
+  subscribedBillingTier,
+  trialFallbackTier,
+} from "./shared/trial";
 import {
   clearDeployRecoveryFlag,
   flushAnalyticsSessionEnd,
@@ -187,7 +194,6 @@ import { modelIconSrc } from "./shared/model-icon";
 import { applyWorkspaceTheme, workspaceLogoUrl } from "./branding/workspace-theme";
 import type { Workspace } from "./shared/tenant";
 import { isSupportedBillingCountry } from "./shared/dodo-billing-countries";
-import { hasLiveBillingSubscription, subscribedBillingTier } from "./shared/trial";
 import {
   DEFAULT_WORKSPACE_FEATURES,
   normalizeWorkspaceFeatures,
@@ -1224,9 +1230,10 @@ async function showAccountScreen(opts?: {
                 void showAccountScreen({ billingSuccess: `You are already on ${tier.name}.` });
                 return;
               }
+              const verb = planActionVerbForTier(activeWorkspace!, tier.id);
               await changeBillingPlan(activeWorkspace!.id, tier.id, billingCountry);
               void showAccountScreen({
-                billingSuccess: `Your ${tier.name} plan change is scheduled for your next billing date.`,
+                billingSuccess: planChangeScheduledMessage(verb, tier.name),
               });
               return;
             }

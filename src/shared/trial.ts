@@ -80,6 +80,28 @@ export function planActionVerbForTier(ws: TrialWorkspace, targetTier: PlanTierId
   return "Current";
 }
 
+/**
+ * Paid-plan change matrix: which self-serve tiers are upgrades vs downgrades.
+ * Empty when the workspace has no live paid entitlement.
+ */
+export function planChangeMatrix(ws: TrialWorkspace): {
+  current: PlanTierId | null;
+  upgrades: PlanTierId[];
+  downgrades: PlanTierId[];
+} {
+  const current = subscribedBillingTier(ws);
+  if (!current) {
+    return { current: null, upgrades: [], downgrades: [] };
+  }
+  const idx = TIER_ORDER.indexOf(current);
+  const selfServe = TIER_ORDER.filter((t) => t !== "scale");
+  return {
+    current,
+    upgrades: selfServe.filter((t) => TIER_ORDER.indexOf(t) > idx),
+    downgrades: selfServe.filter((t) => TIER_ORDER.indexOf(t) < idx),
+  };
+}
+
 /** Tiers a trialing workspace can subscribe to (≤ trial) vs upgrade to (> trial). */
 export function trialCtaTiers(ws: TrialWorkspace): { subscribe: PlanTierId[]; upgrade: PlanTierId[] } {
   const refIdx = TIER_ORDER.indexOf(ws.trialPlan ?? "growth");

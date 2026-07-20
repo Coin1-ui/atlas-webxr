@@ -36,6 +36,7 @@
     "test:billing-providers": "node scripts/test-billing-provider-adapters-unit.mjs",
     "test:billing-policy": "node scripts/test-billing-policy-unit.mjs",
     "test:dodo-billing-countries": "node scripts/test-dodo-billing-countries-unit.mjs",
+    "test:plan-change-matrix": "node scripts/test-plan-change-matrix-unit.mjs",
     "generate:dodo-billing-countries": "node scripts/generate-dodo-billing-countries.mjs",
     "qa:billing-sandbox": "node scripts/qa-billing-sandbox-checklist.mjs",
     "qa:batch33-live": "node scripts/qa-batch33-live.mjs",

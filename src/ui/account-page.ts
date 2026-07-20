@@ -3,7 +3,7 @@ import { brandedHeaderHtml, mountWorkspaceLogo } from "../branding/workspace-the
 import type { WorkspaceUsageResponse } from "../data/usage-api";
 import { formatStorageBytes, formatSessionsLimit, isUnlimitedSessionsLimit } from "../shared/plan-limits";
 import { estimateOverageUsd, planDisplayName, upgradeOptions, type PlanTier } from "../shared/plan-display";
-import { effectiveBillingTier, trialProfilePlanLine, accountTrialBannerHtml, trialSuspendedBannerHtml, mountTrialCountdown, planActionVerbForTier, hasLiveBillingSubscription, subscribedBillingTier } from "../shared/trial";
+import { effectiveBillingTier, trialProfilePlanLine, accountTrialBannerHtml, trialSuspendedBannerHtml, mountTrialCountdown, planActionVerbForTier, hasLiveBillingSubscription, subscribedBillingTier, planChangeMatrix } from "../shared/trial";
 import { isOveragePaidLocally } from "../data/billing-api";
 import {
   billingCountryOptions,
@@ -148,7 +148,28 @@ export function renderAccountPage(
             </button>`;
             })
             .join("")}
-        </div>`
+        </div>
+        ${
+          paidBillingTier
+            ? (() => {
+                const matrix = planChangeMatrix(workspace);
+                const bits: string[] = [];
+                if (matrix.upgrades.length) {
+                  bits.push(
+                    `Upgrade to ${matrix.upgrades.map((id) => planDisplayName(workspace.plan, id)).join(" or ")}`,
+                  );
+                }
+                if (matrix.downgrades.length) {
+                  bits.push(
+                    `downgrade to ${matrix.downgrades.map((id) => planDisplayName(workspace.plan, id)).join(" or ")}`,
+                  );
+                }
+                return bits.length
+                  ? `<p class="auth-hint">Plan changes apply on your next billing date — ${escapeHtml(bits.join("; "))}. You keep your current plan until then.</p>`
+                  : `<p class="auth-hint">You are on our highest self-serve tier. Plan changes apply on your next billing date.</p>`;
+              })()
+            : ""
+        }`
       : `<p class="auth-hint">You are on our highest self-serve tier. <button type="button" class="auth-inline-link" data-action="pricing">Contact sales for Scale</button>.</p>`;
 
   root.innerHTML = `

@@ -1,5 +1,5 @@
 import type { WorkspacePlan } from "./tenant";
-import { effectiveBillingTier, hasPurchasedTrialFallback, isTrialActive, isTrialSuspended, subscribedBillingTier, trialFallbackTier, type TrialWorkspace } from "./trial";
+import { effectiveBillingTier, hasPurchasedTrialFallback, isTrialActive, isTrialSuspended, trialFallbackTier, type TrialWorkspace } from "./trial";
 
 export type PlanTierId = "starter" | "launch" | "growth" | "scale";
 
@@ -55,12 +55,7 @@ export const CUSTOMER_BILLING_TIERS = PLAN_TIERS.filter((t) => t.id !== "scale")
 export function upgradeOptions(ws: TrialWorkspace): PlanTier[] {
   const order: PlanTierId[] = ["starter", "launch", "growth", "scale"];
   if (ws.billingSubscriptionId) {
-    const paidTier = subscribedBillingTier(ws);
-    if (!paidTier) {
-      return CUSTOMER_BILLING_TIERS;
-    }
-    // Show all self-serve tiers so Starter remains visible while on Launch/Growth
-    // (Current / Upgrade / Downgrade CTAs come from planActionVerbForTier).
+    // Paid (or subscription id on file): full self-serve matrix — Current / Upgrade / Downgrade.
     return CUSTOMER_BILLING_TIERS;
   }
   if (isTrialSuspended(ws) && ws.trialPlan) {
@@ -76,6 +71,20 @@ export function upgradeOptions(ws: TrialWorkspace): PlanTier[] {
   const idx = order.indexOf(current);
   if (idx < 0) return [];
   return PLAN_TIERS.filter((t) => order.indexOf(t.id) > idx);
+}
+
+/** User-facing copy after a scheduled plan change (upgrade or downgrade). */
+export function planChangeScheduledMessage(
+  verb: "Upgrade" | "Downgrade" | "Subscribe" | "Current",
+  tierName: string,
+): string {
+  if (verb === "Downgrade") {
+    return `Your downgrade to ${tierName} is scheduled for your next billing date. You keep your current plan until then.`;
+  }
+  if (verb === "Upgrade") {
+    return `Your upgrade to ${tierName} is scheduled for your next billing date.`;
+  }
+  return `Your ${tierName} plan change is scheduled for your next billing date.`;
 }
 
 /** Rough overage estimate when usage exceeds included limits (USD). */
