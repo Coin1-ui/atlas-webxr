@@ -139,9 +139,9 @@ export function renderAccountPage(
           ${upgrades
             .map((tier) => {
               const verb = planActionVerbForTier(workspace, tier.id);
-              const isCurrent = verb === "Current";
+              if (verb === "Current") return "";
               return `
-            <button type="button" class="account-plan-card${isCurrent ? " account-plan-card--current" : ""}" data-action="upgrade" data-tier="${escapeHtml(tier.id)}"${isCurrent ? " disabled aria-current=\"true\"" : ""}>
+            <button type="button" class="account-plan-card" data-action="upgrade" data-tier="${escapeHtml(tier.id)}">
               <span class="account-plan-name">${escapeHtml(tier.name)}</span>
               <span class="account-plan-price">${escapeHtml(tier.price)}</span>
               <span class="account-plan-cta">${escapeHtml(verb)}</span>

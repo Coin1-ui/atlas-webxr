@@ -1,5 +1,5 @@
 import type { WorkspacePlan } from "./tenant";
-import { effectiveBillingTier, hasPurchasedTrialFallback, isTrialActive, isTrialSuspended, trialFallbackTier, type TrialWorkspace } from "./trial";
+import { effectiveBillingTier, hasPurchasedTrialFallback, isTrialActive, isTrialSuspended, subscribedBillingTier, trialFallbackTier, type TrialWorkspace } from "./trial";
 
 export type PlanTierId = "starter" | "launch" | "growth" | "scale";
 
@@ -55,8 +55,13 @@ export const CUSTOMER_BILLING_TIERS = PLAN_TIERS.filter((t) => t.id !== "scale")
 export function upgradeOptions(ws: TrialWorkspace): PlanTier[] {
   const order: PlanTierId[] = ["starter", "launch", "growth", "scale"];
   if (ws.billingSubscriptionId) {
-    // Paid (or subscription id on file): full self-serve matrix — Current / Upgrade / Downgrade.
-    return CUSTOMER_BILLING_TIERS;
+    const paidTier = subscribedBillingTier(ws);
+    if (!paidTier) {
+      return CUSTOMER_BILLING_TIERS;
+    }
+    // Hide the current plan card — Plan name is already shown in Plan & billing.
+    // Offer only Upgrade / Downgrade targets.
+    return CUSTOMER_BILLING_TIERS.filter((tier) => tier.id !== paidTier);
   }
   if (isTrialSuspended(ws) && ws.trialPlan) {
     // Suspended: offer every self-serve tier so the customer can resubscribe at any level.

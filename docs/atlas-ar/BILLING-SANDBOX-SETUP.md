@@ -146,12 +146,41 @@ Use subscription `sub_0NjVduFvyLgtljNZmXMoU` (or a fresh disposable sub).
    Expect updated `currentPeriodEnd` and, if cancel-at-period-end was already true,
    status moving toward canceled/expired and entitlement clearing after period end.
 
+### How to verify a recurring renewal (same plan)
+
+Dodo renews by charging the saved payment method when `next_billing_date` is reached.
+Expected webhooks: `payment.succeeded` + `subscription.renewed` (+ often `subscription.updated`).
+
+**Checks after renewal:**
+
+1. **Dodo Dashboard (test)** → Subscriptions → open the sub:
+   - Status still **active**
+   - Product unchanged (e.g. Launch)
+   - `next_billing_date` advanced by one period
+   - New payment row for the recurring amount (e.g. $59 Launch)
+2. **Dodo API:**
+   ```http
+   GET https://test.dodopayments.com/subscriptions/{subscription_id}
+   GET https://test.dodopayments.com/payments?page_size=10
+   ```
+   Confirm a new `payment_id` on that subscription after the billing time, and status `active`.
+3. **Dodo Webhooks → Message Attempts:** look for `subscription.renewed` / `payment.succeeded` around the billing time (Succeeded).
+4. **Atlas:** `GET /v2/workspaces/{id}/billing/status` → `status: active`, same `entitlementTier`, new `currentPeriodEnd`.
+
+**Clock advance caveat (this sandbox):** advancing `next_billing_date` with
+`PATCH /subscriptions/{id}` has repeatedly moved active subs to **`expired` without a
+renewal charge**. Cancel-at-period-end clock advance still works. For renewal proof here,
+prefer waiting for the natural `next_billing_date`, or confirm with Dodo support why
+accelerated renewals expire instead of charging.
+
 ### Scenario matrix
 
 | What you want to prove | Setup | Then advance `next_billing_date` |
 |------------------------|-------|----------------------------------|
-| **Cancel at period end** (current sandbox state) | Already `cancel_at_next_billing_date: true` | Yes → expect cancel/expire webhooks, Atlas loses entitlement after end |
-| **Renewal charge** | New active sub, cancel flag **false**, success test card | Yes → expect `payment.succeeded` + `subscription.renewed` |
+| **Cancel at period end** | Already `cancel_at_next_billing_date: true` | Yes → expect cancel/expire webhooks, Atlas loses entitlement after end |
+| **Renewal charge** | New active sub, cancel flag **false**, success test card | Prefer **natural** period in this sandbox; clock advance may expire without charge |
+| **Upgrade/downgrade at renewal** | `POST …/billing/plan` (Atlas schedules `next_billing_date`) | Same caveat as renewal; or use `effective_at: immediately` for upgrade-only proof |
+| **Immediate cancel only** | Dashboard / API cancel now (not period-end) | Not needed for period-end proof |
 | **Upgrade at renewal (no immediate charge)** | `POST …/billing/plan` with country → Growth while Launch active | Yes → plan applies at advanced date; no charge until then |
 | **Immediate cancel only** | Dashboard / API cancel now (not period-end) | Not needed for period-end proof |
 
