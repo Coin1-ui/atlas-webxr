@@ -113,4 +113,52 @@ Recorded evidence:
 Before further testing, rotate any test API key exposed during diagnostics and update
 `DODO_PAYMENTS_API_KEY` in Lambda.
 
+## 9. Accelerate period-end testing (do not wait for natural renewal)
+
+Dodo **test mode** supports advancing the billing clock. Official FAQ: you can set
+`next_billing_date` via `PATCH /subscriptions/{id}` — the timestamp must be **in the
+future** (ISO 8601 UTC with `Z`). See Dodo “Testing Process” / FAQ Q139.
+
+### Recommended sandbox procedure
+
+Use subscription `sub_0NjVduFvyLgtljNZmXMoU` (or a fresh disposable sub).
+
+1. Pick a time **2–5 minutes ahead** (UTC):
+   ```powershell
+   $next = (Get-Date).ToUniversalTime().AddMinutes(3).ToString("yyyy-MM-ddTHH:mm:ssZ")
+   Write-Output $next
+   ```
+2. In **Dodo Dashboard (test mode)** → Subscription → Update / API, or:
+   ```http
+   PATCH https://test.dodopayments.com/subscriptions/sub_0NjVduFvyLgtljNZmXMoU
+   Authorization: Bearer <DODO_TEST_API_KEY>
+   Content-Type: application/json
+
+   { "next_billing_date": "2026-07-20T04:10:00Z" }
+   ```
+   (Replace the timestamp with your `$next` value. Do not paste the API key into chat/git.)
+3. Wait for Dodo to fire lifecycle webhooks (`subscription.renewed` / `subscription.cancelled` /
+   `subscription.expired` / `subscription.updated` as applicable).
+4. Confirm Atlas:
+   ```text
+   GET /v2/workspaces/{workspaceId}/billing/status
+   ```
+   Expect updated `currentPeriodEnd` and, if cancel-at-period-end was already true,
+   status moving toward canceled/expired and entitlement clearing after period end.
+
+### Scenario matrix
+
+| What you want to prove | Setup | Then advance `next_billing_date` |
+|------------------------|-------|----------------------------------|
+| **Cancel at period end** (current sandbox state) | Already `cancel_at_next_billing_date: true` | Yes → expect cancel/expire webhooks, Atlas loses entitlement after end |
+| **Renewal charge** | New active sub, cancel flag **false**, success test card | Yes → expect `payment.succeeded` + `subscription.renewed` |
+| **Upgrade at renewal (no immediate charge)** | `POST …/billing/plan` with country → Growth while Launch active | Yes → plan applies at advanced date; no charge until then |
+| **Immediate cancel only** | Dashboard / API cancel now (not period-end) | Not needed for period-end proof |
+
+### Do not
+
+- Set `next_billing_date` to a **past** time (Dodo rejects it).
+- Only edit DynamoDB `billingCurrentPeriodEnd` without a provider event — Atlas must reconcile from signed webhooks.
+- Use live-mode credentials for this clock advance.
+
 When all dashboard values are configured, report only that setup is complete—do not send secret values.

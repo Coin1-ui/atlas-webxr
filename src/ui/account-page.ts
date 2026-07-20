@@ -5,6 +5,11 @@ import { formatStorageBytes, formatSessionsLimit, isUnlimitedSessionsLimit } fro
 import { estimateOverageUsd, upgradeOptions, type PlanTier } from "../shared/plan-display";
 import { effectiveBillingTier, trialProfilePlanLine, accountTrialBannerHtml, trialSuspendedBannerHtml, mountTrialCountdown, planActionVerbForTier } from "../shared/trial";
 import { isOveragePaidLocally } from "../data/billing-api";
+import {
+  billingCountryOptions,
+  formatBillingCountryLabel,
+  isSupportedBillingCountry,
+} from "../shared/dodo-billing-countries";
 import { MKT } from "./marketing-copy";
 import { MKT_ASSETS } from "./marketing-assets";
 
@@ -18,14 +23,17 @@ function escapeHtml(s: string): string {
 
 function readBillingCountry(root: HTMLElement): string {
   return (
-    (root.querySelector("[name=billingCountry]") as HTMLInputElement | null)?.value
+    (root.querySelector("[name=billingCountry]") as HTMLSelectElement | null)?.value
       .trim()
       .toUpperCase() ?? ""
   );
 }
 
-function isValidBillingCountry(country: string): boolean {
-  return /^[A-Z]{2}$/.test(country);
+function isValidBillingCountry(
+  country: string,
+  provider: Workspace["billingProvider"],
+): boolean {
+  return isSupportedBillingCountry(country, provider ?? "dodo");
 }
 
 function isLiveBillingStatus(status: Workspace["billingStatus"]): boolean {
@@ -118,6 +126,12 @@ export function renderAccountPage(
 
   const billingIsLive = isLiveBillingStatus(workspace.billingStatus);
   const cancelScheduled = billingIsLive && workspace.billingCancelAtPeriodEnd === true;
+  const countryOptionsHtml = billingCountryOptions(workspace.billingProvider)
+    .map(
+      (country) =>
+        `<option value="${escapeHtml(country.code)}">${escapeHtml(formatBillingCountryLabel(country))}</option>`,
+    )
+    .join("");
 
   const upgradeHtml =
     upgrades.length > 0
@@ -197,8 +211,11 @@ export function renderAccountPage(
                 : ""
             }
             <div class="account-checkout-fields">
-              <label class="auth-label">Billing country (2-letter ISO code, required)
-                <input class="auth-input" name="billingCountry" maxlength="2" placeholder="e.g. US or IN" autocomplete="country" required />
+              <label class="auth-label">Billing country (required)
+                <select class="auth-input" name="billingCountry" autocomplete="country" required>
+                  <option value="" selected disabled>Select country…</option>
+                  ${countryOptionsHtml}
+                </select>
               </label>
               ${
                 workspace.billingSubscriptionId
@@ -272,7 +289,7 @@ export function renderAccountPage(
       const tier = upgrades.find((t) => t.id === tierId);
       if (tier) {
         const country = readBillingCountry(root);
-        if (!isValidBillingCountry(country)) {
+        if (!isValidBillingCountry(country, workspace.billingProvider)) {
           void handlers.onUpgradePlan(tier, { billingCountry: "" });
           return;
         }
@@ -294,7 +311,7 @@ export function renderAccountPage(
   root.querySelector("[data-action=owner]")?.addEventListener("click", () => handlers.onOwner?.());
   root.querySelector("[data-action=manage-billing]")?.addEventListener("click", () => {
     const country = readBillingCountry(root);
-    if (!isValidBillingCountry(country)) {
+    if (!isValidBillingCountry(country, workspace.billingProvider)) {
       void handlers.onManageBilling?.({ billingCountry: "" });
       return;
     }

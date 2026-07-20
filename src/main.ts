@@ -186,6 +186,7 @@ import { renderMobileAdminHub } from "./ui/mobile-admin-hub";
 import { modelIconSrc } from "./shared/model-icon";
 import { applyWorkspaceTheme, workspaceLogoUrl } from "./branding/workspace-theme";
 import type { Workspace } from "./shared/tenant";
+import { isSupportedBillingCountry } from "./shared/dodo-billing-countries";
 import {
   DEFAULT_WORKSPACE_FEATURES,
   normalizeWorkspaceFeatures,
@@ -1120,10 +1121,10 @@ function mergeBillingStatus(workspace: Workspace, billing: BillingStatus): Works
   };
 }
 
-function requireBillingCountry(country: string): string {
+function requireBillingCountry(country: string, provider: Workspace["billingProvider"] = "dodo"): string {
   const normalized = country.trim().toUpperCase();
-  if (!/^[A-Z]{2}$/.test(normalized)) {
-    throw new Error("Select a valid 2-letter billing country code before continuing");
+  if (!isSupportedBillingCountry(normalized, provider ?? "dodo")) {
+    throw new Error("Select a billing country from the list before continuing");
   }
   return normalized;
 }
@@ -1211,7 +1212,10 @@ async function showAccountScreen(opts?: {
         onUpgradePlan: async (tier: PlanTier, checkout) => {
           try {
             if (tier.id === "scale") throw new Error("Scale requires a sales-assisted contract");
-            const billingCountry = requireBillingCountry(checkout.billingCountry);
+            const billingCountry = requireBillingCountry(
+              checkout.billingCountry,
+              activeWorkspace!.billingProvider,
+            );
             if (activeWorkspace!.billingSubscriptionId) {
               await changeBillingPlan(activeWorkspace!.id, tier.id, billingCountry);
               void showAccountScreen({
@@ -1233,7 +1237,10 @@ async function showAccountScreen(opts?: {
         onManageBilling: activeWorkspace.billingSubscriptionId
           ? async (checkout) => {
               try {
-                const billingCountry = requireBillingCountry(checkout.billingCountry);
+                const billingCountry = requireBillingCountry(
+              checkout.billingCountry,
+              activeWorkspace!.billingProvider,
+            );
                 const session = await createBillingPortal(activeWorkspace!.id, billingCountry);
                 window.location.assign(session.portalUrl);
               } catch (e) {

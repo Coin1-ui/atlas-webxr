@@ -13,6 +13,8 @@ import {
   applyVerifiedBillingEvent,
   ensureProviderSubscriptionBinding,
   getBillingSubscription,
+  resolveBillingWorkspace,
+  workspaceRecordExists,
   withBillingReconciliationLock,
 } from "../lib/billing-store.mjs";
 import { providerTimestampSequence } from "../lib/billing-state.mjs";
@@ -46,6 +48,22 @@ function subscriptionIdFromDodoEvent(webhook) {
     return webhook.data?.subscription_id ? String(webhook.data.subscription_id) : null;
   }
   return webhook.data?.subscription_id ? String(webhook.data.subscription_id) : null;
+}
+
+const TERMINAL_DODO_SUBSCRIPTION_STATUSES = new Set(["cancelled", "failed", "expired"]);
+
+function dodoSubscriptionIsObsolete(subscription) {
+  return TERMINAL_DODO_SUBSCRIPTION_STATUSES.has(String(subscription?.status || "").toLowerCase());
+}
+
+function ignorableDodoWebhookResponse(reason) {
+  return jsonResponse(200, { received: true, ignored: true, reason });
+}
+
+function isIgnorableDodoWebhookError(error) {
+  if (error?.name === "TransactionCanceledException") return true;
+  const message = error instanceof Error ? error.message : "";
+  return message === "Billing provider can change only after the prior subscription has ended";
 }
 
 /**
@@ -82,6 +100,39 @@ export async function handleDodoWebhook(event) {
     const operationId =
       webhook.data?.metadata?.atlas_billing_operation_id || undefined;
     const customerId = webhook.data?.customer?.customer_id || undefined;
+    let workspaceId;
+    try {
+      workspaceId = await resolveBillingWorkspace({
+        provider: "dodo",
+        providerSubscriptionId: subscriptionId,
+        checkoutOperationId: operationId,
+      });
+    } catch (mappingError) {
+      const message = mappingError instanceof Error ? mappingError.message : "";
+      if (
+        message === "No server-owned billing mapping exists" ||
+        message === "Provider billing mappings disagree"
+      ) {
+        const subscription = await getDodoSubscription(subscriptionId);
+        if (dodoSubscriptionIsObsolete(subscription)) {
+          console.info("Dodo webhook ignored (orphan subscription)", {
+            eventId,
+            subscriptionId,
+            operationId,
+          });
+          return ignorableDodoWebhookResponse("orphan_subscription");
+        }
+      }
+      throw mappingError;
+    }
+    if (!(await workspaceRecordExists(workspaceId))) {
+      console.info("Dodo webhook ignored (deleted workspace)", {
+        eventId,
+        subscriptionId,
+        workspaceId,
+      });
+      return ignorableDodoWebhookResponse("deleted_workspace");
+    }
     await ensureProviderSubscriptionBinding({
       provider: "dodo",
       providerSubscriptionId: subscriptionId,
@@ -140,6 +191,14 @@ export async function handleDodoWebhook(event) {
       applied: result?.applied === true,
     });
   } catch (error) {
+    if (isIgnorableDodoWebhookError(error)) {
+      console.info("Dodo webhook ignored (reconciliation conflict)", {
+        eventId,
+        subscriptionId,
+        error: error instanceof Error ? error.message : "Unknown error",
+      });
+      return ignorableDodoWebhookResponse("reconciliation_conflict");
+    }
     console.error("Dodo webhook reconciliation failed", {
       eventId,
       subscriptionId,

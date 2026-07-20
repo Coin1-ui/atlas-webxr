@@ -86,6 +86,43 @@ assert.equal(dodoEvent.status, "active");
 assert.equal(dodoEvent.checkoutOperationId, "op_1");
 assert.equal(dodoEvent.currentPeriodEnd, "2026-08-18T10:00:00.451Z");
 
+assert.equal(dodoEvent.cancelAtPeriodEnd, false);
+
+const expiredDodoEvent = normalizeDodoSubscriptionSnapshot({
+  eventId: "evt_expired_1",
+  eventType: "subscription.expired",
+  occurredAt: "2026-07-20T13:44:32.000Z",
+  providerSequence: 9,
+  subscription: {
+    subscription_id: "sub_expired",
+    product_id: "prod_growth",
+    status: "cancelled",
+    cancel_at_next_billing_date: true,
+    cancelled_at: "2026-07-20T13:44:32.048953Z",
+    customer: { customer_id: "cus_1" },
+    metadata: { atlas_billing_operation_id: "op_1" },
+  },
+});
+assert.equal(expiredDodoEvent.status, "expired");
+assert.equal(expiredDodoEvent.cancelAtPeriodEnd, false);
+
+const cancelScheduledDodoEvent = normalizeDodoSubscriptionSnapshot({
+  eventId: "evt_cancel_scheduled",
+  eventType: "subscription.updated",
+  occurredAt: "2026-07-18T10:00:00.000Z",
+  providerSequence: 2,
+  subscription: {
+    subscription_id: "sub_1",
+    product_id: "prod_growth",
+    status: "active",
+    next_billing_date: "2026-08-18T10:00:00.451503Z",
+    cancel_at_next_billing_date: true,
+    customer: { customer_id: "cus_1" },
+    metadata: { atlas_billing_operation_id: "op_1" },
+  },
+});
+assert.equal(cancelScheduledDodoEvent.cancelAtPeriodEnd, true);
+
 const dodoPaymentEvent = normalizeDodoSubscriptionSnapshot({
   eventId: "evt_payment_1",
   eventType: "payment.succeeded",

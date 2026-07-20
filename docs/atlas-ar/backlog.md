@@ -844,16 +844,48 @@ Full matrix: [PRICING-FEATURE-READINESS.md](./PRICING-FEATURE-READINESS.md)
   re-test cancel / Growth upgrade visibility / country gate / renewal-only upgrade;
   then Zoho India sandbox + optional owner-approved refund E2E.
 
-## NEXUS-Sprint orchestration log (2026-07-20) — Billing account UX + owner refund
+### Billing rollout update — 2026-07-20 09:26 IST (authenticated sandbox)
+
+- Re-ran `npm run qa:billing-sandbox` with Cognito ID token (not persisted in git/memory).
+- Result: **PASS 22 · FAIL 0 · SKIP 3** (mutating cancel/upgrade intentionally skipped).
+- Workspace `1ee2cb65-6252-4679-ab53-84ea36b2518f` (`test-admin`):
+  - Trial: Growth through `2026-08-02T07:23:42.821Z`
+  - Entitlement: **launch** / status **active** / `cancelAtPeriodEnd=true`
+  - Period end: `2026-08-19T11:32:53.048Z` · sub `sub_0NjVduFvyLgtljNZmXMoU`
+- Lambda ZIP confirmed live for country gate:
+  - `POST …/billing/plan` without country → `400 billingCountry must be an ISO country code`
+  - `POST …/billing/portal` without country → `400`
+  - Same-tier plan with `billingCountry=US` → `200 { ok, pending:false, tier:launch }`
+- Remaining manual: signed-in Account UI — Growth upgrade card (paid Launch → show Growth),
+  country empty blocks CTA, cancel message already expected (`cancelAtPeriodEnd=true`).
+- Do **not** run a live Growth upgrade smoke unless asked (would schedule provider plan change).
+
+### Billing rollout update — 2026-07-20 09:33 IST (period-end acceleration)
+
+- **Do not wait until 19 Aug.** Dodo test mode supports advancing the clock via
+  `PATCH /subscriptions/{id}` `{ "next_billing_date": "<future UTC Z>" }` (2–5 minutes ahead).
+- Procedure recorded in [BILLING-SANDBOX-SETUP.md](./BILLING-SANDBOX-SETUP.md) §9.
+- Current `test-admin` sub already has cancel-at-period-end → advancing date validates
+  cancel/expiry webhooks + Atlas entitlement drop. For renewal or upgrade-at-renewal proofs,
+  use a fresh Month/Month sub (or clear cancel flag) before advancing the date.
+
+### Billing rollout update — 2026-07-20 17:52 IST (authenticated checklist GREEN)
+
+- User ran `npm run qa:billing-sandbox` with fresh Cognito token from project dir.
+- **Result: PASS 22 · FAIL 0 · SKIP 3**
+- Auth status: **launch / active / cancelAtPeriodEnd=true**
+- All BILL-1 UX markers live on Amplify; country gate on Lambda confirmed.
+- **BILL-1 automated sandbox gate: PASSED** ✅
+- Remaining optional: manual Account UI glance; period-end acceleration via Dodo
+  `next_billing_date` if testing cancel/expiry before 19 Aug; Zoho India sandbox.
+
+## NEXUS-Sprint orchestration log (2026-07-20) — BILL-1 sandbox sign-off
 
 | # | Agent / role | Outcome |
 |---|--------------|---------|
-| 1 | **Agents Orchestrator** | Recovered interrupted owner-refund push; scoped four BILL-1 UX bugs from user report |
-| 2 | **Backend Architect** | Optimistic cancel projection; country required on plan/portal; upgrades at next billing date |
-| 3 | **Frontend Developer** | Account country gate always visible; Growth upgrade during trial; merge billing status on account load |
-| 4 | **Senior PM** | Memory + backlog updated; Batch 29 status refreshed |
-| 5 | **QA** | Policy unit + production build ✅ · live Amplify/Lambda verification pending deploy |
-| 6 | **Next gate** | Push `main` → Amplify green → upload Lambda ZIP → sandbox re-test cancel/upgrade/country |
+| 1 | **Evidence Collector / QA** | Authenticated checklist 22/22 pass (3 mutating skips) |
+| 2 | **Senior PM** | Memory updated; BILL-1 automated gate closed |
+| 3 | **Next gate** | Optional: Dodo clock advance for period-end E2E · Zoho India · owner refund E2E |
 
 ---
 

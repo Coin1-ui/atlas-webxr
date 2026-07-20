@@ -622,7 +622,19 @@ async function getBillingEvent(provider, eventId) {
   return row.Item ?? null;
 }
 
-async function resolveBillingWorkspace(input) {
+export async function workspaceRecordExists(workspaceId) {
+  const normalizedWorkspaceId = mappingId(workspaceId, "workspaceId");
+  const row = await client.send(
+    new GetCommand({
+      TableName: workspacesTable(),
+      Key: { pk: `WORKSPACE#${normalizedWorkspaceId}`, sk: "META" },
+      ConsistentRead: true,
+    })
+  );
+  return Boolean(row.Item);
+}
+
+export async function resolveBillingWorkspace(input) {
   const candidates = [];
   const subscriptionRow = await client.send(
     new GetCommand({
