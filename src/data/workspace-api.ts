@@ -280,6 +280,9 @@ export function createBillingCheckout(
     email: string;
     name?: string;
     couponCode?: string;
+    gstNo?: string;
+    gstTreatment?: string;
+    placeOfSupply?: string;
   },
 ): Promise<{ checkoutUrl: string; provider: "dodo" | "zoho"; reused: boolean }> {
   return billingRequest(workspaceId, "checkout", {
@@ -291,8 +294,12 @@ export function createBillingCheckout(
 
 export function createBillingPortal(
   workspaceId: string,
+  billingCountry: string,
 ): Promise<{ portalUrl: string }> {
-  return billingRequest(workspaceId, "portal", { method: "POST" });
+  return billingRequest(workspaceId, "portal", {
+    method: "POST",
+    body: JSON.stringify({ billingCountry }),
+  });
 }
 
 export async function cancelBillingSubscription(workspaceId: string): Promise<void> {
@@ -302,9 +309,10 @@ export async function cancelBillingSubscription(workspaceId: string): Promise<vo
 export async function changeBillingPlan(
   workspaceId: string,
   tier: "starter" | "launch" | "growth",
+  billingCountry: string,
 ): Promise<void> {
   await billingRequest(workspaceId, "plan", {
     method: "POST",
-    body: JSON.stringify({ tier }),
+    body: JSON.stringify({ tier, billingCountry }),
   });
 }

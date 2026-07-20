@@ -163,9 +163,11 @@ import {
   createBillingCheckout,
   createBillingPortal,
   fetchPublicWorkspaceConfig,
+  getBillingStatus,
   PublicShowroomBlockedError,
   updateWorkspaceSettings,
   uploadWorkspaceLogo,
+  type BillingStatus,
 } from "./data/workspace-api";
 import { fetchWorkspaceUsage } from "./data/usage-api";
 import { acceptOverageCharge, isOveragePaidLocally } from "./data/billing-api";
@@ -1100,6 +1102,27 @@ function renderPublicShowroomBlocked(kind: "restricted" | "suspended", message: 
   routePainted();
 }
 
+function mergeBillingStatus(workspace: Workspace, billing: BillingStatus): Workspace {
+  if (!billing.subscription) return workspace;
+  return {
+    ...workspace,
+    billingProvider: billing.subscription.provider,
+    billingStatus: billing.subscription.status as Workspace["billingStatus"],
+    billingEntitlementTier: billing.entitlementTier as Workspace["billingEntitlementTier"],
+    billingCurrentPeriodEnd: billing.subscription.currentPeriodEnd,
+    billingGraceUntil: billing.subscription.graceUntil,
+    billingCancelAtPeriodEnd: billing.subscription.cancelAtPeriodEnd,
+  };
+}
+
+function requireBillingCountry(country: string): string {
+  const normalized = country.trim().toUpperCase();
+  if (!/^[A-Z]{2}$/.test(normalized)) {
+    throw new Error("Select a valid 2-letter billing country code before continuing");
+  }
+  return normalized;
+}
+
 async function showAccountScreen(opts?: {
   passwordError?: string;
   passwordSuccess?: string;
@@ -1117,7 +1140,13 @@ async function showAccountScreen(opts?: {
       navigateTo("/onboard", true);
       return;
     }
-    const workspace = applyPlatformOverrides(next);
+    const workspaceBase = applyPlatformOverrides(next);
+    let workspace = workspaceBase;
+    try {
+      workspace = mergeBillingStatus(workspaceBase, await getBillingStatus(workspaceBase.id));
+    } catch {
+      /* billing status API optional until deployed */
+    }
     activeWorkspace = workspace;
     if (isWorkspaceRestricted(workspace)) {
       renderRestrictedAccount(
@@ -1177,19 +1206,17 @@ async function showAccountScreen(opts?: {
         onUpgradePlan: async (tier: PlanTier, checkout) => {
           try {
             if (tier.id === "scale") throw new Error("Scale requires a sales-assisted contract");
+            const billingCountry = requireBillingCountry(checkout.billingCountry);
             if (activeWorkspace!.billingSubscriptionId) {
-              await changeBillingPlan(activeWorkspace!.id, tier.id);
+              await changeBillingPlan(activeWorkspace!.id, tier.id, billingCountry);
               void showAccountScreen({
-                billingSuccess: `Your ${tier.name} plan change is pending provider confirmation.`,
+                billingSuccess: `Your ${tier.name} plan change is scheduled for your next billing date.`,
               });
               return;
             }
-            if (!/^[A-Z]{2}$/.test(checkout.billingCountry)) {
-              throw new Error("Enter a valid 2-letter billing country code");
-            }
             const result = await createBillingCheckout(activeWorkspace!.id, {
               tier: tier.id,
-              billingCountry: checkout.billingCountry,
+              billingCountry,
               email: user.email,
               couponCode: checkout.couponCode,
             });
@@ -1199,9 +1226,10 @@ async function showAccountScreen(opts?: {
           }
         },
         onManageBilling: activeWorkspace.billingSubscriptionId
-          ? async () => {
+          ? async (checkout) => {
               try {
-                const session = await createBillingPortal(activeWorkspace!.id);
+                const billingCountry = requireBillingCountry(checkout.billingCountry);
+                const session = await createBillingPortal(activeWorkspace!.id, billingCountry);
                 window.location.assign(session.portalUrl);
               } catch (e) {
                 void showAccountScreen({ billingError: e instanceof Error ? e.message : String(e) });
@@ -1213,6 +1241,10 @@ async function showAccountScreen(opts?: {
               if (!window.confirm("Cancel this subscription at the end of its billing period?")) return;
               try {
                 await cancelBillingSubscription(activeWorkspace!.id);
+                activeWorkspace = {
+                  ...activeWorkspace!,
+                  billingCancelAtPeriodEnd: true,
+                };
                 void showAccountScreen({
                   billingSuccess: "Cancellation requested. Access continues through the paid period.",
                 });

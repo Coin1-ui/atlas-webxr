@@ -24,5 +24,5 @@ export function planChangeEffectiveAt(currentTier, targetTier) {
   if (current < 0 || target < 0 || current === target) {
     throw new Error("Plan change tiers are invalid or unchanged");
   }
-  return target > current ? "after_confirmed_payment" : "next_billing_date";
+  return "next_billing_date";
 }

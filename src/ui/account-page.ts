@@ -16,6 +16,18 @@ function escapeHtml(s: string): string {
     .replace(/"/g, "&quot;");
 }
 
+function readBillingCountry(root: HTMLElement): string {
+  return (
+    (root.querySelector("[name=billingCountry]") as HTMLInputElement | null)?.value
+      .trim()
+      .toUpperCase() ?? ""
+  );
+}
+
+function isValidBillingCountry(country: string): boolean {
+  return /^[A-Z]{2}$/.test(country);
+}
+
 function formatDate(iso: string): string {
   try {
     return new Date(iso).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
@@ -45,7 +57,7 @@ export function renderAccountPage(
       tier: PlanTier,
       checkout: { billingCountry: string; couponCode?: string },
     ) => void | Promise<void>;
-    onManageBilling?: () => void | Promise<void>;
+    onManageBilling?: (checkout: { billingCountry: string }) => void | Promise<void>;
     onCancelBilling?: () => void | Promise<void>;
     onPayOverage: (amountUsd: number) => void | Promise<void>;
     onAdmin: () => void;
@@ -175,15 +187,20 @@ export function renderAccountPage(
                     <div><dt>Provider</dt><dd>${escapeHtml(workspace.billingProvider === "zoho" ? "Zoho (India)" : "Dodo Payments")}</dd></div>
                     ${workspace.billingCurrentPeriodEnd ? `<div><dt>Current period ends</dt><dd>${escapeHtml(formatDate(workspace.billingCurrentPeriodEnd))}</dd></div>` : ""}
                   </dl>`
-                : `<div class="account-checkout-fields">
-                    <label class="auth-label">Billing country (2-letter code)
-                      <input class="auth-input" name="billingCountry" maxlength="2" value="US" autocomplete="country" />
-                    </label>
-                    <label class="auth-label">Coupon (optional)
-                      <input class="auth-input" name="couponCode" maxlength="64" autocomplete="off" />
-                    </label>
-                  </div>`
+                : ""
             }
+            <div class="account-checkout-fields">
+              <label class="auth-label">Billing country (2-letter ISO code, required)
+                <input class="auth-input" name="billingCountry" maxlength="2" placeholder="e.g. US or IN" autocomplete="country" required />
+              </label>
+              ${
+                workspace.billingSubscriptionId
+                  ? ""
+                  : `<label class="auth-label">Coupon (optional)
+                      <input class="auth-input" name="couponCode" maxlength="64" autocomplete="off" />
+                    </label>`
+              }
+            </div>
             ${upgradeHtml}
             ${handlers.onManageBilling && workspace.billingSubscriptionId ? `<button type="button" class="mkt-btn mkt-btn-primary account-secondary-btn" data-action="manage-billing">Manage payment method &amp; invoices</button>` : ""}
             ${handlers.onCancelBilling && workspace.billingSubscriptionId && !workspace.billingCancelAtPeriodEnd ? `<button type="button" class="mkt-btn mkt-btn-ghost account-secondary-btn" data-action="cancel-billing">Cancel at renewal</button>` : ""}
@@ -247,10 +264,11 @@ export function renderAccountPage(
       const tierId = btn.getAttribute("data-tier");
       const tier = upgrades.find((t) => t.id === tierId);
       if (tier) {
-        const country =
-          (root.querySelector("[name=billingCountry]") as HTMLInputElement | null)?.value
-            .trim()
-            .toUpperCase() ?? "";
+        const country = readBillingCountry(root);
+        if (!isValidBillingCountry(country)) {
+          void handlers.onUpgradePlan(tier, { billingCountry: "" });
+          return;
+        }
         const couponCode =
           (root.querySelector("[name=couponCode]") as HTMLInputElement | null)?.value.trim() ||
           undefined;
@@ -267,7 +285,14 @@ export function renderAccountPage(
   root.querySelector("[data-action=admin]")?.addEventListener("click", handlers.onAdmin);
   root.querySelector("[data-action=branding]")?.addEventListener("click", () => handlers.onBranding?.());
   root.querySelector("[data-action=owner]")?.addEventListener("click", () => handlers.onOwner?.());
-  root.querySelector("[data-action=manage-billing]")?.addEventListener("click", () => void handlers.onManageBilling?.());
+  root.querySelector("[data-action=manage-billing]")?.addEventListener("click", () => {
+    const country = readBillingCountry(root);
+    if (!isValidBillingCountry(country)) {
+      void handlers.onManageBilling?.({ billingCountry: "" });
+      return;
+    }
+    void handlers.onManageBilling?.({ billingCountry: country });
+  });
   root.querySelector("[data-action=cancel-billing]")?.addEventListener("click", () => void handlers.onCancelBilling?.());
   root.querySelector("[data-action=pricing]")?.addEventListener("click", handlers.onPricing);
   root.querySelector("[data-action=back]")?.addEventListener("click", handlers.onBack);

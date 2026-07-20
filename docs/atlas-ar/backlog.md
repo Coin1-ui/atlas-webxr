@@ -1,8 +1,8 @@
 # Atlas AR — Product backlog
 
-**Last updated:** 2026-07-17 (branding logo + manage-models note)
+**Last updated:** 2026-07-20 (billing UX: cancel sync · Growth upgrade visibility · renewal-only plan change · country gate)
 
-**Latest orchestration batch (2026-07-17):** Preview AR tenant isolation · sales deck Starter “100 sessions / model”
+**Latest orchestration batch (2026-07-20):** BILL-1 account UX bugs + owner refund UI · Lambda zip ready · Amplify push pending
 
 **Sprint cadence:** 2-week sprints  
 **Phase 0:** Complete → **Phase 1:** COMPLETE ✅ (QA-3b/4b signed · ENG-19 verified 4/4 · DES-1/DES-2 shipped) → **Post-28: DEPLOYED + verified live** → **Phase 2:** ENG-23–31 + MF-1 MiroFish conversion (2026-06-18)
@@ -208,7 +208,7 @@ Full matrix: [PRICING-FEATURE-READINESS.md](./PRICING-FEATURE-READINESS.md)
 | Batch | Theme | Scope | Unblocks |
 |-------|-------|-------|----------|
 | **28** | **LEG-1 + trial automation** | Privacy/Terms + **ENG-36** auto Growth trial | **confirmed** ✅ [BATCH-28-CONFIRMED.md](./BATCH-28-CONFIRMED.md) |
-| **29** | **Billing MVP** ▶ | **BILL-1** Dodo international + Zoho India checkout · **BILL-3** overage · **ENG-37** plan-gated JSON log | **in progress** — provider-neutral ledger foundation passed QA |
+| **29** | **Billing MVP** ▶ | **BILL-1** Dodo international + Zoho India checkout · **BILL-3** overage · **ENG-37** plan-gated JSON log | **in progress** — Dodo sandbox checkout+webhook ✅; account UX fixes coded 2026-07-20; Amplify+Lambda deploy pending |
 | **30** | ~~Limits & copy truth~~ → **33** | See Batch 33 below | Merged into Batch 33 |
 | **31** | **MKT-3 production** | Record A1/B1 · **MKT-3b** landing embed | Marketing hero · SAL-3 “watch demo” follow-up |
 | **32** | **SAL-4 ops** | Design partner tracker · owner checklist UI · CRM export optional | Scale SAL-2 outbound without founder bottlenecks |
@@ -224,7 +224,7 @@ Full matrix: [PRICING-FEATURE-READINESS.md](./PRICING-FEATURE-READINESS.md)
 
 | ID | Task | Priority | Owner | Status |
 |----|------|----------|-------|--------|
-| BILL-1 | Dodo international + Zoho India checkout (Starter/Launch/Growth) | **P1** ↑ | Backend | **in_progress** · ledger/state foundation complete; provider adapters next |
+| BILL-1 | Dodo international + Zoho India checkout (Starter/Launch/Growth) | **P1** ↑ | Backend | **in_progress** · Dodo sandbox active+webhook ✅ · cancel/upgrade/country UX fixed locally · deploy Lambda zip + Amplify pending · Zoho India sandbox next |
 | BILL-2 | Hard enforce plan limits (upload + session + storage) | **P1** ↑ | Backend | todo · pairs with **ENG-38** (Batch 33) |
 | SEC-2 | External pen test | P2 | Security | todo |
 | ENG-20 | Custom domain per workspace (Scale) | P2 | DevOps | todo · do not promise in SAL-3 |
@@ -825,6 +825,35 @@ Full matrix: [PRICING-FEATURE-READINESS.md](./PRICING-FEATURE-READINESS.md)
   near-exhausted 128 MB allocation.
 - Sandbox security follow-up: rotate the test Dodo API key exposed during diagnostics and update
   the Lambda environment before further provider testing.
+
+### Billing rollout update — 2026-07-20 09:05 IST
+
+- Interrupted mid-work recovered: owner refund UI was committed locally as `dbd3111`
+  (`feat: add owner payment refunds`) but not yet pushed when Cursor dropped.
+- User-reported BILL-1 account bugs investigated and fixed in code:
+  1. Cancel-at-period-end now optimistically updates subscription + workspace projection
+     (`markBillingCancelScheduled`) and account UI merges `/billing/status` on load.
+  2. Growth upgrade options during Growth trial use paid `subscribedBillingTier`, not
+     trial-elevated `effectiveBillingTier`.
+  3. Plan changes schedule at `next_billing_date` (no immediate upgrade proration charge).
+  4. Billing country is required (no `US` default) before checkout, plan change, and portal.
+- Owner refund controls: `/owner` “Issue refund” → `POST /v2/platform/billing/refunds`.
+- Tests: `test:billing-policy` ✅ · frontend `npm run build` ✅ · Lambda ZIP rebuilt
+  (`backend/lambda/atlas-api-deploy.zip`).
+- **Still required:** upload Lambda ZIP to `atlas-api`; push Amplify `main` with frontend;
+  re-test cancel / Growth upgrade visibility / country gate / renewal-only upgrade;
+  then Zoho India sandbox + optional owner-approved refund E2E.
+
+## NEXUS-Sprint orchestration log (2026-07-20) — Billing account UX + owner refund
+
+| # | Agent / role | Outcome |
+|---|--------------|---------|
+| 1 | **Agents Orchestrator** | Recovered interrupted owner-refund push; scoped four BILL-1 UX bugs from user report |
+| 2 | **Backend Architect** | Optimistic cancel projection; country required on plan/portal; upgrades at next billing date |
+| 3 | **Frontend Developer** | Account country gate always visible; Growth upgrade during trial; merge billing status on account load |
+| 4 | **Senior PM** | Memory + backlog updated; Batch 29 status refreshed |
+| 5 | **QA** | Policy unit + production build ✅ · live Amplify/Lambda verification pending deploy |
+| 6 | **Next gate** | Push `main` → Amplify green → upload Lambda ZIP → sandbox re-test cancel/upgrade/country |
 
 ---
 

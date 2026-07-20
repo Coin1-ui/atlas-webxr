@@ -52,7 +52,7 @@ export type PlanActionVerb = "Subscribe" | "Upgrade";
  * No paid plan on file → "Subscribe"; already paying → "Upgrade".
  */
 export function planActionVerb(ws: TrialWorkspace): PlanActionVerb {
-  return paidBillingTier(ws) ? "Upgrade" : "Subscribe";
+  return subscribedBillingTier(ws) ? "Upgrade" : "Subscribe";
 }
 
 /**
@@ -71,7 +71,7 @@ export function planActionVerb(ws: TrialWorkspace): PlanActionVerb {
  *   Growth trial → Starter/Launch/Growth = Subscribe · Scale = Upgrade
  */
 export function planActionVerbForTier(ws: TrialWorkspace, targetTier: PlanTierId): PlanActionVerb {
-  const paidTier = paidBillingTier(ws);
+  const paidTier = subscribedBillingTier(ws);
   const referenceTier: PlanTierId | null =
     isTrialActive(ws) && ws.trialPlan ? ws.trialPlan : paidTier;
   if (!referenceTier) return "Subscribe";
@@ -132,7 +132,8 @@ function providerBillingTier(ws: TrialWorkspace, now = Date.now()): PlanTierId |
   return null;
 }
 
-function paidBillingTier(ws: TrialWorkspace): PlanTierId | null {
+/** Paid or manually granted tier — excludes active trial elevation. */
+export function subscribedBillingTier(ws: TrialWorkspace): PlanTierId | null {
   const candidates = [
     ws.manualBillingTier,
     providerBillingTier(ws),
@@ -148,7 +149,7 @@ function paidBillingTier(ws: TrialWorkspace): PlanTierId | null {
 }
 
 export function hasPurchasedTrialFallback(ws: TrialWorkspace): boolean {
-  const paidTier = paidBillingTier(ws);
+  const paidTier = subscribedBillingTier(ws);
   if (!ws.trialPlan || !paidTier) return false;
   const fallback = trialFallbackTier(ws.trialPlan);
   const fallbackIdx = TIER_ORDER.indexOf(fallback);
@@ -158,7 +159,7 @@ export function hasPurchasedTrialFallback(ws: TrialWorkspace): boolean {
 
 /** Trial ended without purchasing the required fallback tier. */
 export function isTrialSuspended(ws: TrialWorkspace): boolean {
-  if (!isTrialActive(ws) && ws.billingProvider && !paidBillingTier(ws)) return true;
+  if (!isTrialActive(ws) && ws.billingProvider && !subscribedBillingTier(ws)) return true;
   return isTrialExpired(ws) && Boolean(ws.trialPlan) && !hasPurchasedTrialFallback(ws);
 }
 
@@ -194,7 +195,7 @@ export function formatTrialCountdown(parts: TrialCountdownParts): string {
 export function effectiveBillingTier(ws: TrialWorkspace): PlanTierId {
   if (isTrialActive(ws) && ws.trialPlan) return ws.trialPlan;
   if (isTrialSuspended(ws) && ws.trialPlan) return trialFallbackTier(ws.trialPlan);
-  const paidTier = paidBillingTier(ws);
+  const paidTier = subscribedBillingTier(ws);
   if (paidTier) return paidTier;
   return billingTierFromWorkspace(ws);
 }
@@ -205,7 +206,7 @@ export function trialEndsAtIso(days = TRIAL_DURATION_DAYS): string {
 
 function trialAfterTrialMessage(ws: TrialWorkspace): string {
   if (!ws.trialPlan) return "";
-  const paidTier = paidBillingTier(ws);
+  const paidTier = subscribedBillingTier(ws);
   if (hasPurchasedTrialFallback(ws) && paidTier) {
     return `continues on ${planDisplayName(ws.plan, paidTier)} after trial`;
   }
@@ -265,7 +266,7 @@ export function accountTrialBannerHtml(ws: TrialWorkspace): string {
   const countdown = parts ? formatTrialCountdown(parts) : `${trialDaysRemaining(ws)}d`;
   const trialName = planDisplayName(ws.plan, ws.trialPlan);
   const purchased = hasPurchasedTrialFallback(ws);
-  const paidTier = paidBillingTier(ws);
+  const paidTier = subscribedBillingTier(ws);
   const purchasedName = paidTier ? planDisplayName(ws.plan, paidTier) : trialName;
   return `<div class="account-trial-banner account-trial-banner--active" role="status" aria-live="polite" data-trial-banner>
     <p class="account-trial-eyebrow">${escapeHtml(trialName)} trial</p>

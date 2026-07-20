@@ -1,5 +1,5 @@
 import type { WorkspacePlan } from "./tenant";
-import { effectiveBillingTier, hasPurchasedTrialFallback, isTrialActive, isTrialSuspended, trialFallbackTier, type TrialWorkspace } from "./trial";
+import { effectiveBillingTier, hasPurchasedTrialFallback, isTrialActive, isTrialSuspended, subscribedBillingTier, trialFallbackTier, type TrialWorkspace } from "./trial";
 
 export type PlanTierId = "starter" | "launch" | "growth" | "scale";
 
@@ -53,9 +53,14 @@ export function tierOptionLabel(tier: PlanTier): string {
 export const CUSTOMER_BILLING_TIERS = PLAN_TIERS.filter((t) => t.id !== "scale");
 
 export function upgradeOptions(ws: TrialWorkspace): PlanTier[] {
+  const order: PlanTierId[] = ["starter", "launch", "growth", "scale"];
   if (ws.billingSubscriptionId) {
-    const current = effectiveBillingTier(ws);
-    return CUSTOMER_BILLING_TIERS.filter((tier) => tier.id !== current);
+    const paidTier = subscribedBillingTier(ws);
+    if (!paidTier) {
+      return CUSTOMER_BILLING_TIERS;
+    }
+    const paidIdx = order.indexOf(paidTier);
+    return CUSTOMER_BILLING_TIERS.filter((tier) => order.indexOf(tier.id) > paidIdx);
   }
   if (isTrialSuspended(ws) && ws.trialPlan) {
     // Suspended: offer every self-serve tier so the customer can resubscribe at any level.
@@ -63,12 +68,10 @@ export function upgradeOptions(ws: TrialWorkspace): PlanTier[] {
   }
   if (isTrialActive(ws) && ws.trialPlan && !hasPurchasedTrialFallback(ws)) {
     const required = trialFallbackTier(ws.trialPlan);
-    const order: PlanTierId[] = ["starter", "launch", "growth", "scale"];
     const minIdx = order.indexOf(required);
     return PLAN_TIERS.filter((t) => order.indexOf(t.id) >= minIdx && t.id !== "scale");
   }
   const current = effectiveBillingTier(ws);
-  const order: PlanTierId[] = ["starter", "launch", "growth", "scale"];
   const idx = order.indexOf(current);
   if (idx < 0) return [];
   return PLAN_TIERS.filter((t) => order.indexOf(t.id) > idx);

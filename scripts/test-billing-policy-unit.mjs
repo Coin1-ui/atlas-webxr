@@ -19,7 +19,7 @@ assert.equal(assertProviderPaymentCurrency("zoho", "INR"), "INR");
 assert.throws(() => assertProviderPaymentCurrency("dodo", "INR"));
 assert.throws(() => assertProviderPaymentCurrency("zoho", "USD"));
 
-assert.equal(planChangeEffectiveAt("starter", "growth"), "after_confirmed_payment");
+assert.equal(planChangeEffectiveAt("starter", "growth"), "next_billing_date");
 assert.equal(planChangeEffectiveAt("growth", "launch"), "next_billing_date");
 assert.throws(() => planChangeEffectiveAt("launch", "launch"));
 assert.throws(() => planChangeEffectiveAt("scale", "growth"));

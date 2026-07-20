@@ -1,6 +1,6 @@
 import { requireWorkspaceAdmin } from "../lib/authz.mjs";
 import { jsonResponse, parseJsonBody } from "../lib/http.mjs";
-import { getBillingSubscription } from "../lib/billing-store.mjs";
+import { getBillingSubscription, markBillingCancelScheduled } from "../lib/billing-store.mjs";
 import {
   cancelDodoSubscription,
   changeDodoPlan,
@@ -34,6 +34,12 @@ function errorResponse(error, fallback) {
 
 export async function handleBillingPortal(event, workspaceId) {
   try {
+    const body = parseJsonBody(event);
+    const billingCountry =
+      typeof body?.billingCountry === "string" ? body.billingCountry.trim().toUpperCase() : "";
+    if (!/^[A-Z]{2}$/.test(billingCountry)) {
+      return jsonResponse(400, { error: "billingCountry must be an ISO country code" });
+    }
     const subscription = await activeSubscription(event, workspaceId);
     if (subscription.provider === "dodo") {
       if (!subscription.providerCustomerId) {
@@ -58,6 +64,7 @@ export async function handleBillingCancel(event, workspaceId) {
     } else {
       await cancelZohoSubscription(subscription.providerSubscriptionId);
     }
+    await markBillingCancelScheduled(workspaceId);
     return jsonResponse(202, { ok: true, pending: true, cancelAtPeriodEnd: true });
   } catch (error) {
     return errorResponse(error, "Unable to schedule cancellation");
@@ -70,6 +77,11 @@ export async function handleBillingChangePlan(event, workspaceId) {
     const body = parseJsonBody(event);
     const targetTier =
       typeof body?.tier === "string" ? body.tier.trim().toLowerCase() : "";
+    const billingCountry =
+      typeof body?.billingCountry === "string" ? body.billingCountry.trim().toUpperCase() : "";
+    if (!/^[A-Z]{2}$/.test(billingCountry)) {
+      return jsonResponse(400, { error: "billingCountry must be an ISO country code" });
+    }
     if (!["starter", "launch", "growth"].includes(targetTier)) {
       return jsonResponse(400, { error: "tier must be starter, launch, or growth" });
     }

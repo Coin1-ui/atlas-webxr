@@ -581,6 +581,36 @@ export async function getBillingSubscription(workspaceId) {
   return subscriptionFromItem(row.Item);
 }
 
+/** Optimistically mark cancel-at-period-end after provider API succeeds. */
+export async function markBillingCancelScheduled(workspaceId) {
+  const now = new Date().toISOString();
+  await client.send(
+    new TransactWriteCommand({
+      TransactItems: [
+        {
+          Update: {
+            TableName: billingTable(),
+            Key: { pk: `WORKSPACE#${workspaceId}`, sk: "SUBSCRIPTION#CURRENT" },
+            UpdateExpression: "SET cancelAtPeriodEnd = :true, updatedAt = :now",
+            ConditionExpression: "attribute_exists(pk)",
+            ExpressionAttributeValues: { ":true": true, ":now": now },
+          },
+        },
+        {
+          Update: {
+            TableName: workspacesTable(),
+            Key: { pk: `WORKSPACE#${workspaceId}`, sk: "META" },
+            UpdateExpression:
+              "SET billingCancelAtPeriodEnd = :true, billingUpdatedAt = :now, updatedAt = :now",
+            ConditionExpression: "attribute_exists(pk)",
+            ExpressionAttributeValues: { ":true": true, ":now": now },
+          },
+        },
+      ],
+    })
+  );
+}
+
 async function getBillingEvent(provider, eventId) {
   const row = await client.send(
     new GetCommand({
