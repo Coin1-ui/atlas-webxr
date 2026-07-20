@@ -260,6 +260,7 @@ export type BillingStatus = {
   entitlementTier: string | null;
   subscription: {
     provider: "dodo" | "zoho";
+    providerSubscriptionId?: string;
     tier: "starter" | "launch" | "growth";
     status: string;
     currentPeriodEnd: string | null;

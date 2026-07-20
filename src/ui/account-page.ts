@@ -2,8 +2,8 @@ import type { Workspace } from "../shared/tenant";
 import { brandedHeaderHtml, mountWorkspaceLogo } from "../branding/workspace-theme";
 import type { WorkspaceUsageResponse } from "../data/usage-api";
 import { formatStorageBytes, formatSessionsLimit, isUnlimitedSessionsLimit } from "../shared/plan-limits";
-import { estimateOverageUsd, upgradeOptions, type PlanTier } from "../shared/plan-display";
-import { effectiveBillingTier, trialProfilePlanLine, accountTrialBannerHtml, trialSuspendedBannerHtml, mountTrialCountdown, planActionVerbForTier, hasLiveBillingSubscription } from "../shared/trial";
+import { estimateOverageUsd, planDisplayName, upgradeOptions, type PlanTier } from "../shared/plan-display";
+import { effectiveBillingTier, trialProfilePlanLine, accountTrialBannerHtml, trialSuspendedBannerHtml, mountTrialCountdown, planActionVerbForTier, hasLiveBillingSubscription, subscribedBillingTier } from "../shared/trial";
 import { isOveragePaidLocally } from "../data/billing-api";
 import {
   billingCountryOptions,
@@ -122,6 +122,10 @@ export function renderAccountPage(
 
   const billingIsLive = hasLiveBillingSubscription(workspace);
   const cancelScheduled = billingIsLive && workspace.billingCancelAtPeriodEnd === true;
+  const paidBillingTier = subscribedBillingTier(workspace);
+  const billingPlanName = paidBillingTier
+    ? planDisplayName(workspace.plan, paidBillingTier)
+    : trialProfilePlanLine(workspace);
   const countryOptionsHtml = billingCountryOptions(workspace.billingProvider)
     .map(
       (country) =>
@@ -200,6 +204,7 @@ export function renderAccountPage(
             ${
               workspace.billingSubscriptionId
                 ? `<dl class="account-dl">
+                    <div><dt>Plan</dt><dd><strong>${escapeHtml(billingPlanName)}</strong></dd></div>
                     <div><dt>Status</dt><dd><strong>${escapeHtml(workspace.billingStatus ?? "pending")}</strong></dd></div>
                     <div><dt>Provider</dt><dd>${escapeHtml(workspace.billingProvider === "zoho" ? "Zoho (India)" : "Dodo Payments")}</dd></div>
                     ${workspace.billingCurrentPeriodEnd ? `<div><dt>Current period ends</dt><dd>${escapeHtml(formatDate(workspace.billingCurrentPeriodEnd))}</dd></div>` : ""}

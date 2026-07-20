@@ -1111,6 +1111,8 @@ function mergeBillingStatus(workspace: Workspace, billing: BillingStatus): Works
     billingProvider: billing.subscription.provider,
     billingStatus: billing.subscription.status as Workspace["billingStatus"],
     billingEntitlementTier: billing.entitlementTier as Workspace["billingEntitlementTier"],
+    billingSubscriptionId:
+      billing.subscription.providerSubscriptionId ?? workspace.billingSubscriptionId,
     billingCurrentPeriodEnd: billing.subscription.currentPeriodEnd,
     billingGraceUntil: billing.subscription.graceUntil,
     billingCancelAtPeriodEnd:
