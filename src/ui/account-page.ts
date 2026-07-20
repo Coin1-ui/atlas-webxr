@@ -137,14 +137,16 @@ export function renderAccountPage(
     upgrades.length > 0
       ? `<div class="account-plan-grid">
           ${upgrades
-            .map(
-              (tier) => `
-            <button type="button" class="account-plan-card" data-action="upgrade" data-tier="${escapeHtml(tier.id)}">
+            .map((tier) => {
+              const verb = planActionVerbForTier(workspace, tier.id);
+              const isCurrent = verb === "Current";
+              return `
+            <button type="button" class="account-plan-card${isCurrent ? " account-plan-card--current" : ""}" data-action="upgrade" data-tier="${escapeHtml(tier.id)}"${isCurrent ? " disabled aria-current=\"true\"" : ""}>
               <span class="account-plan-name">${escapeHtml(tier.name)}</span>
               <span class="account-plan-price">${escapeHtml(tier.price)}</span>
-              <span class="account-plan-cta">${planActionVerbForTier(workspace, tier.id)}</span>
-            </button>`,
-            )
+              <span class="account-plan-cta">${escapeHtml(verb)}</span>
+            </button>`;
+            })
             .join("")}
         </div>`
       : `<p class="auth-hint">You are on our highest self-serve tier. <button type="button" class="auth-inline-link" data-action="pricing">Contact sales for Scale</button>.</p>`;

@@ -4393,6 +4393,20 @@ body.ar-object-mode-active .ar-dom-panel {
   outline-offset: var(--focus-ring-offset);
 }
 
+.account-plan-card--current,
+.account-plan-card:disabled {
+  cursor: default;
+  opacity: 0.85;
+  border-color: rgba(45, 212, 191, 0.4);
+  background: rgba(45, 212, 191, 0.12);
+}
+
+.account-plan-card--current:hover,
+.account-plan-card:disabled:hover {
+  border-color: rgba(45, 212, 191, 0.4);
+  background: rgba(45, 212, 191, 0.12);
+}
+
 .account-plan-name {
   font-weight: 600;
 }

@@ -59,8 +59,9 @@ export function upgradeOptions(ws: TrialWorkspace): PlanTier[] {
     if (!paidTier) {
       return CUSTOMER_BILLING_TIERS;
     }
-    const paidIdx = order.indexOf(paidTier);
-    return CUSTOMER_BILLING_TIERS.filter((tier) => order.indexOf(tier.id) > paidIdx);
+    // Show all self-serve tiers so Starter remains visible while on Launch/Growth
+    // (Current / Upgrade / Downgrade CTAs come from planActionVerbForTier).
+    return CUSTOMER_BILLING_TIERS;
   }
   if (isTrialSuspended(ws) && ws.trialPlan) {
     // Suspended: offer every self-serve tier so the customer can resubscribe at any level.

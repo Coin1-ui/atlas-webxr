@@ -45,7 +45,7 @@ export function trialFallbackTier(_trialPlan: PlanTierId): PlanTierId {
   return "starter";
 }
 
-export type PlanActionVerb = "Subscribe" | "Upgrade";
+export type PlanActionVerb = "Subscribe" | "Upgrade" | "Downgrade" | "Current";
 
 /** Billing status still entitled to self-serve management actions. */
 export function isLiveBillingStatus(
@@ -58,31 +58,26 @@ export function isLiveBillingStatus(
  * Workspace-level Subscribe vs Upgrade — used for single-CTA / suspended copy.
  * No paid plan on file → "Subscribe"; already paying → "Upgrade".
  */
-export function planActionVerb(ws: TrialWorkspace): PlanActionVerb {
+export function planActionVerb(ws: TrialWorkspace): "Subscribe" | "Upgrade" {
   return subscribedBillingTier(ws) ? "Upgrade" : "Subscribe";
 }
 
 /**
- * Per-tier Subscribe vs Upgrade matrix.
+ * Per-tier CTA matrix.
  *
- * Reference tier = the level the workspace currently experiences:
- *   • active trial → the trial plan
- *   • otherwise    → the purchased tier (or none)
- *
- * For a target tier:
- *   • target ≤ reference → "Subscribe" (lock in at/below current level; not paying yet)
- *   • target >  reference → "Upgrade"  (move above current level)
- * With no reference (never paid, no trial) every tier is "Subscribe".
- *
- *   Launch trial → Starter/Launch = Subscribe · Growth/Scale = Upgrade
- *   Growth trial → Starter/Launch/Growth = Subscribe · Scale = Upgrade
+ * When a paid entitlement exists, that paid tier is the reference (not an active
+ * trial elevation) so Launch subscribers see Growth as Upgrade and Starter as Downgrade.
+ * Without paid entitlement, an active trial plan remains the reference (trial matrix).
  */
 export function planActionVerbForTier(ws: TrialWorkspace, targetTier: PlanTierId): PlanActionVerb {
   const paidTier = subscribedBillingTier(ws);
   const referenceTier: PlanTierId | null =
-    isTrialActive(ws) && ws.trialPlan ? ws.trialPlan : paidTier;
+    paidTier ?? (isTrialActive(ws) && ws.trialPlan ? ws.trialPlan : null);
   if (!referenceTier) return "Subscribe";
-  return TIER_ORDER.indexOf(targetTier) > TIER_ORDER.indexOf(referenceTier) ? "Upgrade" : "Subscribe";
+  const cmp = TIER_ORDER.indexOf(targetTier) - TIER_ORDER.indexOf(referenceTier);
+  if (cmp > 0) return "Upgrade";
+  if (cmp < 0) return "Downgrade";
+  return "Current";
 }
 
 /** Tiers a trialing workspace can subscribe to (≤ trial) vs upgrade to (> trial). */
