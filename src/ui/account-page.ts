@@ -28,6 +28,10 @@ function isValidBillingCountry(country: string): boolean {
   return /^[A-Z]{2}$/.test(country);
 }
 
+function isLiveBillingStatus(status: Workspace["billingStatus"]): boolean {
+  return status === "active" || status === "past_due" || status === "canceled";
+}
+
 function formatDate(iso: string): string {
   try {
     return new Date(iso).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
@@ -111,6 +115,9 @@ export function renderAccountPage(
             : ""
       }`
     : `<p class="auth-hint">Usage stats will appear when the usage API is connected.</p>`;
+
+  const billingIsLive = isLiveBillingStatus(workspace.billingStatus);
+  const cancelScheduled = billingIsLive && workspace.billingCancelAtPeriodEnd === true;
 
   const upgradeHtml =
     upgrades.length > 0
@@ -202,9 +209,9 @@ export function renderAccountPage(
               }
             </div>
             ${upgradeHtml}
-            ${handlers.onManageBilling && workspace.billingSubscriptionId ? `<button type="button" class="mkt-btn mkt-btn-primary account-secondary-btn" data-action="manage-billing">Manage payment method &amp; invoices</button>` : ""}
-            ${handlers.onCancelBilling && workspace.billingSubscriptionId && !workspace.billingCancelAtPeriodEnd ? `<button type="button" class="mkt-btn mkt-btn-ghost account-secondary-btn" data-action="cancel-billing">Cancel at renewal</button>` : ""}
-            ${workspace.billingCancelAtPeriodEnd ? `<p class="auth-hint">Cancellation is scheduled for the end of the current billing period.</p>` : ""}
+            ${handlers.onManageBilling && workspace.billingSubscriptionId && billingIsLive ? `<button type="button" class="mkt-btn mkt-btn-primary account-secondary-btn" data-action="manage-billing">Manage payment method &amp; invoices</button>` : ""}
+            ${handlers.onCancelBilling && workspace.billingSubscriptionId && billingIsLive && !workspace.billingCancelAtPeriodEnd ? `<button type="button" class="mkt-btn mkt-btn-ghost account-secondary-btn" data-action="cancel-billing">Cancel at renewal</button>` : ""}
+            ${cancelScheduled ? `<p class="auth-hint">Cancellation is scheduled for the end of the current billing period.</p>` : ""}
             <button type="button" class="mkt-btn mkt-btn-ghost account-secondary-btn" data-action="pricing">Compare all plans</button>
           </section>
 

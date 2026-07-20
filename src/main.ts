@@ -1111,7 +1111,12 @@ function mergeBillingStatus(workspace: Workspace, billing: BillingStatus): Works
     billingEntitlementTier: billing.entitlementTier as Workspace["billingEntitlementTier"],
     billingCurrentPeriodEnd: billing.subscription.currentPeriodEnd,
     billingGraceUntil: billing.subscription.graceUntil,
-    billingCancelAtPeriodEnd: billing.subscription.cancelAtPeriodEnd,
+    billingCancelAtPeriodEnd:
+      billing.subscription.status === "active" ||
+      billing.subscription.status === "past_due" ||
+      billing.subscription.status === "canceled"
+        ? billing.subscription.cancelAtPeriodEnd
+        : false,
   };
 }
 

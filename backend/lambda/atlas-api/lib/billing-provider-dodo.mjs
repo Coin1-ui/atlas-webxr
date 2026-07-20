@@ -220,7 +220,9 @@ export function normalizeDodoSubscriptionSnapshot(input) {
     providerSequence: input.providerSequence,
     currentPeriodEnd: ["active", "past_due"].includes(normalizedStatus) ? periodEnd : null,
     graceUntil,
-    cancelAtPeriodEnd: subscription.cancel_at_next_billing_date === true,
+    cancelAtPeriodEnd:
+      ["active", "past_due"].includes(normalizedStatus) &&
+      subscription.cancel_at_next_billing_date === true,
     amountMinor: input.amountMinor ?? null,
     currency: input.currency ?? null,
   };
