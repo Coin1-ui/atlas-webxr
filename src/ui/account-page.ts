@@ -3,7 +3,7 @@ import { brandedHeaderHtml, mountWorkspaceLogo } from "../branding/workspace-the
 import type { WorkspaceUsageResponse } from "../data/usage-api";
 import { formatStorageBytes, formatSessionsLimit, isUnlimitedSessionsLimit } from "../shared/plan-limits";
 import { estimateOverageUsd, upgradeOptions, type PlanTier } from "../shared/plan-display";
-import { effectiveBillingTier, trialProfilePlanLine, accountTrialBannerHtml, trialSuspendedBannerHtml, mountTrialCountdown, planActionVerbForTier, isLiveBillingStatus } from "../shared/trial";
+import { effectiveBillingTier, trialProfilePlanLine, accountTrialBannerHtml, trialSuspendedBannerHtml, mountTrialCountdown, planActionVerbForTier, hasLiveBillingSubscription } from "../shared/trial";
 import { isOveragePaidLocally } from "../data/billing-api";
 import {
   billingCountryOptions,
@@ -120,7 +120,7 @@ export function renderAccountPage(
       }`
     : `<p class="auth-hint">Usage stats will appear when the usage API is connected.</p>`;
 
-  const billingIsLive = isLiveBillingStatus(workspace.billingStatus);
+  const billingIsLive = hasLiveBillingSubscription(workspace);
   const cancelScheduled = billingIsLive && workspace.billingCancelAtPeriodEnd === true;
   const countryOptionsHtml = billingCountryOptions(workspace.billingProvider)
     .map(

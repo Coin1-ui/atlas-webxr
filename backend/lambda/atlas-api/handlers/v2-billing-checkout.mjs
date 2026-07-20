@@ -215,8 +215,14 @@ export async function handleBillingCheckout(event, workspaceId) {
     });
   } catch (error) {
     const status = error?.statusCode || 500;
+    const message = error instanceof Error ? error.message : "Unknown error";
+    console.error("Billing checkout failed", {
+      workspaceId,
+      status,
+      message,
+    });
     return jsonResponse(status, {
-      error: status >= 500 ? "Unable to create checkout" : error.message,
+      error: status >= 500 ? "Unable to create checkout" : message,
     });
   }
 }

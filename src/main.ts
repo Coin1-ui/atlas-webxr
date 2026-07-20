@@ -1235,7 +1235,7 @@ async function showAccountScreen(opts?: {
             void showAccountScreen({ billingError: e instanceof Error ? e.message : String(e) });
           }
         },
-        onManageBilling: activeWorkspace.billingSubscriptionId
+        onManageBilling: hasLiveBillingSubscription(activeWorkspace)
           ? async (checkout) => {
               try {
                 const billingCountry = requireBillingCountry(
@@ -1249,7 +1249,7 @@ async function showAccountScreen(opts?: {
               }
             }
           : undefined,
-        onCancelBilling: activeWorkspace.billingSubscriptionId
+        onCancelBilling: hasLiveBillingSubscription(activeWorkspace)
           ? async () => {
               if (!window.confirm("Cancel this subscription at the end of its billing period?")) return;
               try {

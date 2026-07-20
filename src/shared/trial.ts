@@ -47,15 +47,11 @@ export function trialFallbackTier(_trialPlan: PlanTierId): PlanTierId {
 
 export type PlanActionVerb = "Subscribe" | "Upgrade";
 
-/** Paid subscription still managed at the provider (not ended/expired). */
+/** Billing status still entitled to self-serve management actions. */
 export function isLiveBillingStatus(
   status: TrialWorkspace["billingStatus"],
 ): boolean {
   return status === "active" || status === "past_due" || status === "canceled";
-}
-
-export function hasLiveBillingSubscription(ws: TrialWorkspace): boolean {
-  return Boolean(ws.billingSubscriptionId && isLiveBillingStatus(ws.billingStatus));
 }
 
 /**
@@ -157,6 +153,11 @@ export function subscribedBillingTier(ws: TrialWorkspace): PlanTierId | null {
       !highest || TIER_ORDER.indexOf(tier) > TIER_ORDER.indexOf(highest) ? tier : highest,
     null
   );
+}
+
+/** Paid entitlement still active — use plan change / portal / cancel, not new checkout. */
+export function hasLiveBillingSubscription(ws: TrialWorkspace): boolean {
+  return subscribedBillingTier(ws) !== null;
 }
 
 export function hasPurchasedTrialFallback(ws: TrialWorkspace): boolean {
