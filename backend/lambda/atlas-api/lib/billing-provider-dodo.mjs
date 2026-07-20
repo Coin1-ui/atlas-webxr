@@ -53,7 +53,23 @@ async function dodoRequest(path, options = {}) {
     signal: AbortSignal.timeout(12_000),
   });
   if (!response.ok) {
-    throw Object.assign(new Error("Dodo Payments request failed"), {
+    const text = await response.text();
+    let detail = "Dodo Payments request failed";
+    try {
+      const parsed = text ? JSON.parse(text) : null;
+      const message =
+        typeof parsed?.message === "string"
+          ? parsed.message
+          : typeof parsed?.error === "string"
+            ? parsed.error
+            : typeof parsed?.detail === "string"
+              ? parsed.detail
+              : null;
+      if (message) detail = message;
+    } catch {
+      if (text.trim()) detail = text.trim().slice(0, 240);
+    }
+    throw Object.assign(new Error(detail), {
       statusCode: response.status >= 500 ? 502 : 400,
     });
   }

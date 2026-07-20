@@ -47,6 +47,17 @@ export function trialFallbackTier(_trialPlan: PlanTierId): PlanTierId {
 
 export type PlanActionVerb = "Subscribe" | "Upgrade";
 
+/** Paid subscription still managed at the provider (not ended/expired). */
+export function isLiveBillingStatus(
+  status: TrialWorkspace["billingStatus"],
+): boolean {
+  return status === "active" || status === "past_due" || status === "canceled";
+}
+
+export function hasLiveBillingSubscription(ws: TrialWorkspace): boolean {
+  return Boolean(ws.billingSubscriptionId && isLiveBillingStatus(ws.billingStatus));
+}
+
 /**
  * Workspace-level Subscribe vs Upgrade — used for single-CTA / suspended copy.
  * No paid plan on file → "Subscribe"; already paying → "Upgrade".

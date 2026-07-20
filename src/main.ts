@@ -187,6 +187,7 @@ import { modelIconSrc } from "./shared/model-icon";
 import { applyWorkspaceTheme, workspaceLogoUrl } from "./branding/workspace-theme";
 import type { Workspace } from "./shared/tenant";
 import { isSupportedBillingCountry } from "./shared/dodo-billing-countries";
+import { hasLiveBillingSubscription } from "./shared/trial";
 import {
   DEFAULT_WORKSPACE_FEATURES,
   normalizeWorkspaceFeatures,
@@ -1216,7 +1217,7 @@ async function showAccountScreen(opts?: {
               checkout.billingCountry,
               activeWorkspace!.billingProvider,
             );
-            if (activeWorkspace!.billingSubscriptionId) {
+            if (hasLiveBillingSubscription(activeWorkspace!)) {
               await changeBillingPlan(activeWorkspace!.id, tier.id, billingCountry);
               void showAccountScreen({
                 billingSuccess: `Your ${tier.name} plan change is scheduled for your next billing date.`,

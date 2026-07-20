@@ -12,6 +12,7 @@ import {
   createZohoPortalSession,
 } from "../lib/billing-provider-zoho.mjs";
 import { planChangeEffectiveAt } from "../lib/billing-policy.mjs";
+import { billingEntitlementTier } from "../lib/billing-state.mjs";
 
 async function activeSubscription(event, workspaceId) {
   if (process.env.ATLAS_BILLING_ENABLED !== "true") {
@@ -84,6 +85,14 @@ export async function handleBillingChangePlan(event, workspaceId) {
     }
     if (!["starter", "launch", "growth"].includes(targetTier)) {
       return jsonResponse(400, { error: "tier must be starter, launch, or growth" });
+    }
+    if (
+      subscription.status === "expired" ||
+      (subscription.status !== "canceled" && billingEntitlementTier(subscription) === null)
+    ) {
+      return jsonResponse(409, {
+        error: "This subscription has ended. Start a new checkout instead of changing plan.",
+      });
     }
     if (targetTier === subscription.tier) {
       return jsonResponse(200, { ok: true, pending: false, tier: targetTier });

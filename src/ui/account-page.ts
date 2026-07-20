@@ -3,7 +3,7 @@ import { brandedHeaderHtml, mountWorkspaceLogo } from "../branding/workspace-the
 import type { WorkspaceUsageResponse } from "../data/usage-api";
 import { formatStorageBytes, formatSessionsLimit, isUnlimitedSessionsLimit } from "../shared/plan-limits";
 import { estimateOverageUsd, upgradeOptions, type PlanTier } from "../shared/plan-display";
-import { effectiveBillingTier, trialProfilePlanLine, accountTrialBannerHtml, trialSuspendedBannerHtml, mountTrialCountdown, planActionVerbForTier } from "../shared/trial";
+import { effectiveBillingTier, trialProfilePlanLine, accountTrialBannerHtml, trialSuspendedBannerHtml, mountTrialCountdown, planActionVerbForTier, isLiveBillingStatus } from "../shared/trial";
 import { isOveragePaidLocally } from "../data/billing-api";
 import {
   billingCountryOptions,
@@ -34,10 +34,6 @@ function isValidBillingCountry(
   provider: Workspace["billingProvider"],
 ): boolean {
   return isSupportedBillingCountry(country, provider ?? "dodo");
-}
-
-function isLiveBillingStatus(status: Workspace["billingStatus"]): boolean {
-  return status === "active" || status === "past_due" || status === "canceled";
 }
 
 function formatDate(iso: string): string {
