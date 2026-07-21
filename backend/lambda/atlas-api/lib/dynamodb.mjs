@@ -707,6 +707,8 @@ function couponFromItem(item) {
       Number.isFinite(promoPriceMonthly) && promoPriceMonthly > 0 ? promoPriceMonthly : undefined,
     durationMonths: Number.isFinite(durationMonths) && durationMonths > 0 ? durationMonths : undefined,
     createdAt: String(item.createdAt),
+    dodoDiscountId: item.dodoDiscountId ? String(item.dodoDiscountId) : undefined,
+    dodoSyncedAt: item.dodoSyncedAt ? String(item.dodoSyncedAt) : undefined,
   };
 }
 
@@ -748,7 +750,14 @@ export async function getActivePromo() {
   const coupons = await listPlatformCoupons();
   const promo = coupons.find((c) => c.showOnPricing && couponIsActive(c));
   if (!promo) return null;
-  return publicPromoFromCoupon(promo);
+  let synced = promo;
+  try {
+    const { syncOnePlatformCouponFromDodo } = await import("./coupon-dodo-sync.mjs");
+    synced = await syncOnePlatformCouponFromDodo(promo);
+  } catch {
+    // Public promo still works with last known Atlas counts.
+  }
+  return publicPromoFromCoupon(synced);
 }
 
 /**
@@ -777,6 +786,42 @@ export async function incrementPlatformCouponUse(code) {
     }
     throw e;
   }
+}
+
+/**
+ * Overwrite Atlas coupon usage from Dodo (source of truth for redemptions).
+ * @param {string} code
+ * @param {{ usesCount: number; maxUses?: number; dodoDiscountId?: string }} input
+ */
+export async function syncPlatformCouponUsesFromDodo(code, input) {
+  const normalized = couponKey(code);
+  const now = new Date().toISOString();
+  const parts = ["usesCount = :usesCount", "dodoSyncedAt = :dodoSyncedAt", "updatedAt = :updatedAt"];
+  /** @type {Record<string, unknown>} */
+  const values = {
+    ":usesCount": input.usesCount,
+    ":dodoSyncedAt": now,
+    ":updatedAt": now,
+  };
+  if (input.maxUses != null && input.maxUses > 0) {
+    parts.push("maxUses = :maxUses");
+    values[":maxUses"] = input.maxUses;
+  }
+  if (input.dodoDiscountId) {
+    parts.push("dodoDiscountId = :dodoDiscountId");
+    values[":dodoDiscountId"] = input.dodoDiscountId;
+  }
+  const result = await client.send(
+    new UpdateCommand({
+      TableName: workspacesTable(),
+      Key: { pk: "PLATFORM#COUPONS", sk: `CODE#${normalized}` },
+      UpdateExpression: `SET ${parts.join(", ")}`,
+      ConditionExpression: "attribute_exists(pk)",
+      ExpressionAttributeValues: values,
+      ReturnValues: "ALL_NEW",
+    })
+  );
+  return couponFromItem(result.Attributes);
 }
 
 /**

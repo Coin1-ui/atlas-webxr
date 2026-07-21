@@ -351,8 +351,9 @@ export function renderOwnerDashboard(
           <section class="owner-panel ${tab === "coupons" ? "" : "hidden"}" data-panel="coupons">
             <div class="owner-panel-head">
               <h2 class="admin-section-title">Discount coupons</h2>
-              <button type="button" class="btn btn-ghost btn-sm" data-action="refresh-coupons">Refresh</button>
+              <button type="button" class="btn btn-ghost btn-sm" data-action="refresh-coupons">Sync from Dodo</button>
             </div>
+            <p class="auth-hint owner-coupon-sync-hint">Use counts sync from Dodo Payments when you open or refresh this panel.</p>
             <form class="owner-coupon-form" data-form="create-coupon" novalidate>
               <div class="owner-form-grid">
                 <label class="auth-label">Code

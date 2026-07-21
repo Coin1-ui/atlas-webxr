@@ -222,6 +222,44 @@ export async function createDodoRefund(paymentId, amountMinor, reason, operation
   });
 }
 
+/**
+ * List Dodo discount codes (paginated).
+ * @param {{ pageSize?: number; cursor?: string | null }} [opts]
+ */
+export async function listDodoDiscounts(opts = {}) {
+  const params = new URLSearchParams({ page_size: String(opts.pageSize ?? 100) });
+  if (opts.cursor) params.set("cursor", opts.cursor);
+  return dodoRequest(`/discounts?${params}`);
+}
+
+/**
+ * Find a Dodo discount by uppercase coupon code.
+ * @param {string} code
+ */
+export async function findDodoDiscountByCode(code) {
+  const target = String(code || "")
+    .trim()
+    .toUpperCase();
+  if (!target) return null;
+  let cursor = null;
+  for (let page = 0; page < 20; page += 1) {
+    const result = await listDodoDiscounts({ cursor });
+    const items = Array.isArray(result?.items) ? result.items : [];
+    const match = items.find((row) => String(row.code || "").toUpperCase() === target);
+    if (match) return match;
+    cursor = result?.next_page_token ?? result?.next_cursor ?? result?.cursor ?? null;
+    if (!cursor) break;
+  }
+  return null;
+}
+
+export async function createDodoDiscount(input) {
+  return dodoRequest("/discounts", {
+    method: "POST",
+    body: input,
+  });
+}
+
 export function verifyDodoWebhook(rawBody, headers) {
   const webhook = new Webhook(requiredEnv("DODO_PAYMENTS_WEBHOOK_SECRET"));
   return webhook.verify(rawBody, {
