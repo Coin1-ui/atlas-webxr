@@ -44,6 +44,7 @@ export function renderOwnerDashboard(
   handlers: {
     onTab: (tab: OwnerTab) => void;
     onRefreshWorkspaces: () => void;
+    onRefreshCoupons: () => void;
     onSetPlan: (workspaceId: string, billingTier: PlanTierId) => void | Promise<void>;
     onSetFeature: (
       workspaceId: string,
@@ -348,7 +349,10 @@ export function renderOwnerDashboard(
           </section>
 
           <section class="owner-panel ${tab === "coupons" ? "" : "hidden"}" data-panel="coupons">
-            <h2 class="admin-section-title">Discount coupons</h2>
+            <div class="owner-panel-head">
+              <h2 class="admin-section-title">Discount coupons</h2>
+              <button type="button" class="btn btn-ghost btn-sm" data-action="refresh-coupons">Refresh</button>
+            </div>
             <form class="owner-coupon-form" data-form="create-coupon" novalidate>
               <div class="owner-form-grid">
                 <label class="auth-label">Code
@@ -435,6 +439,7 @@ export function renderOwnerDashboard(
   root.querySelector("[data-action=back]")?.addEventListener("click", handlers.onBack);
   root.querySelector("[data-action=signout]")?.addEventListener("click", handlers.onSignOut);
   root.querySelector("[data-action=refresh-workspaces]")?.addEventListener("click", handlers.onRefreshWorkspaces);
+  root.querySelector("[data-action=refresh-coupons]")?.addEventListener("click", handlers.onRefreshCoupons);
 
   root.querySelector<HTMLInputElement>("[data-sales-deck-toggle]")?.addEventListener("change", (e) => {
     const input = e.currentTarget as HTMLInputElement;

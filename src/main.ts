@@ -1113,11 +1113,17 @@ function renderPublicShowroomBlocked(kind: "restricted" | "suspended", message: 
 
 function mergeBillingStatus(workspace: Workspace, billing: BillingStatus): Workspace {
   if (!billing.subscription) return workspace;
-  return {
+  const entitlementTier = billing.entitlementTier as Workspace["billingEntitlementTier"];
+  const paidLive =
+    Boolean(entitlementTier) &&
+    (billing.subscription.status === "active" ||
+      billing.subscription.status === "past_due" ||
+      billing.subscription.status === "canceled");
+  const merged: Workspace = {
     ...workspace,
     billingProvider: billing.subscription.provider,
     billingStatus: billing.subscription.status as Workspace["billingStatus"],
-    billingEntitlementTier: billing.entitlementTier as Workspace["billingEntitlementTier"],
+    billingEntitlementTier: entitlementTier,
     billingSubscriptionId:
       billing.subscription.providerSubscriptionId ?? workspace.billingSubscriptionId,
     billingCurrentPeriodEnd: billing.subscription.currentPeriodEnd,
@@ -1129,6 +1135,20 @@ function mergeBillingStatus(workspace: Workspace, billing: BillingStatus): Works
         ? billing.subscription.cancelAtPeriodEnd
         : false,
   };
+  if (paidLive && entitlementTier) {
+    let plan: Workspace["plan"] = "starter";
+    if (entitlementTier === "growth") plan = "pro";
+    else if (entitlementTier === "scale") plan = "enterprise";
+    return {
+      ...merged,
+      trialEndsAt: null,
+      trialPlan: null,
+      purchasedBillingTier: entitlementTier,
+      billingTier: entitlementTier,
+      plan,
+    };
+  }
+  return merged;
 }
 
 function requireBillingCountry(country: string, provider: Workspace["billingProvider"] = "dodo"): string {
@@ -2240,6 +2260,7 @@ async function showOwnerScreen(tab: OwnerTab = ownerTab): Promise<void> {
     {
       onTab: (t) => void showOwnerScreen(t),
       onRefreshWorkspaces: () => void showOwnerScreen("customers"),
+      onRefreshCoupons: () => void showOwnerScreen("coupons"),
       onSetPlan: async (workspaceId, billingTier) => {
         try {
           await platformSetWorkspacePlan(workspaceId, billingTier);

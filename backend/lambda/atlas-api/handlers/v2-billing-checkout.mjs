@@ -20,7 +20,7 @@ import {
 import { createHash } from "node:crypto";
 import { providerForBillingCountry } from "../lib/billing-policy.mjs";
 import { billingEntitlementTier } from "../lib/billing-state.mjs";
-import { getPlatformCouponByCode, incrementPlatformCouponUse } from "../lib/dynamodb.mjs";
+import { getPlatformCouponByCode } from "../lib/dynamodb.mjs";
 import { couponIsActive, couponMatchesTier } from "../lib/coupon.mjs";
 
 function header(event, name) {
@@ -125,9 +125,8 @@ export async function handleBillingCheckout(event, workspaceId) {
         if (!couponMatchesTier(atlasCoupon, input.tier)) {
           return jsonResponse(400, { error: "Coupon does not apply to this plan" });
         }
-        await incrementPlatformCouponUse(input.couponCode);
       }
-      // If not found in Atlas, forward as-is to the provider (may be a provider-native code).
+      // Redeem Atlas coupon use count after successful payment (webhook), not at checkout creation.
     }
 
     const idempotencyKey = header(event, "idempotency-key");

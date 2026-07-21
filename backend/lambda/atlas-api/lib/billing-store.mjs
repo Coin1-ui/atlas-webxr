@@ -12,6 +12,10 @@ import {
   billingEntitlementTier,
   normalizeBillingEvent,
 } from "./billing-state.mjs";
+import {
+  getPlatformCouponByCode,
+  incrementPlatformCouponUse,
+} from "./dynamodb.mjs";
 
 const client = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 
@@ -25,6 +29,57 @@ function workspacesTable() {
 
 function checkoutKey(operationId) {
   return { pk: `CHECKOUT#${operationId}`, sk: "OPERATION" };
+}
+
+function workspacePlanForBillingTier(tier) {
+  if (tier === "growth") return "pro";
+  if (tier === "scale") return "enterprise";
+  return "starter";
+}
+
+/** @param {string} operationId */
+export async function getBillingCheckoutOperation(operationId) {
+  const normalized = mappingId(operationId, "operationId");
+  const row = await client.send(
+    new GetCommand({
+      TableName: billingTable(),
+      Key: checkoutKey(normalized),
+      ConsistentRead: true,
+    })
+  );
+  return row.Item ?? null;
+}
+
+/**
+ * Idempotently increment Atlas coupon use after a successful checkout payment.
+ * @param {string | null | undefined} operationId
+ * @param {string} eventId
+ */
+async function redeemCheckoutCoupon(operationId, eventId) {
+  if (!operationId) return;
+  const operation = await getBillingCheckoutOperation(operationId);
+  const couponCode =
+    typeof operation?.couponCode === "string" ? operation.couponCode.trim().toUpperCase() : "";
+  if (!couponCode) return;
+  const now = new Date().toISOString();
+  try {
+    await client.send(
+      new UpdateCommand({
+        TableName: billingTable(),
+        Key: checkoutKey(String(operation.operationId)),
+        UpdateExpression: "SET couponRedeemedEventId = :eventId, updatedAt = :now",
+        ConditionExpression: "attribute_not_exists(couponRedeemedEventId)",
+        ExpressionAttributeValues: { ":eventId": eventId, ":now": now },
+      })
+    );
+  } catch (error) {
+    if (error?.name === "ConditionalCheckFailedException") return;
+    throw error;
+  }
+  const atlasCoupon = await getPlatformCouponByCode(couponCode);
+  if (atlasCoupon) {
+    await incrementPlatformCouponUse(couponCode);
+  }
 }
 
 function refundKey(provider, paymentId, idempotencyKey) {
@@ -43,6 +98,28 @@ function checkoutRequestKey(workspaceId, idempotencyKey) {
 
 function checkoutLeaseKey(workspaceId) {
   return { pk: `WORKSPACE#${workspaceId}`, sk: "CHECKOUT#ACTIVE" };
+}
+
+/** Expire the workspace checkout lease so a fresh hosted session can be created. */
+export async function releaseCheckoutLease(workspaceId, operationId) {
+  const now = new Date().toISOString();
+  try {
+    await client.send(
+      new UpdateCommand({
+        TableName: billingTable(),
+        Key: checkoutLeaseKey(workspaceId),
+        UpdateExpression: "SET leaseUntil = :leaseUntil, updatedAt = :now",
+        ConditionExpression: "operationId = :operationId",
+        ExpressionAttributeValues: {
+          ":operationId": String(operationId),
+          ":leaseUntil": Math.floor(Date.now() / 1000) - 1,
+          ":now": now,
+        },
+      })
+    );
+  } catch (error) {
+    if (error?.name !== "ConditionalCheckFailedException") throw error;
+  }
 }
 
 function providerCustomerKey(provider, customerId, workspaceId) {
@@ -88,7 +165,8 @@ export function providerCheckoutUrl(value, provider) {
   return url;
 }
 
-export async function createBillingCheckoutOperation(input) {
+export async function createBillingCheckoutOperation(input, options = {}) {
+  const allowStaleLeaseRetry = options.allowStaleLeaseRetry !== false;
   const workspaceId = mappingId(input.workspaceId, "workspaceId");
   const idempotencyKey = mappingId(input.idempotencyKey, "idempotencyKey");
   const requestHash = String(input.requestHash || "");
@@ -210,7 +288,16 @@ export async function createBillingCheckoutOperation(input) {
           leasedOperation.Item?.requestHash === requestHash &&
           leasedOperation.Item?.workspaceId === workspaceId
         ) {
-          return { ...leasedOperation.Item, reused: true };
+          // Only reuse in-flight checkouts. Dodo checkout_url is single-use; returning a
+          // completed provider_created session causes "payment link expired" on retry.
+          const leasedStatus = String(leasedOperation.Item.status || "");
+          if (leasedStatus === "pending_provider" || leasedStatus === "provider_call_started") {
+            return { ...leasedOperation.Item, reused: true };
+          }
+          if (leasedStatus === "provider_created" && allowStaleLeaseRetry) {
+            await releaseCheckoutLease(workspaceId, String(lease.Item.operationId));
+            return createBillingCheckoutOperation(input, { allowStaleLeaseRetry: false });
+          }
         }
       }
       throw Object.assign(new Error("Another checkout is already in progress"), {
@@ -276,6 +363,8 @@ export async function recordProviderCheckout(input) {
       },
     },
     {
+      // Release the workspace lease immediately. Hosted checkout URLs (especially Dodo)
+      // are single-use; holding the lease for 30m caused retries to reuse an expired link.
       Update: {
         TableName: billingTable(),
         Key: checkoutLeaseKey(operation.workspaceId),
@@ -283,7 +372,7 @@ export async function recordProviderCheckout(input) {
         ConditionExpression: "operationId = :operationId",
         ExpressionAttributeValues: {
           ":operationId": operationId,
-          ":leaseUntil": Math.floor(Date.now() / 1000) + 30 * 60,
+          ":leaseUntil": Math.floor(Date.now() / 1000) - 1,
           ":now": now,
         },
       },
@@ -901,6 +990,32 @@ export function buildBillingTransactionItems(event, transition, receivedAt) {
     "updatedAt = :receivedAt",
   ];
   if (entitlementTier) workspaceSet.push("billingEntitlementTier = :entitlementTier");
+  /** @type {Record<string, unknown>} */
+  const workspaceValues = {
+    ":provider": event.provider,
+    ":status": subscription.status,
+    ":subscriptionId": event.providerSubscriptionId,
+    ":customerId": subscription.providerCustomerId,
+    ":periodEnd": subscription.currentPeriodEnd,
+    ":graceUntil": subscription.graceUntil,
+    ":cancelAtPeriodEnd": subscription.cancelAtPeriodEnd,
+    ":eventId": event.eventId,
+    ":eventAt": event.occurredAt,
+    ":receivedAt": receivedAt,
+    ...(entitlementTier ? { ":entitlementTier": entitlementTier } : {}),
+  };
+  if (entitlementTier) {
+    workspaceSet.push(
+      "purchasedBillingTier = :entitlementTier",
+      "billingTier = :entitlementTier",
+      "#plan = :workspacePlan",
+      "trialEndsAt = :trialEndsAt",
+      "trialPlan = :trialPlan"
+    );
+    workspaceValues[":workspacePlan"] = workspacePlanForBillingTier(entitlementTier);
+    workspaceValues[":trialEndsAt"] = null;
+    workspaceValues[":trialPlan"] = null;
+  }
 
   return [
     ...eventWrites,
@@ -931,19 +1046,8 @@ export function buildBillingTransactionItems(event, transition, receivedAt) {
           ? `SET ${workspaceSet.join(", ")}`
           : `SET ${workspaceSet.join(", ")} REMOVE billingEntitlementTier`,
         ConditionExpression: "attribute_exists(pk)",
-        ExpressionAttributeValues: {
-          ":provider": event.provider,
-          ":status": subscription.status,
-          ":subscriptionId": event.providerSubscriptionId,
-          ":customerId": subscription.providerCustomerId,
-          ":periodEnd": subscription.currentPeriodEnd,
-          ":graceUntil": subscription.graceUntil,
-          ":cancelAtPeriodEnd": subscription.cancelAtPeriodEnd,
-          ":eventId": event.eventId,
-          ":eventAt": event.occurredAt,
-          ":receivedAt": receivedAt,
-          ...(entitlementTier ? { ":entitlementTier": entitlementTier } : {}),
-        },
+        ExpressionAttributeNames: entitlementTier ? { "#plan": "plan" } : undefined,
+        ExpressionAttributeValues: workspaceValues,
       },
     },
   ];
@@ -976,6 +1080,19 @@ export async function applyVerifiedBillingEvent(input) {
           TransactItems: buildBillingTransactionItems(event, transition, receivedAt),
         })
       );
+      if (
+        transition.applied &&
+        (event.eventType === "subscription.active" || event.eventType === "payment.succeeded")
+      ) {
+        const binding = await client.send(
+          new GetCommand({
+            TableName: billingTable(),
+            Key: providerSubscriptionKey(event.provider, event.providerSubscriptionId),
+            ConsistentRead: true,
+          })
+        );
+        await redeemCheckoutCoupon(binding.Item?.operationId, event.eventId);
+      }
       return {
         duplicate: false,
         applied: transition.applied,

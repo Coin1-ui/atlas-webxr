@@ -65,6 +65,9 @@ export function planActionVerb(ws) {
  */
 export function planActionVerbForTier(ws, targetTier) {
   const paidTier = paidBillingTier(ws);
+  if (!paidTier && isTrialActive(ws)) {
+    return "Subscribe";
+  }
   const reference = paidTier ?? (isTrialActive(ws) && ws.trialPlan ? ws.trialPlan : null);
   if (!reference) return "Subscribe";
   const cmp = TIER_ORDER.indexOf(targetTier) - TIER_ORDER.indexOf(reference);
