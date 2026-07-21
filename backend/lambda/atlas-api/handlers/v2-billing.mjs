@@ -2,6 +2,10 @@ import { jsonResponse, optionsResponse } from "../lib/http.mjs";
 import { requireWorkspaceAdmin } from "../lib/authz.mjs";
 import { billingEntitlementTier } from "../lib/billing-state.mjs";
 import { getBillingSubscription } from "../lib/billing-store.mjs";
+import {
+  getDodoSubscription,
+  scheduledPlanChangeFromDodoSubscription,
+} from "../lib/billing-provider-dodo.mjs";
 
 /**
  * GET /v2/workspaces/{id}/billing/status — authoritative provider subscription state.
@@ -15,9 +19,24 @@ export async function handleBillingStatus(event, workspaceId) {
   try {
     await requireWorkspaceAdmin(event, workspaceId, { allowSuspended: true });
     const subscription = await getBillingSubscription(workspaceId);
+    let scheduledPlanChange = null;
+    if (
+      process.env.ATLAS_BILLING_ENABLED === "true" &&
+      subscription?.provider === "dodo" &&
+      subscription.providerSubscriptionId &&
+      !["expired", "canceled"].includes(String(subscription.status || ""))
+    ) {
+      try {
+        const live = await getDodoSubscription(subscription.providerSubscriptionId);
+        scheduledPlanChange = scheduledPlanChangeFromDodoSubscription(live);
+      } catch {
+        scheduledPlanChange = null;
+      }
+    }
     return jsonResponse(200, {
       subscription,
       entitlementTier: billingEntitlementTier(subscription),
+      scheduledPlanChange,
     });
   } catch (e) {
     const status = /** @type {{ statusCode?: number }} */ (e).statusCode || 500;

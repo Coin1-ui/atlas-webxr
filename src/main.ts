@@ -159,6 +159,7 @@ import {
 } from "./auth/flow";
 import {
   cancelBillingSubscription,
+  cancelScheduledBillingPlanChange,
   changeBillingPlan,
   createBillingCheckout,
   createBillingPortal,
@@ -1157,8 +1158,11 @@ async function showAccountScreen(opts?: {
     }
     const workspaceBase = applyPlatformOverrides(next);
     let workspace = workspaceBase;
+    let scheduledPlanChange: BillingStatus["scheduledPlanChange"] = null;
     try {
-      workspace = mergeBillingStatus(workspaceBase, await getBillingStatus(workspaceBase.id));
+      const billing = await getBillingStatus(workspaceBase.id);
+      workspace = mergeBillingStatus(workspaceBase, billing);
+      scheduledPlanChange = billing.scheduledPlanChange ?? null;
     } catch {
       /* billing status API optional until deployed */
     }
@@ -1197,6 +1201,7 @@ async function showAccountScreen(opts?: {
         usage,
         usageUnrestricted: isPlatformOwner,
         overagePaid: usage ? isOveragePaidLocally(workspace.id, usage.usage.month) : false,
+        scheduledPlanChange,
         ...opts,
       },
       {
@@ -1279,6 +1284,29 @@ async function showAccountScreen(opts?: {
               }
             }
           : undefined,
+        onCancelScheduledPlanChange:
+          hasLiveBillingSubscription(activeWorkspace) &&
+          activeWorkspace?.billingProvider === "dodo"
+            ? async () => {
+                if (
+                  !window.confirm(
+                    "Cancel the scheduled plan change? Your current plan stays until you choose a new one.",
+                  )
+                ) {
+                  return;
+                }
+                try {
+                  await cancelScheduledBillingPlanChange(activeWorkspace!.id);
+                  void showAccountScreen({
+                    billingSuccess: "Scheduled plan change canceled.",
+                  });
+                } catch (e) {
+                  void showAccountScreen({
+                    billingError: e instanceof Error ? e.message : String(e),
+                  });
+                }
+              }
+            : undefined,
         onPayOverage: async (amountUsd) => {
           if (!usage) return;
           try {

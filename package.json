@@ -38,6 +38,7 @@
     "test:dodo-billing-countries": "node scripts/test-dodo-billing-countries-unit.mjs",
     "test:plan-change-matrix": "node scripts/test-plan-change-matrix-unit.mjs",
     "test:billing-plan-status": "node scripts/test-billing-plan-display-status-unit.mjs",
+    "test:scheduled-plan-change": "node scripts/test-scheduled-plan-change-dodo-unit.mjs",
     "generate:dodo-billing-countries": "node scripts/generate-dodo-billing-countries.mjs",
     "qa:billing-sandbox": "node scripts/qa-billing-sandbox-checklist.mjs",
     "qa:batch33-live": "node scripts/qa-batch33-live.mjs",

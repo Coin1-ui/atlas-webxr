@@ -1,6 +1,7 @@
 import type { Workspace } from "../shared/tenant";
 import { brandedHeaderHtml, mountWorkspaceLogo } from "../branding/workspace-theme";
 import type { WorkspaceUsageResponse } from "../data/usage-api";
+import type { BillingScheduledPlanChange } from "../data/workspace-api";
 import { formatStorageBytes, formatSessionsLimit, isUnlimitedSessionsLimit } from "../shared/plan-limits";
 import { estimateOverageUsd, planDisplayName, upgradeOptions, type PlanTier } from "../shared/plan-display";
 import { effectiveBillingTier, trialProfilePlanLine, accountTrialBannerHtml, trialSuspendedBannerHtml, mountTrialCountdown, planActionVerbForTier, hasLiveBillingSubscription, subscribedBillingTier, planChangeMatrix, isTrialActive, billingPlanDisplayStatus, billingPlanStatusLabel } from "../shared/trial";
@@ -58,6 +59,7 @@ export function renderAccountPage(
     billingSuccess?: string;
     overagePaid?: boolean;
     usageUnrestricted?: boolean;
+    scheduledPlanChange?: BillingScheduledPlanChange | null;
   },
   handlers: {
     onChangePassword: (current: string, next: string) => void | Promise<void>;
@@ -67,6 +69,7 @@ export function renderAccountPage(
     ) => void | Promise<void>;
     onManageBilling?: (checkout: { billingCountry: string }) => void | Promise<void>;
     onCancelBilling?: () => void | Promise<void>;
+    onCancelScheduledPlanChange?: () => void | Promise<void>;
     onPayOverage: (amountUsd: number) => void | Promise<void>;
     onAdmin: () => void;
     onBranding?: () => void;
@@ -126,6 +129,10 @@ export function renderAccountPage(
   const cancelScheduled = billingDisplayStatus === "cancel_scheduled";
   const billingCanceled = billingDisplayStatus === "canceled";
   const paidBillingTier = subscribedBillingTier(workspace);
+  const scheduledPlanChange = data.scheduledPlanChange ?? null;
+  const scheduledPlanName = scheduledPlanChange
+    ? planDisplayName(workspace.plan, scheduledPlanChange.tier)
+    : "";
   const billingPlanName = paidBillingTier
     ? planDisplayName(workspace.plan, paidBillingTier)
     : trialProfilePlanLine(workspace);
@@ -255,6 +262,15 @@ export function renderAccountPage(
                             : " Subscribe below to restore paid access."
                         }</p>`
                       : ""
+                  }
+                  ${
+                    scheduledPlanChange
+                      ? `<p class="auth-hint">Plan change scheduled to <strong>${escapeHtml(scheduledPlanName)}</strong>${
+                          scheduledPlanChange.effectiveAt
+                            ? ` on ${escapeHtml(formatDate(scheduledPlanChange.effectiveAt))}`
+                            : " at the next billing date"
+                        }. You keep your current plan until then.</p>`
+                      : ""
                   }`
                 : ""
             }
@@ -275,6 +291,7 @@ export function renderAccountPage(
             </div>
             ${upgradeHtml}
             ${handlers.onManageBilling && workspace.billingSubscriptionId && billingIsLive ? `<button type="button" class="mkt-btn mkt-btn-primary account-secondary-btn" data-action="manage-billing">Manage payment method &amp; invoices</button>` : ""}
+            ${handlers.onCancelScheduledPlanChange && scheduledPlanChange ? `<button type="button" class="mkt-btn mkt-btn-ghost account-secondary-btn" data-action="cancel-scheduled-plan">Cancel scheduled plan change</button>` : ""}
             ${handlers.onCancelBilling && workspace.billingSubscriptionId && billingIsLive && !cancelScheduled ? `<button type="button" class="mkt-btn mkt-btn-ghost account-secondary-btn" data-action="cancel-billing">Cancel at renewal</button>` : ""}
             <button type="button" class="mkt-btn mkt-btn-ghost account-secondary-btn" data-action="pricing">Compare all plans</button>
           </section>
@@ -365,6 +382,9 @@ export function renderAccountPage(
     void handlers.onManageBilling?.({ billingCountry: country });
   });
   root.querySelector("[data-action=cancel-billing]")?.addEventListener("click", () => void handlers.onCancelBilling?.());
+  root
+    .querySelector("[data-action=cancel-scheduled-plan]")
+    ?.addEventListener("click", () => void handlers.onCancelScheduledPlanChange?.());
   root.querySelector("[data-action=pricing]")?.addEventListener("click", handlers.onPricing);
   root.querySelector("[data-action=back]")?.addEventListener("click", handlers.onBack);
   root.querySelector("[data-action=signout]")?.addEventListener("click", handlers.onSignOut);

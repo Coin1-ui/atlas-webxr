@@ -23,6 +23,7 @@ import {
 import { handleBillingCheckout } from "./handlers/v2-billing-checkout.mjs";
 import {
   handleBillingCancel,
+  handleBillingCancelScheduledPlan,
   handleBillingChangePlan,
   handleBillingPortal,
 } from "./handlers/v2-billing-manage.mjs";
@@ -101,6 +102,15 @@ export async function handler(event) {
     const billingPlanMatch = /^\/v2\/workspaces\/([^/]+)\/billing\/plan$/.exec(rawPath);
     if (billingPlanMatch && method === "POST") {
       return await handleBillingChangePlan(event, decodeURIComponent(billingPlanMatch[1]));
+    }
+
+    const billingPlanScheduledCancelMatch =
+      /^\/v2\/workspaces\/([^/]+)\/billing\/plan\/scheduled\/cancel$/.exec(rawPath);
+    if (billingPlanScheduledCancelMatch && method === "POST") {
+      return await handleBillingCancelScheduledPlan(
+        event,
+        decodeURIComponent(billingPlanScheduledCancelMatch[1]),
+      );
     }
 
     if (rawPath === "/v2/billing/webhooks/dodo" && method === "POST") {

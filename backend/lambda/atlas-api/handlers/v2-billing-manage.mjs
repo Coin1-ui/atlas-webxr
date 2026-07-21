@@ -3,6 +3,7 @@ import { jsonResponse, parseJsonBody } from "../lib/http.mjs";
 import { getBillingSubscription, markBillingCancelScheduled } from "../lib/billing-store.mjs";
 import {
   cancelDodoSubscription,
+  cancelDodoScheduledPlanChange,
   changeDodoPlan,
   createDodoPortalSession,
 } from "../lib/billing-provider-dodo.mjs";
@@ -116,5 +117,26 @@ export async function handleBillingChangePlan(event, workspaceId) {
     });
   } catch (error) {
     return errorResponse(error, "Unable to change billing plan");
+  }
+}
+
+/** POST /v2/workspaces/{id}/billing/plan/scheduled/cancel — clear pending Dodo plan change. */
+export async function handleBillingCancelScheduledPlan(event, workspaceId) {
+  try {
+    const subscription = await activeSubscription(event, workspaceId);
+    if (subscription.provider !== "dodo") {
+      return jsonResponse(501, {
+        error: "Canceling a scheduled plan change is only supported for Dodo subscriptions",
+      });
+    }
+    if (["canceled", "expired"].includes(subscription.status)) {
+      return jsonResponse(409, {
+        error: "This subscription has ended. Start a new checkout instead.",
+      });
+    }
+    await cancelDodoScheduledPlanChange(subscription.providerSubscriptionId);
+    return jsonResponse(200, { ok: true, scheduledPlanChange: null });
+  } catch (error) {
+    return errorResponse(error, "Unable to cancel scheduled plan change");
   }
 }

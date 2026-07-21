@@ -158,6 +158,41 @@ export async function cancelDodoSubscription(subscriptionId) {
   });
 }
 
+/** Clears a pending next-billing-date plan change (Dodo DELETE …/change-plan/scheduled). */
+export async function cancelDodoScheduledPlanChange(subscriptionId) {
+  await dodoRequest(
+    `/subscriptions/${encodeURIComponent(subscriptionId)}/change-plan/scheduled`,
+    { method: "DELETE" },
+  );
+}
+
+/**
+ * @param {unknown} subscription Dodo subscription payload
+ * @returns {{ tier: string; productId: string; effectiveAt: string | null } | null}
+ */
+export function scheduledPlanChangeFromDodoSubscription(subscription) {
+  const change = subscription && typeof subscription === "object" ? subscription.scheduled_change : null;
+  if (!change || typeof change !== "object") return null;
+  const productId = typeof change.product_id === "string" ? change.product_id : "";
+  if (!productId) return null;
+  let tier = null;
+  try {
+    tier = tierForProductId(productId);
+  } catch {
+    return null;
+  }
+  return {
+    tier,
+    productId,
+    effectiveAt:
+      typeof change.effective_at === "string"
+        ? change.effective_at
+        : typeof change.scheduled_at === "string"
+          ? change.scheduled_at
+          : null,
+  };
+}
+
 export async function changeDodoPlan(subscriptionId, tier, effectiveAt = "next_billing_date") {
   await dodoRequest(`/subscriptions/${encodeURIComponent(subscriptionId)}/change-plan`, {
     method: "POST",

@@ -256,6 +256,12 @@ async function billingRequest<T>(
   return data as T;
 }
 
+export type BillingScheduledPlanChange = {
+  tier: "starter" | "launch" | "growth";
+  productId: string;
+  effectiveAt: string | null;
+};
+
 export type BillingStatus = {
   entitlementTier: string | null;
   subscription: {
@@ -267,6 +273,7 @@ export type BillingStatus = {
     graceUntil: string | null;
     cancelAtPeriodEnd: boolean;
   } | null;
+  scheduledPlanChange?: BillingScheduledPlanChange | null;
 };
 
 export function getBillingStatus(workspaceId: string): Promise<BillingStatus> {
@@ -316,4 +323,8 @@ export async function changeBillingPlan(
     method: "POST",
     body: JSON.stringify({ tier, billingCountry }),
   });
+}
+
+export async function cancelScheduledBillingPlanChange(workspaceId: string): Promise<void> {
+  await billingRequest(workspaceId, "plan/scheduled/cancel", { method: "POST" });
 }
