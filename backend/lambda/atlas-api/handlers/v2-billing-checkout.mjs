@@ -6,6 +6,7 @@ import {
   markBillingCheckoutProviderCallStarted,
   markBillingCheckoutReconciliationFailed,
   recordProviderCheckout,
+  releaseCheckoutLease,
 } from "../lib/billing-store.mjs";
 import {
   createDodoCheckout,
@@ -19,6 +20,8 @@ import {
 import { createHash } from "node:crypto";
 import { providerForBillingCountry } from "../lib/billing-policy.mjs";
 import { billingEntitlementTier } from "../lib/billing-state.mjs";
+import { getPlatformCouponByCode, incrementPlatformCouponUse } from "../lib/dynamodb.mjs";
+import { couponIsActive, couponMatchesTier } from "../lib/coupon.mjs";
 
 function header(event, name) {
   const target = name.toLowerCase();
@@ -112,6 +115,21 @@ export async function handleBillingCheckout(event, workspaceId) {
         error: "An existing subscription must be managed instead of creating another checkout",
       });
     }
+    // Validate Atlas platform coupon if provided.
+    if (input.couponCode) {
+      const atlasCoupon = await getPlatformCouponByCode(input.couponCode);
+      if (atlasCoupon) {
+        if (!couponIsActive(atlasCoupon)) {
+          return jsonResponse(400, { error: "Coupon has expired or is sold out" });
+        }
+        if (!couponMatchesTier(atlasCoupon, input.tier)) {
+          return jsonResponse(400, { error: "Coupon does not apply to this plan" });
+        }
+        await incrementPlatformCouponUse(input.couponCode);
+      }
+      // If not found in Atlas, forward as-is to the provider (may be a provider-native code).
+    }
+
     const idempotencyKey = header(event, "idempotency-key");
     if (
       typeof idempotencyKey !== "string" ||
@@ -126,7 +144,7 @@ export async function handleBillingCheckout(event, workspaceId) {
     const requestHash = createHash("sha256")
       .update(JSON.stringify({ provider, ...input }))
       .digest("hex");
-    const operation = await createBillingCheckoutOperation({
+    let operation = await createBillingCheckoutOperation({
       workspaceId,
       provider,
       tier: input.tier,
@@ -142,6 +160,25 @@ export async function handleBillingCheckout(event, workspaceId) {
       operation.requestHash !== requestHash
     ) {
       return jsonResponse(409, { error: "Idempotency key was already used for another checkout" });
+    }
+    // Dodo checkout_url is single-use. Lease recovery used to return a completed
+    // provider_created session for the same tier/country/email → "payment link expired".
+    if (
+      operation.status === "provider_created" &&
+      operation.checkoutUrl &&
+      operation.reused &&
+      operation.idempotencyKey !== idempotencyKey
+    ) {
+      await releaseCheckoutLease(workspaceId, operation.operationId);
+      operation = await createBillingCheckoutOperation({
+        workspaceId,
+        provider,
+        tier: input.tier,
+        billingCountry: input.billingCountry,
+        couponCode: input.couponCode,
+        idempotencyKey,
+        requestHash,
+      });
     }
     if (operation.status === "provider_created" && operation.checkoutUrl) {
       return jsonResponse(200, {

@@ -72,6 +72,10 @@ export function planActionVerb(ws: TrialWorkspace): "Subscribe" | "Upgrade" {
  */
 export function planActionVerbForTier(ws: TrialWorkspace, targetTier: PlanTierId): PlanActionVerb {
   const paidTier = subscribedBillingTier(ws);
+  if (!paidTier && isTrialActive(ws)) {
+    // During trial with no paid subscription, all tiers are purchasable (including the trial tier).
+    return "Subscribe";
+  }
   const referenceTier: PlanTierId | null =
     paidTier ?? (isTrialActive(ws) && ws.trialPlan ? ws.trialPlan : null);
   if (!referenceTier) return "Subscribe";
