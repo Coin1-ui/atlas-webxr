@@ -36,7 +36,7 @@ Deploy `backend/lambda/atlas-api` for **Atlas AR SaaS v2** (Sprint 1+):
 | POST | `/v2/workspaces/{workspaceId}/billing/checkout` | Cognito JWT + admin | Routed hosted checkout; requires `Idempotency-Key` |
 | POST | `/v2/workspaces/{workspaceId}/billing/portal` | Cognito JWT + admin | Provider customer portal |
 | POST | `/v2/workspaces/{workspaceId}/billing/plan` | Cognito JWT + admin | Immediate upgrade or renewal downgrade |
-| POST | `/v2/workspaces/{workspaceId}/billing/cancel` | Cognito JWT + admin | Cancel at renewal |
+| POST | `/v2/workspaces/{workspaceId}/billing/cancel` | Cognito JWT + admin | Cancel at renewal, or `{ cancelScheduledPlanChange: true }` to clear pending plan change |
 | POST | `/v2/billing/webhooks/dodo` | Dodo signature | Public Dodo event trigger; no Cognito authorizer |
 | POST | `/v2/billing/webhooks/zoho-payments` | Zoho Payments signature | Public Zoho event trigger; no Cognito authorizer |
 | POST | `/v2/platform/billing/refunds` | Platform owner JWT | Manual approved refund; requires `Idempotency-Key` |

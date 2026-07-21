@@ -58,6 +58,21 @@ export async function handleBillingPortal(event, workspaceId) {
 export async function handleBillingCancel(event, workspaceId) {
   try {
     const subscription = await activeSubscription(event, workspaceId);
+    const body = parseJsonBody(event);
+    if (body?.cancelScheduledPlanChange === true) {
+      if (subscription.provider !== "dodo") {
+        return jsonResponse(501, {
+          error: "Canceling a scheduled plan change is only supported for Dodo subscriptions",
+        });
+      }
+      if (["canceled", "expired"].includes(subscription.status)) {
+        return jsonResponse(409, {
+          error: "This subscription has ended. Start a new checkout instead.",
+        });
+      }
+      await cancelDodoScheduledPlanChange(subscription.providerSubscriptionId);
+      return jsonResponse(200, { ok: true, scheduledPlanChange: null });
+    }
     if (["canceled", "expired"].includes(subscription.status)) {
       return jsonResponse(200, { ok: true, pending: false, status: subscription.status });
     }

@@ -326,5 +326,9 @@ export async function changeBillingPlan(
 }
 
 export async function cancelScheduledBillingPlanChange(workspaceId: string): Promise<void> {
-  await billingRequest(workspaceId, "plan/scheduled/cancel", { method: "POST" });
+  // Uses existing API Gateway route POST …/billing/cancel (nested plan/scheduled/cancel is not registered in API GW).
+  await billingRequest(workspaceId, "cancel", {
+    method: "POST",
+    body: JSON.stringify({ cancelScheduledPlanChange: true }),
+  });
 }
