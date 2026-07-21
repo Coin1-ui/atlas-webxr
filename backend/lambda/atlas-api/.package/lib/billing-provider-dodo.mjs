@@ -115,6 +115,11 @@ export async function createDodoCheckout(operation, input) {
       metadata: {
         atlas_billing_operation_id: operation.operationId,
       },
+      subscription_data: {
+        on_demand: {
+          mandate_only: false,
+        },
+      },
       ...(operation.couponCode ? { discount_codes: [operation.couponCode] } : {}),
     },
   });
@@ -207,6 +212,35 @@ export async function changeDodoPlan(subscriptionId, tier, effectiveAt = "next_b
   });
 }
 
+/**
+ * Charge usage overage against an on-demand-capable Dodo subscription.
+ * @param {string} subscriptionId
+ * @param {{ amountMinor: number; month: string; workspaceId: string; operationId: string }} input
+ */
+export async function createDodoOverageCharge(subscriptionId, input) {
+  const result = await dodoRequest(
+    `/subscriptions/${encodeURIComponent(subscriptionId)}/charge`,
+    {
+      method: "POST",
+      headers: { "Idempotency-Key": String(input.operationId) },
+      body: {
+        product_price: input.amountMinor,
+        product_currency: "USD",
+        product_description: `Atlas usage overage ${input.month}`,
+        metadata: {
+          atlas_overage_month: input.month,
+          atlas_workspace_id: input.workspaceId,
+          atlas_billing_operation_id: input.operationId,
+        },
+      },
+    }
+  );
+  if (!result?.payment_id) {
+    throw new Error("Dodo Payments did not return a payment id for overage charge");
+  }
+  return { paymentId: String(result.payment_id) };
+}
+
 export async function createDodoRefund(paymentId, amountMinor, reason, operationId) {
   return dodoRequest("/refunds", {
     method: "POST",
@@ -219,6 +253,44 @@ export async function createDodoRefund(paymentId, amountMinor, reason, operation
         atlas_billing_operation_id: String(operationId),
       },
     },
+  });
+}
+
+/**
+ * List Dodo discount codes (paginated).
+ * @param {{ pageSize?: number; cursor?: string | null }} [opts]
+ */
+export async function listDodoDiscounts(opts = {}) {
+  const params = new URLSearchParams({ page_size: String(opts.pageSize ?? 100) });
+  if (opts.cursor) params.set("cursor", opts.cursor);
+  return dodoRequest(`/discounts?${params}`);
+}
+
+/**
+ * Find a Dodo discount by uppercase coupon code.
+ * @param {string} code
+ */
+export async function findDodoDiscountByCode(code) {
+  const target = String(code || "")
+    .trim()
+    .toUpperCase();
+  if (!target) return null;
+  let cursor = null;
+  for (let page = 0; page < 20; page += 1) {
+    const result = await listDodoDiscounts({ cursor });
+    const items = Array.isArray(result?.items) ? result.items : [];
+    const match = items.find((row) => String(row.code || "").toUpperCase() === target);
+    if (match) return match;
+    cursor = result?.next_page_token ?? result?.next_cursor ?? result?.cursor ?? null;
+    if (!cursor) break;
+  }
+  return null;
+}
+
+export async function createDodoDiscount(input) {
+  return dodoRequest("/discounts", {
+    method: "POST",
+    body: input,
   });
 }
 

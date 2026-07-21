@@ -13,6 +13,7 @@ import {
   applyVerifiedBillingEvent,
   ensureProviderSubscriptionBinding,
   getBillingSubscription,
+  markWorkspaceOveragePaidFromWebhook,
   resolveBillingWorkspace,
   workspaceRecordExists,
   withBillingReconciliationLock,
@@ -166,6 +167,19 @@ export async function handleDodoWebhook(event) {
         );
         if (String(webhook.type) === "payment.succeeded") {
           assertProviderPaymentCurrency("dodo", webhook.data?.currency);
+          const overageMonth = webhook.data?.metadata?.atlas_overage_month;
+          const overageWorkspaceId = webhook.data?.metadata?.atlas_workspace_id;
+          if (
+            typeof overageMonth === "string" &&
+            typeof overageWorkspaceId === "string" &&
+            webhook.data?.payment_id
+          ) {
+            await markWorkspaceOveragePaidFromWebhook(
+              String(overageWorkspaceId),
+              String(overageMonth),
+              String(webhook.data.payment_id)
+            );
+          }
         }
         const normalized = normalizeDodoSubscriptionSnapshot({
           subscription,

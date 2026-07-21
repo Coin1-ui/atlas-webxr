@@ -1145,3 +1145,97 @@ export async function applyVerifiedBillingEvent(input) {
     }
   }
 }
+
+function overageRecordKey(workspaceId, month) {
+  return { pk: `WORKSPACE#${workspaceId}`, sk: `OVERAGE#${month}` };
+}
+
+/**
+ * @param {string} workspaceId
+ * @param {string} month YYYY-MM
+ */
+export async function getWorkspaceOverage(workspaceId, month) {
+  const row = await client.send(
+    new GetCommand({
+      TableName: billingTable(),
+      Key: overageRecordKey(workspaceId, month),
+      ConsistentRead: true,
+    })
+  );
+  return row.Item ?? null;
+}
+
+/**
+ * @param {{
+ *   workspaceId: string;
+ *   month: string;
+ *   amountUsd: number;
+ *   status: "paid" | "accepted" | "failed";
+ *   provider?: string | null;
+ *   providerPaymentId?: string | null;
+ *   operationId?: string | null;
+ *   paidAt?: string | null;
+ *   note?: string | null;
+ * }} input
+ */
+export async function recordWorkspaceOverageCharge(input) {
+  const now = new Date().toISOString();
+  const item = {
+    entityType: "OVERAGE",
+    workspaceId: input.workspaceId,
+    month: input.month,
+    amountUsd: input.amountUsd,
+    status: input.status,
+    provider: input.provider ?? null,
+    providerPaymentId: input.providerPaymentId ?? null,
+    operationId: input.operationId ?? null,
+    paidAt: input.paidAt ?? (input.status === "paid" ? now : null),
+    note: input.note ?? null,
+    updatedAt: now,
+    createdAt: now,
+  };
+  await client.send(
+    new PutCommand({
+      TableName: billingTable(),
+      Item: { ...overageRecordKey(input.workspaceId, input.month), ...item },
+      ConditionExpression: "attribute_not_exists(#status) OR #status <> :paid",
+      ExpressionAttributeNames: { "#status": "status" },
+      ExpressionAttributeValues: { ":paid": "paid" },
+    })
+  );
+  return item;
+}
+
+/**
+ * Mark overage paid from a Dodo payment.succeeded webhook.
+ * @param {string} workspaceId
+ * @param {string} month
+ * @param {string} paymentId
+ */
+export async function markWorkspaceOveragePaidFromWebhook(workspaceId, month, paymentId) {
+  const existing = await getWorkspaceOverage(workspaceId, month);
+  if (existing?.status === "paid") return existing;
+  const now = new Date().toISOString();
+  await client.send(
+    new PutCommand({
+      TableName: billingTable(),
+      Item: {
+        ...overageRecordKey(workspaceId, month),
+        entityType: "OVERAGE",
+        workspaceId,
+        month,
+        amountUsd: existing?.amountUsd ?? null,
+        status: "paid",
+        provider: "dodo",
+        providerPaymentId: paymentId,
+        operationId: existing?.operationId ?? null,
+        paidAt: now,
+        note: existing?.note ?? null,
+        createdAt: existing?.createdAt ?? now,
+        updatedAt: now,
+      },
+    })
+  );
+  return getWorkspaceOverage(workspaceId, month);
+}
+

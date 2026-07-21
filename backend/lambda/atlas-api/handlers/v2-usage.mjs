@@ -5,6 +5,8 @@ import { readManifest, sumWorkspaceStorageBytes } from "../lib/models-store.mjs"
 import { getMonthlyUsage } from "../lib/usage.mjs";
 import { buildUsageWarnings, limitsForWorkspace } from "../lib/plan-limits.mjs";
 import { effectiveBillingTier, hasPurchasedTrialFallback, isTrialActive, isTrialSuspended } from "../lib/trial.mjs";
+import { estimateOverageUsd } from "../lib/overage-estimate.mjs";
+import { getWorkspaceOverage } from "../lib/billing-store.mjs";
 
 /**
  * @param {import("aws-lambda").APIGatewayProxyEventV2} event
@@ -37,10 +39,14 @@ export async function handleWorkspaceUsage(event, workspaceId) {
     };
     const limits = limitsForWorkspace(workspace);
     const warnings = buildUsageWarnings(workspace, usage);
+    const billingTier = effectiveBillingTier(workspace);
+    const estimatedOverageUsd = estimateOverageUsd(billingTier, usage, limits);
+    const overageRecord = await getWorkspaceOverage(workspaceId, usage.month);
+    const overagePaid = overageRecord?.status === "paid";
 
     return jsonResponse(200, {
       plan: workspace.plan,
-      billingTier: effectiveBillingTier(workspace),
+      billingTier,
       trialActive: isTrialActive(workspace),
       trialSuspended: isTrialSuspended(workspace),
       purchasedBillingTier: workspace.purchasedBillingTier ?? null,
@@ -50,6 +56,10 @@ export async function handleWorkspaceUsage(event, workspaceId) {
       limits,
       usage,
       warnings,
+      estimatedOverageUsd,
+      overagePaid,
+      overageAccepted: overageRecord?.status === "accepted",
+      overageStatus: overageRecord?.status ?? (estimatedOverageUsd > 0 ? "unpaid" : "none"),
     });
   } catch (e) {
     const status = /** @type {{ statusCode?: number }} */ (e).statusCode || 500;

@@ -58,6 +58,7 @@ export function renderAccountPage(
     billingError?: string;
     billingSuccess?: string;
     overagePaid?: boolean;
+    overageAccepted?: boolean;
     usageUnrestricted?: boolean;
     scheduledPlanChange?: BillingScheduledPlanChange | null;
   },
@@ -92,7 +93,11 @@ export function renderAccountPage(
       ? estimateOverageUsd(effectiveBillingTier(workspace), usage.usage, usage.limits)
       : 0;
   const hasOverage = !unrestricted && overageUsd > 0;
-  const overagePaid = data.overagePaid ?? (usage ? isOveragePaidLocally(workspace.id, usage.usage.month) : false);
+  const overagePaid =
+    data.overagePaid ??
+    usage?.overagePaid ??
+    (usage ? isOveragePaidLocally(workspace.id, usage.usage.month) : false);
+  const overageAccepted = data.overageAccepted ?? usage?.overageAccepted ?? false;
 
   const usageHtml = usage
     ? `<div class="admin-usage-grid account-usage-grid${unrestricted ? " admin-usage-grid--operator" : ""}">
@@ -313,6 +318,8 @@ export function renderAccountPage(
                     ${
                       overagePaid
                         ? `<p class="camera-success" role="status">Overage for ${escapeHtml(usage!.usage.month)} accepted and marked paid.</p>`
+                        : overageAccepted
+                          ? `<p class="camera-success" role="status">Overage for ${escapeHtml(usage!.usage.month)} accepted — invoicing is pending.</p>`
                         : `<button type="button" class="mkt-btn mkt-btn-primary auth-submit" data-action="pay-overage" data-amount="${overageUsd}">Accept &amp; pay overage</button>`
                     }
                   </div>`

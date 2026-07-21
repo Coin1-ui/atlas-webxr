@@ -17,6 +17,10 @@ export type WorkspaceUsageResponse = {
     storageBytes: number;
   };
   warnings: UsageWarning[];
+  estimatedOverageUsd?: number;
+  overagePaid?: boolean;
+  overageAccepted?: boolean;
+  overageStatus?: string;
 };
 
 function apiUrl(path: string): string {

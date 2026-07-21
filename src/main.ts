@@ -1220,7 +1220,8 @@ async function showAccountScreen(opts?: {
         workspace: workspace,
         usage,
         usageUnrestricted: isPlatformOwner,
-        overagePaid: usage ? isOveragePaidLocally(workspace.id, usage.usage.month) : false,
+        overagePaid: usage?.overagePaid ?? (usage ? isOveragePaidLocally(workspace.id, usage.usage.month) : false),
+        overageAccepted: usage?.overageAccepted ?? false,
         scheduledPlanChange,
         ...opts,
       },
@@ -1330,10 +1331,12 @@ async function showAccountScreen(opts?: {
         onPayOverage: async (amountUsd) => {
           if (!usage) return;
           try {
-            await acceptOverageCharge(activeWorkspace!.id, usage.usage.month, amountUsd);
-            void showAccountScreen({
-              billingSuccess: `Overage of $${amountUsd.toFixed(2)} accepted for ${usage.usage.month}.`,
-            });
+            const result = await acceptOverageCharge(activeWorkspace!.id, usage.usage.month, amountUsd);
+            const message =
+              result.paymentPending
+                ? `Overage of $${amountUsd.toFixed(2)} accepted for ${usage.usage.month}. Invoicing is pending.`
+                : `Overage of $${amountUsd.toFixed(2)} accepted for ${usage.usage.month}.`;
+            void showAccountScreen({ billingSuccess: message });
           } catch (e) {
             void showAccountScreen({ billingError: e instanceof Error ? e.message : String(e) });
           }

@@ -39,6 +39,7 @@
     "test:plan-change-matrix": "node scripts/test-plan-change-matrix-unit.mjs",
     "test:billing-plan-status": "node scripts/test-billing-plan-display-status-unit.mjs",
     "test:scheduled-plan-change": "node scripts/test-scheduled-plan-change-dodo-unit.mjs",
+    "test:overage-estimate": "node scripts/test-overage-estimate-unit.mjs",
     "generate:dodo-billing-countries": "node scripts/generate-dodo-billing-countries.mjs",
     "create:dodo-discount": "node scripts/create-dodo-discount.mjs",
     "sync:dodo-coupon-uses": "node scripts/sync-dodo-coupon-uses.mjs",

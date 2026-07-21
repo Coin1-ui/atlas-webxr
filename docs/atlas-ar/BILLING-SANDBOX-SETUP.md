@@ -80,6 +80,8 @@ ATLAS_ZOHO_CHECKOUT_ENABLED
   - `POST /v2/billing/webhooks/dodo` — no Cognito authorizer.
   - `POST /v2/workspaces/{workspaceId}/billing/checkout` — Cognito authorizer.
   - `GET /v2/workspaces/{workspaceId}/billing/status` — Cognito authorizer.
+  - `GET /v2/workspaces/{workspaceId}/billing/overage` — Cognito authorizer.
+  - `POST /v2/workspaces/{workspaceId}/billing/overage` — Cognito authorizer.
 - CORS headers: `content-type, authorization, idempotency-key`.
 
 ### 7. Safe activation order
@@ -233,4 +235,33 @@ Owner dashboard → **Coupons** → create percent offer:
 
 Then at **Account → Plan & billing**, enter `ATLAS20` in **Coupon (optional)** when starting a new checkout (trial or expired workspace).
 
+**Owner dashboard sync:** `GET /v2/platform/coupons` (and **Sync from Dodo** on Owner → Discount coupons) pulls `times_used` / `usage_limit` from Dodo `GET /discounts` and updates Atlas `usesCount` so the panel matches Dodo (e.g. Dodo **2 / 10** → Atlas **8 of 10 spots left · 2 used**). Requires Lambda with Dodo API env vars.
+
 **Note:** Dodo only supports **percentage** discounts via API. Atlas fixed-price promos (`promoPriceMonthly`) are Atlas-only until mapped to Dodo products.
+
+## 11. Usage overage (BILL-3)
+
+Account → **Usage overage** shows an estimated USD total when models, sessions, or storage exceed plan limits (see `PRICING.md`).
+
+### API routes (Cognito authorizer)
+
+- `GET /v2/workspaces/{workspaceId}/billing/overage?month=YYYY-MM` — overage status for a month
+- `POST /v2/workspaces/{workspaceId}/billing/overage` — body `{ month, amountUsd, accept: true }`
+
+Usage API (`GET …/usage`) also returns `estimatedOverageUsd`, `overagePaid`, and `overageAccepted`.
+
+### Charge path
+
+1. Server recomputes overage (client `amountUsd` is validated, not trusted).
+2. For active **Dodo** subscriptions, Atlas calls `POST /subscriptions/{id}/charge` (on-demand mandate).
+3. New checkouts include `subscription_data.on_demand` so future subs support usage charges.
+4. If automatic charge is unavailable (legacy non–on-demand sub), status is stored as **`accepted`** — UI shows invoicing pending.
+5. `payment.succeeded` webhooks with `metadata.atlas_overage_month` mark the month **paid** in `atlas-billing`.
+
+### Sandbox test
+
+1. Exceed a limit on a paid Starter/Launch/Growth workspace (or use test usage data).
+2. Open **Account** → confirm estimated overage > $0.
+3. Click **Accept & pay overage** — expect paid (Dodo charge) or accepted (manual fallback).
+4. Re-open account — button hidden; status shows paid or invoicing pending.
+

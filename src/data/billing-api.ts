@@ -33,7 +33,7 @@ export async function acceptOverageCharge(
   workspaceId: string,
   month: string,
   amountUsd: number
-): Promise<{ ok: true; method: "api" | "local" }> {
+): Promise<{ ok: true; method: "api" | "local"; paymentPending?: boolean }> {
   const base = getApiBase();
   if (!base) {
     markOveragePaidLocally(workspaceId, month);
@@ -51,8 +51,19 @@ export async function acceptOverageCharge(
     throw new Error(text || `HTTP ${res.status}`);
   }
 
-  markOveragePaidLocally(workspaceId, month);
-  return { ok: true, method: "api" };
+  const payload = (await res.json()) as {
+    overagePaid?: boolean;
+    paymentPending?: boolean;
+    method?: string;
+  };
+  if (payload.overagePaid) {
+    markOveragePaidLocally(workspaceId, month);
+  }
+  return {
+    ok: true,
+    method: "api",
+    paymentPending: payload.paymentPending === true,
+  };
 }
 
 /** Request plan upgrade — records purchase when billing API is deployed. */

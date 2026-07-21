@@ -115,6 +115,11 @@ export async function createDodoCheckout(operation, input) {
       metadata: {
         atlas_billing_operation_id: operation.operationId,
       },
+      subscription_data: {
+        on_demand: {
+          mandate_only: false,
+        },
+      },
       ...(operation.couponCode ? { discount_codes: [operation.couponCode] } : {}),
     },
   });
@@ -205,6 +210,35 @@ export async function changeDodoPlan(subscriptionId, tier, effectiveAt = "next_b
       on_payment_failure: "prevent_change",
     },
   });
+}
+
+/**
+ * Charge usage overage against an on-demand-capable Dodo subscription.
+ * @param {string} subscriptionId
+ * @param {{ amountMinor: number; month: string; workspaceId: string; operationId: string }} input
+ */
+export async function createDodoOverageCharge(subscriptionId, input) {
+  const result = await dodoRequest(
+    `/subscriptions/${encodeURIComponent(subscriptionId)}/charge`,
+    {
+      method: "POST",
+      headers: { "Idempotency-Key": String(input.operationId) },
+      body: {
+        product_price: input.amountMinor,
+        product_currency: "USD",
+        product_description: `Atlas usage overage ${input.month}`,
+        metadata: {
+          atlas_overage_month: input.month,
+          atlas_workspace_id: input.workspaceId,
+          atlas_billing_operation_id: input.operationId,
+        },
+      },
+    }
+  );
+  if (!result?.payment_id) {
+    throw new Error("Dodo Payments did not return a payment id for overage charge");
+  }
+  return { paymentId: String(result.payment_id) };
 }
 
 export async function createDodoRefund(paymentId, amountMinor, reason, operationId) {

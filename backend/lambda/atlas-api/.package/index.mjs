@@ -28,6 +28,7 @@ import {
   handleBillingPortal,
 } from "./handlers/v2-billing-manage.mjs";
 import { handlePlatformBillingRefund } from "./handlers/v2-billing-refunds.mjs";
+import { handleBillingOverage } from "./handlers/v2-billing-overage.mjs";
 import { handleBillingAccountingWorker } from "./handlers/billing-accounting-worker.mjs";
 import {
   handleCreatePlatformCoupon,
@@ -111,6 +112,11 @@ export async function handler(event) {
         event,
         decodeURIComponent(billingPlanScheduledCancelMatch[1]),
       );
+    }
+
+    const billingOverageMatch = /^\/v2\/workspaces\/([^/]+)\/billing\/overage$/.exec(rawPath);
+    if (billingOverageMatch && (method === "GET" || method === "POST")) {
+      return await handleBillingOverage(event, decodeURIComponent(billingOverageMatch[1]));
     }
 
     if (rawPath === "/v2/billing/webhooks/dodo" && method === "POST") {
