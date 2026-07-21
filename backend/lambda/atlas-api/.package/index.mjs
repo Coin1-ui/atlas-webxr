@@ -16,8 +16,19 @@ import {
 import { handleAnalyticsEvents } from "./handlers/v2-analytics.mjs";
 import { handleWorkspaceUsage } from "./handlers/v2-usage.mjs";
 import { handleBillingStatus, handleBillingUpgrade } from "./handlers/v2-billing.mjs";
-import { handleDodoWebhook } from "./handlers/v2-billing-webhooks.mjs";
+import {
+  handleDodoWebhook,
+  handleZohoPaymentsWebhook,
+} from "./handlers/v2-billing-webhooks.mjs";
 import { handleBillingCheckout } from "./handlers/v2-billing-checkout.mjs";
+import {
+  handleBillingCancel,
+  handleBillingCancelScheduledPlan,
+  handleBillingChangePlan,
+  handleBillingPortal,
+} from "./handlers/v2-billing-manage.mjs";
+import { handlePlatformBillingRefund } from "./handlers/v2-billing-refunds.mjs";
+import { handleBillingAccountingWorker } from "./handlers/billing-accounting-worker.mjs";
 import {
   handleCreatePlatformCoupon,
   handleDeletePlatformCoupon,
@@ -34,6 +45,9 @@ import {
  * @param {import("aws-lambda").APIGatewayProxyEventV2} event
  */
 export async function handler(event) {
+  if (event?.source === "aws.events" && event?.["detail-type"] === "Scheduled Event") {
+    return handleBillingAccountingWorker();
+  }
   const method = event.requestContext?.http?.method ?? "GET";
   const rawPath = event.rawPath || event.requestContext?.http?.path || "/";
 
@@ -75,8 +89,36 @@ export async function handler(event) {
       return await handleBillingStatus(event, decodeURIComponent(billingStatusMatch[1]));
     }
 
+    const billingPortalMatch = /^\/v2\/workspaces\/([^/]+)\/billing\/portal$/.exec(rawPath);
+    if (billingPortalMatch && method === "POST") {
+      return await handleBillingPortal(event, decodeURIComponent(billingPortalMatch[1]));
+    }
+
+    const billingCancelMatch = /^\/v2\/workspaces\/([^/]+)\/billing\/cancel$/.exec(rawPath);
+    if (billingCancelMatch && method === "POST") {
+      return await handleBillingCancel(event, decodeURIComponent(billingCancelMatch[1]));
+    }
+
+    const billingPlanMatch = /^\/v2\/workspaces\/([^/]+)\/billing\/plan$/.exec(rawPath);
+    if (billingPlanMatch && method === "POST") {
+      return await handleBillingChangePlan(event, decodeURIComponent(billingPlanMatch[1]));
+    }
+
+    const billingPlanScheduledCancelMatch =
+      /^\/v2\/workspaces\/([^/]+)\/billing\/plan\/scheduled\/cancel$/.exec(rawPath);
+    if (billingPlanScheduledCancelMatch && method === "POST") {
+      return await handleBillingCancelScheduledPlan(
+        event,
+        decodeURIComponent(billingPlanScheduledCancelMatch[1]),
+      );
+    }
+
     if (rawPath === "/v2/billing/webhooks/dodo" && method === "POST") {
       return await handleDodoWebhook(event);
+    }
+
+    if (rawPath === "/v2/billing/webhooks/zoho-payments" && method === "POST") {
+      return await handleZohoPaymentsWebhook(event);
     }
 
     const logoMatch = /^\/v2\/workspaces\/([^/]+)\/logo$/.exec(rawPath);
@@ -153,6 +195,10 @@ export async function handler(event) {
 
     if (rawPath === "/v2/platform/coupons" && method === "POST") {
       return await handleCreatePlatformCoupon(event);
+    }
+
+    if (rawPath === "/v2/platform/billing/refunds" && method === "POST") {
+      return await handlePlatformBillingRefund(event);
     }
 
     const platformCouponDelete = /^\/v2\/platform\/coupons\/([^/]+)$/.exec(rawPath);

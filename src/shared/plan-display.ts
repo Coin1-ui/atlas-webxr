@@ -59,8 +59,8 @@ export function upgradeOptions(ws: TrialWorkspace): PlanTier[] {
     if (!paidTier) {
       return CUSTOMER_BILLING_TIERS;
     }
-    // Hide the current plan card — Plan name is already shown in Plan & billing.
-    // Offer only Upgrade / Downgrade targets.
+    // Paid (non-trial): hide current plan card — Plan name is in Plan & billing.
+    // Trial Current card is handled in account-page when no paid entitlement.
     return CUSTOMER_BILLING_TIERS.filter((tier) => tier.id !== paidTier);
   }
   if (isTrialSuspended(ws) && ws.trialPlan) {

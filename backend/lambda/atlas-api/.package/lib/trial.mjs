@@ -10,10 +10,23 @@ export const SUSPENDED_LIMITS = {
 
 const TIER_ORDER = ["starter", "launch", "growth", "scale"];
 
+function providerBillingTier(ws, now = Date.now()) {
+  if (!ws.billingProvider || !ws.billingEntitlementTier) return null;
+  const periodEnd = Date.parse(String(ws.billingCurrentPeriodEnd || ""));
+  const graceUntil = Date.parse(String(ws.billingGraceUntil || ""));
+  if (ws.billingStatus === "past_due") {
+    return Number.isFinite(graceUntil) && now < graceUntil ? ws.billingEntitlementTier : null;
+  }
+  if (["active", "canceled"].includes(String(ws.billingStatus))) {
+    return Number.isFinite(periodEnd) && now < periodEnd ? ws.billingEntitlementTier : null;
+  }
+  return null;
+}
+
 function paidBillingTier(ws) {
   const candidates = [
     ws.manualBillingTier,
-    ws.billingEntitlementTier,
+    providerBillingTier(ws),
     ...(ws.billingProvider ? [] : [ws.purchasedBillingTier]),
   ].filter(Boolean);
   return candidates.reduce(
@@ -44,17 +57,41 @@ export function planActionVerb(ws) {
 }
 
 /**
- * Per-tier Subscribe vs Upgrade matrix (mirror of src/shared/trial.ts).
- * Reference = active trial plan, else purchased tier. target > reference → Upgrade, else Subscribe.
- * @param {{ trialEndsAt?: string | null; trialPlan?: BillingTierId | null; purchasedBillingTier?: BillingTierId | null; billingEntitlementTier?: BillingTierId | null }} ws
+ * Per-tier CTA matrix (mirror of src/shared/trial.ts).
+ * Paid entitlement is the reference when present; otherwise active trial plan.
+ * @param {{ trialEndsAt?: string | null; trialPlan?: BillingTierId | null; purchasedBillingTier?: BillingTierId | null; billingEntitlementTier?: BillingTierId | null; billingProvider?: string | null; billingStatus?: string | null; billingCurrentPeriodEnd?: string | null; billingGraceUntil?: string | null; manualBillingTier?: BillingTierId | null }} ws
  * @param {BillingTierId} targetTier
- * @returns {"Subscribe" | "Upgrade"}
+ * @returns {"Subscribe" | "Upgrade" | "Downgrade" | "Current"}
  */
 export function planActionVerbForTier(ws, targetTier) {
   const paidTier = paidBillingTier(ws);
-  const reference = isTrialActive(ws) && ws.trialPlan ? ws.trialPlan : paidTier;
+  if (!paidTier && isTrialActive(ws)) {
+    return "Subscribe";
+  }
+  const reference = paidTier ?? (isTrialActive(ws) && ws.trialPlan ? ws.trialPlan : null);
   if (!reference) return "Subscribe";
-  return TIER_ORDER.indexOf(targetTier) > TIER_ORDER.indexOf(reference) ? "Upgrade" : "Subscribe";
+  const cmp = TIER_ORDER.indexOf(targetTier) - TIER_ORDER.indexOf(reference);
+  if (cmp > 0) return "Upgrade";
+  if (cmp < 0) return "Downgrade";
+  return "Current";
+}
+
+/**
+ * Paid-plan change matrix (mirror of src/shared/trial.ts).
+ * @param {{ purchasedBillingTier?: BillingTierId | null; billingEntitlementTier?: BillingTierId | null; billingProvider?: string | null; billingStatus?: string | null; billingCurrentPeriodEnd?: string | null; billingGraceUntil?: string | null; manualBillingTier?: BillingTierId | null }} ws
+ */
+export function planChangeMatrix(ws) {
+  const current = paidBillingTier(ws);
+  if (!current) {
+    return { current: null, upgrades: [], downgrades: [] };
+  }
+  const idx = TIER_ORDER.indexOf(current);
+  const selfServe = TIER_ORDER.filter((t) => t !== "scale");
+  return {
+    current,
+    upgrades: selfServe.filter((t) => TIER_ORDER.indexOf(t) > idx),
+    downgrades: selfServe.filter((t) => TIER_ORDER.indexOf(t) < idx),
+  };
 }
 
 /**
@@ -75,6 +112,48 @@ export function isTrialExpired(ws) {
   const end = Date.parse(ws.trialEndsAt);
   if (Number.isNaN(end)) return false;
   return Date.now() >= end;
+}
+
+/**
+ * User-facing Plan & billing status (mirror of src/shared/trial.ts).
+ * @param {{ billingStatus?: string | null; billingSubscriptionId?: string | null; billingCancelAtPeriodEnd?: boolean | null; billingProvider?: string | null; billingEntitlementTier?: BillingTierId | null; billingCurrentPeriodEnd?: string | null; billingGraceUntil?: string | null; manualBillingTier?: BillingTierId | null; purchasedBillingTier?: BillingTierId | null }} ws
+ * @returns {"active" | "cancel_scheduled" | "canceled" | "past_due" | "pending" | "none"}
+ */
+export function billingPlanDisplayStatus(ws) {
+  const paid = paidBillingTier(ws);
+  if (ws.billingStatus === "past_due" && paid) return "past_due";
+  if (paid && ws.billingCancelAtPeriodEnd === true) return "cancel_scheduled";
+  if (paid) return "active";
+  if (ws.billingStatus === "pending" && !ws.billingSubscriptionId) return "pending";
+  if (
+    ws.billingStatus === "expired" ||
+    ws.billingStatus === "canceled" ||
+    (Boolean(ws.billingSubscriptionId) && !paid)
+  ) {
+    return "canceled";
+  }
+  if (ws.billingStatus === "pending") return "pending";
+  return "none";
+}
+
+/**
+ * @param {{ billingStatus?: string | null; billingSubscriptionId?: string | null; billingCancelAtPeriodEnd?: boolean | null; billingProvider?: string | null; billingEntitlementTier?: BillingTierId | null; billingCurrentPeriodEnd?: string | null; billingGraceUntil?: string | null; manualBillingTier?: BillingTierId | null; purchasedBillingTier?: BillingTierId | null }} ws
+ */
+export function billingPlanStatusLabel(ws) {
+  switch (billingPlanDisplayStatus(ws)) {
+    case "active":
+      return "Active";
+    case "cancel_scheduled":
+      return "Cancel scheduled";
+    case "canceled":
+      return "Canceled";
+    case "past_due":
+      return "Past due";
+    case "pending":
+      return "Pending";
+    default:
+      return "—";
+  }
 }
 
 /**

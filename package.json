@@ -40,6 +40,7 @@
     "test:billing-plan-status": "node scripts/test-billing-plan-display-status-unit.mjs",
     "test:scheduled-plan-change": "node scripts/test-scheduled-plan-change-dodo-unit.mjs",
     "generate:dodo-billing-countries": "node scripts/generate-dodo-billing-countries.mjs",
+    "create:dodo-discount": "node scripts/create-dodo-discount.mjs",
     "qa:billing-sandbox": "node scripts/qa-billing-sandbox-checklist.mjs",
     "qa:batch33-live": "node scripts/qa-batch33-live.mjs",
     "qa:5-prod": "node scripts/qa-5-prod-gate.mjs",

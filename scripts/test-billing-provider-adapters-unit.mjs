@@ -39,8 +39,15 @@ assert.equal(
   503
 );
 assert.equal(
-  (await handleBillingPortal({ requestContext: { http: { method: "POST" } } }, "ws_1"))
-    .statusCode,
+  (
+    await handleBillingPortal(
+      {
+        requestContext: { http: { method: "POST" } },
+        body: JSON.stringify({ billingCountry: "US" }),
+      },
+      "ws_1"
+    )
+  ).statusCode,
   503
 );
 assert.equal(
@@ -87,6 +94,42 @@ assert.equal(dodoEvent.checkoutOperationId, "op_1");
 assert.equal(dodoEvent.currentPeriodEnd, "2026-08-18T10:00:00.451Z");
 
 assert.equal(dodoEvent.cancelAtPeriodEnd, false);
+
+const renewedSnapshot = normalizeDodoSubscriptionSnapshot({
+  eventId: "evt_renewed_norm",
+  eventType: "subscription.renewed",
+  occurredAt: "2026-08-18T10:00:01.000Z",
+  providerSequence: 2,
+  subscription: {
+    subscription_id: "sub_1",
+    product_id: "prod_growth",
+    status: "active",
+    next_billing_date: "2026-09-18T10:00:00.000Z",
+    cancel_at_next_billing_date: false,
+    customer: { customer_id: "cus_1" },
+  },
+});
+assert.equal(renewedSnapshot.status, "active");
+assert.equal(renewedSnapshot.tier, "growth");
+assert.equal(renewedSnapshot.currentPeriodEnd, "2026-09-18T10:00:00.000Z");
+
+process.env.DODO_PRODUCT_LAUNCH_MONTHLY = "prod_launch";
+const planChangeSnapshot = normalizeDodoSubscriptionSnapshot({
+  eventId: "evt_plan_norm",
+  eventType: "subscription.updated",
+  occurredAt: "2026-08-18T10:00:02.000Z",
+  providerSequence: 3,
+  subscription: {
+    subscription_id: "sub_1",
+    product_id: "prod_launch",
+    status: "active",
+    next_billing_date: "2026-09-18T10:00:00.000Z",
+    cancel_at_next_billing_date: false,
+    customer: { customer_id: "cus_1" },
+  },
+});
+assert.equal(planChangeSnapshot.tier, "launch");
+assert.equal(planChangeSnapshot.status, "active");
 
 const expiredDodoEvent = normalizeDodoSubscriptionSnapshot({
   eventId: "evt_expired_1",

@@ -173,6 +173,11 @@ renewal charge**. Cancel-at-period-end clock advance still works. For renewal pr
 prefer waiting for the natural `next_billing_date`, or confirm with Dodo support why
 accelerated renewals expire instead of charging.
 
+**Full renewal test plan (scenarios 1 & 2):** see
+[`BILLING-RENEWAL-TEST-PLAN.md`](./BILLING-RENEWAL-TEST-PLAN.md) — Track A (Atlas unit),
+Track B (natural NBD), Track C (immediate upgrade stand-in). Checklist:
+`node scripts/qa-dodo-renewal-checklist.mjs`
+
 ### Scenario matrix
 
 | What you want to prove | Setup | Then advance `next_billing_date` |
@@ -180,8 +185,6 @@ accelerated renewals expire instead of charging.
 | **Cancel at period end** | Already `cancel_at_next_billing_date: true` | Yes → expect cancel/expire webhooks, Atlas loses entitlement after end |
 | **Renewal charge** | New active sub, cancel flag **false**, success test card | Prefer **natural** period in this sandbox; clock advance may expire without charge |
 | **Upgrade/downgrade at renewal** | `POST …/billing/plan` (Atlas schedules `next_billing_date`) | Same caveat as renewal; or use `effective_at: immediately` for upgrade-only proof |
-| **Immediate cancel only** | Dashboard / API cancel now (not period-end) | Not needed for period-end proof |
-| **Upgrade at renewal (no immediate charge)** | `POST …/billing/plan` with country → Growth while Launch active | Yes → plan applies at advanced date; no charge until then |
 | **Immediate cancel only** | Dashboard / API cancel now (not period-end) | Not needed for period-end proof |
 
 ### Do not
@@ -191,3 +194,43 @@ accelerated renewals expire instead of charging.
 - Use live-mode credentials for this clock advance.
 
 When all dashboard values are configured, report only that setup is complete—do not send secret values.
+
+## 10. Discount coupons (Dodo + Atlas)
+
+End-to-end checkout requires **both**:
+
+1. **Dodo discount** — provider applies the actual billing discount at hosted checkout (`discount_codes`).
+2. **Atlas platform coupon** — owner dashboard → Coupons; same code string. Atlas validates active/uses/tier before forwarding to Dodo.
+
+### Create Dodo test discount (script)
+
+```powershell
+cd D:\AI\atlas-webxr\atlas-webxr
+npm run create:dodo-discount
+# Or custom: node scripts/create-dodo-discount.mjs MYCODE 15 "My 15% promo" 50
+```
+
+Uses `DODO_PAYMENTS_API_KEY` or `DOdo_api.txt` (`Test_mode API Key = …`). Calls `POST https://test.dodopayments.com/discounts` with `type: percentage`, amount in basis points (2000 = 20%).
+
+**Sandbox coupon created 2026-07-21:**
+
+| Field | Value |
+|-------|--------|
+| Code | `ATLAS20` |
+| Discount ID | `dsc_0NjembK27qeRQhP817iZ5` |
+| Amount | 20% off |
+| Usage limit | 100 |
+
+### Create matching Atlas coupon
+
+Owner dashboard → **Coupons** → create percent offer:
+
+- **Code:** `ATLAS20` (must match Dodo)
+- **Label:** e.g. Atlas Sandbox 20% Off
+- **Discount:** 20%
+- **Max uses:** 100 (optional)
+- **Show on pricing:** optional
+
+Then at **Account → Plan & billing**, enter `ATLAS20` in **Coupon (optional)** when starting a new checkout (trial or expired workspace).
+
+**Note:** Dodo only supports **percentage** discounts via API. Atlas fixed-price promos (`promoPriceMonthly`) are Atlas-only until mapped to Dodo products.

@@ -5,14 +5,23 @@ import {
   verifyDodoWebhook,
 } from "../lib/billing-provider-dodo.mjs";
 import {
+  getZohoSubscription,
+  normalizeZohoSubscriptionSnapshot,
+  verifyZohoPaymentsWebhook,
+} from "../lib/billing-provider-zoho.mjs";
+import {
   applyVerifiedBillingEvent,
   ensureProviderSubscriptionBinding,
   getBillingSubscription,
+  resolveBillingWorkspace,
+  workspaceRecordExists,
   withBillingReconciliationLock,
 } from "../lib/billing-store.mjs";
 import { providerTimestampSequence } from "../lib/billing-state.mjs";
+import { assertProviderPaymentCurrency } from "../lib/billing-policy.mjs";
 
 const DODO_SUBSCRIPTION_EVENTS = new Set([
+  "payment.succeeded",
   "subscription.active",
   "subscription.renewed",
   "subscription.failed",
@@ -22,6 +31,7 @@ const DODO_SUBSCRIPTION_EVENTS = new Set([
   "subscription.update_payment_method",
   "subscription.cancelled",
   "subscription.expired",
+  "payment.succeeded",
   "payment.failed",
 ]);
 
@@ -38,6 +48,24 @@ function subscriptionIdFromDodoEvent(webhook) {
     return webhook.data?.subscription_id ? String(webhook.data.subscription_id) : null;
   }
   return webhook.data?.subscription_id ? String(webhook.data.subscription_id) : null;
+}
+
+const TERMINAL_DODO_SUBSCRIPTION_STATUSES = new Set(["cancelled", "failed", "expired"]);
+
+function dodoSubscriptionIsObsolete(subscription) {
+  return TERMINAL_DODO_SUBSCRIPTION_STATUSES.has(String(subscription?.status || "").toLowerCase());
+}
+
+function ignorableDodoWebhookResponse(reason) {
+  return jsonResponse(200, { received: true, ignored: true, reason });
+}
+
+function isIgnorableDodoWebhookError(error) {
+  // Do NOT treat TransactionCanceledException as success — that caused Dodo to show
+  // "Succeeded" while Atlas may not have applied the event (false-positive delivery).
+  // Return 500 so Dodo retries until the transaction commits or a true ignore reason applies.
+  const message = error instanceof Error ? error.message : "";
+  return message === "Billing provider can change only after the prior subscription has ended";
 }
 
 /**
@@ -74,6 +102,39 @@ export async function handleDodoWebhook(event) {
     const operationId =
       webhook.data?.metadata?.atlas_billing_operation_id || undefined;
     const customerId = webhook.data?.customer?.customer_id || undefined;
+    let workspaceId;
+    try {
+      workspaceId = await resolveBillingWorkspace({
+        provider: "dodo",
+        providerSubscriptionId: subscriptionId,
+        checkoutOperationId: operationId,
+      });
+    } catch (mappingError) {
+      const message = mappingError instanceof Error ? mappingError.message : "";
+      if (
+        message === "No server-owned billing mapping exists" ||
+        message === "Provider billing mappings disagree"
+      ) {
+        const subscription = await getDodoSubscription(subscriptionId);
+        if (dodoSubscriptionIsObsolete(subscription)) {
+          console.info("Dodo webhook ignored (orphan subscription)", {
+            eventId,
+            subscriptionId,
+            operationId,
+          });
+          return ignorableDodoWebhookResponse("orphan_subscription");
+        }
+      }
+      throw mappingError;
+    }
+    if (!(await workspaceRecordExists(workspaceId))) {
+      console.info("Dodo webhook ignored (deleted workspace)", {
+        eventId,
+        subscriptionId,
+        workspaceId,
+      });
+      return ignorableDodoWebhookResponse("deleted_workspace");
+    }
     await ensureProviderSubscriptionBinding({
       provider: "dodo",
       providerSubscriptionId: subscriptionId,
@@ -89,20 +150,39 @@ export async function handleDodoWebhook(event) {
           throw new Error("Dodo webhook timestamp is invalid");
         }
         const current = await getBillingSubscription(workspaceId);
+        const subscription = await getDodoSubscription(subscriptionId);
+        const authoritativeTimestamp = subscription.updated_at
+          ? Date.parse(String(subscription.updated_at))
+          : providerTimestamp;
+        if (!Number.isSafeInteger(authoritativeTimestamp) || authoritativeTimestamp < 0) {
+          throw new Error("Dodo subscription revision time is invalid");
+        }
         const providerSequence = providerTimestampSequence(
-          providerTimestamp,
+          authoritativeTimestamp,
           current?.provider === "dodo" &&
             current?.providerSubscriptionId === subscriptionId
             ? current.providerSequence
             : null
         );
-        const subscription = await getDodoSubscription(subscriptionId);
+        if (String(webhook.type) === "payment.succeeded") {
+          assertProviderPaymentCurrency("dodo", webhook.data?.currency);
+        }
         const normalized = normalizeDodoSubscriptionSnapshot({
           subscription,
           eventId,
           eventType: String(webhook.type),
-          occurredAt: new Date(providerTimestamp).toISOString(),
+          occurredAt: new Date(authoritativeTimestamp).toISOString(),
           providerSequence,
+          providerPaymentId: webhook.data?.payment_id,
+          amountMinor:
+            String(webhook.type) === "payment.succeeded" &&
+            Number.isSafeInteger(webhook.data?.total_amount)
+              ? webhook.data.total_amount
+              : null,
+          currency:
+            String(webhook.type) === "payment.succeeded"
+              ? webhook.data?.currency
+              : null,
         });
         return applyVerifiedBillingEvent(normalized);
       }
@@ -113,6 +193,14 @@ export async function handleDodoWebhook(event) {
       applied: result?.applied === true,
     });
   } catch (error) {
+    if (isIgnorableDodoWebhookError(error)) {
+      console.info("Dodo webhook ignored (reconciliation conflict)", {
+        eventId,
+        subscriptionId,
+        error: error instanceof Error ? error.message : "Unknown error",
+      });
+      return ignorableDodoWebhookResponse("reconciliation_conflict");
+    }
     console.error("Dodo webhook reconciliation failed", {
       eventId,
       subscriptionId,
@@ -121,5 +209,91 @@ export async function handleDodoWebhook(event) {
     return jsonResponse(error?.statusCode === 503 ? 503 : 500, {
       error: "Webhook reconciliation failed",
     });
+  }
+}
+
+export async function handleZohoPaymentsWebhook(event) {
+  if (process.env.ATLAS_ZOHO_WEBHOOK_ENABLED !== "true") {
+    return jsonResponse(503, { error: "Zoho webhook ingestion is not enabled" });
+  }
+  try {
+    const rawBody = rawRequestBody(event);
+    verifyZohoPaymentsWebhook(
+      rawBody,
+      header(event, "x-zpayments-signature") || header(event, "x-zoho-webhook-signature")
+    );
+    const webhook = JSON.parse(rawBody);
+    const eventId = String(webhook.event_id || webhook.id || "");
+    const eventType = String(webhook.event_type || webhook.type || "");
+    const resource = webhook.data?.subscription || webhook.subscription || webhook.data?.object;
+    const subscriptionId = String(
+      resource?.subscription_id || webhook.data?.subscription_id || ""
+    );
+    if (!eventId || !eventType || !subscriptionId) {
+      return jsonResponse(400, { error: "Invalid Zoho Payments webhook payload" });
+    }
+    const checkoutOperationId =
+      resource?.reference_id ||
+      (Array.isArray(resource?.custom_fields)
+        ? resource.custom_fields.find(
+            (field) => field?.label === "Atlas Billing Operation ID"
+          )?.value
+        : null);
+    await ensureProviderSubscriptionBinding({
+      provider: "zoho",
+      providerSubscriptionId: subscriptionId,
+      providerCustomerId: resource?.customer_id,
+      checkoutOperationId,
+    });
+    const rawOccurredAt = webhook.created_time || webhook.created_at;
+    if (!rawOccurredAt || Number.isNaN(Date.parse(String(rawOccurredAt)))) {
+      return jsonResponse(400, { error: "Zoho webhook is missing provider event time" });
+    }
+    const occurredAt = new Date(rawOccurredAt).toISOString();
+    const result = await withBillingReconciliationLock(
+      "zoho",
+      subscriptionId,
+      async ({ workspaceId }) => {
+        const current = await getBillingSubscription(workspaceId);
+        const authoritative = await getZohoSubscription(subscriptionId);
+        const authoritativeTime =
+          authoritative.updated_time || authoritative.updated_at || occurredAt;
+        const authoritativeTimestamp = Date.parse(String(authoritativeTime));
+        if (!Number.isSafeInteger(authoritativeTimestamp)) {
+          throw new Error("Zoho subscription revision time is invalid");
+        }
+        const providerSequence = providerTimestampSequence(
+          authoritativeTimestamp,
+          current?.provider === "zoho" &&
+            current?.providerSubscriptionId === subscriptionId
+            ? current.providerSequence
+            : null
+        );
+        if (Number.isSafeInteger(webhook.data?.amount_minor)) {
+          assertProviderPaymentCurrency("zoho", webhook.data?.currency);
+        }
+        return applyVerifiedBillingEvent(
+          normalizeZohoSubscriptionSnapshot({
+            subscription: authoritative,
+            eventId,
+            eventType,
+            occurredAt: new Date(authoritativeTimestamp).toISOString(),
+            providerSequence,
+            providerPaymentId:
+              webhook.data?.payment?.payment_id ||
+              resource?.payment_id ||
+              webhook.data?.payment_id,
+            amountMinor: Number.isSafeInteger(webhook.data?.amount_minor)
+              ? webhook.data.amount_minor
+              : null,
+            currency: webhook.data?.currency || null,
+          })
+        );
+      }
+    );
+    return jsonResponse(200, { ok: true, duplicate: result.duplicate, applied: result.applied });
+  } catch (error) {
+    console.error("Zoho Payments webhook rejected", error);
+    return jsonResponse(400, { error: "Invalid webhook" });
   }
 }

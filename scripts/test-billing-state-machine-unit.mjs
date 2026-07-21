@@ -162,4 +162,42 @@ assert.throws(
   /canonical UTC ISO timestamp/
 );
 
+// Scenario 1: same-plan renewal advances period end, keeps tier
+const renewed = applyBillingEvent(active.subscription, {
+  ...baseEvent,
+  eventId: "evt_renewed_1",
+  eventType: "subscription.renewed",
+  occurredAt: "2026-08-18T10:00:01.000Z",
+  providerSequence: 200,
+  currentPeriodEnd: "2026-09-18T10:00:00.000Z",
+  amountMinor: 17900,
+  currency: "USD",
+});
+assert.equal(renewed.applied, true);
+assert.equal(renewed.subscription.tier, "growth");
+assert.equal(renewed.subscription.currentPeriodEnd, "2026-09-18T10:00:00.000Z");
+assert.equal(
+  billingEntitlementTier(renewed.subscription, "2026-09-18T09:59:59.000Z"),
+  "growth"
+);
+
+// Scenario 2: renewal with plan change (new product/tier at period boundary)
+const planChangedAtRenewal = applyBillingEvent(active.subscription, {
+  ...baseEvent,
+  eventId: "evt_plan_at_renewal",
+  eventType: "subscription.plan_changed",
+  tier: "launch",
+  occurredAt: "2026-08-18T10:00:02.000Z",
+  providerSequence: 201,
+  currentPeriodEnd: "2026-09-18T10:00:00.000Z",
+  amountMinor: 5900,
+  currency: "USD",
+});
+assert.equal(planChangedAtRenewal.applied, true);
+assert.equal(planChangedAtRenewal.subscription.tier, "launch");
+assert.equal(
+  billingEntitlementTier(planChangedAtRenewal.subscription, "2026-08-19T00:00:00.000Z"),
+  "launch"
+);
+
 console.log("test:billing-state-machine-unit — OK");

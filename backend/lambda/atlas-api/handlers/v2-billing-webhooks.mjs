@@ -61,7 +61,9 @@ function ignorableDodoWebhookResponse(reason) {
 }
 
 function isIgnorableDodoWebhookError(error) {
-  if (error?.name === "TransactionCanceledException") return true;
+  // Do NOT treat TransactionCanceledException as success — that caused Dodo to show
+  // "Succeeded" while Atlas may not have applied the event (false-positive delivery).
+  // Return 500 so Dodo retries until the transaction commits or a true ignore reason applies.
   const message = error instanceof Error ? error.message : "";
   return message === "Billing provider can change only after the prior subscription has ended";
 }

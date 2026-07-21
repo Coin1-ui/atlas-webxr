@@ -84,6 +84,9 @@ function workspaceTierContext(item) {
     billingEntitlementTier: currentBillingEntitlementTier(item),
     manualBillingTier: item.manualBillingTier,
     billingProvider: item.billingProvider,
+    billingStatus: item.billingStatus,
+    billingCurrentPeriodEnd: item.billingCurrentPeriodEnd,
+    billingGraceUntil: item.billingGraceUntil,
   };
 }
 
@@ -138,6 +141,7 @@ function workspaceFromItem(item) {
     billingProvider: item.billingProvider ? String(item.billingProvider) : null,
     billingStatus: item.billingStatus ? String(item.billingStatus) : null,
     billingSubscriptionId: item.billingSubscriptionId ? String(item.billingSubscriptionId) : null,
+    billingCustomerId: item.billingCustomerId ? String(item.billingCustomerId) : null,
     billingCurrentPeriodEnd: item.billingCurrentPeriodEnd
       ? String(item.billingCurrentPeriodEnd)
       : null,

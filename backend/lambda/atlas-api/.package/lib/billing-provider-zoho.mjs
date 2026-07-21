@@ -44,7 +44,7 @@ async function zohoAccessToken() {
     grant_type: "refresh_token",
     client_id: requiredEnv("ZOHO_CLIENT_ID"),
     client_secret: requiredEnv("ZOHO_CLIENT_SECRET"),
-    refresh_token: requiredEnv("ZOHO_REFRESH_TOKEN"),
+    refresh_token: requiredEnv("ZOHO_BILLING_REFRESH_TOKEN"),
   });
   const response = await fetch("https://accounts.zoho.in/oauth/v2/token", {
     method: "POST",
@@ -132,6 +132,14 @@ export async function getZohoHostedPage(hostedPageId) {
   return zohoBillingRequest(`/hostedpages/${encodeURIComponent(hostedPageId)}`);
 }
 
+export async function findZohoHostedPageByReference(operationId) {
+  const result = await zohoBillingRequest(
+    `/hostedpages?reference_id=${encodeURIComponent(operationId)}`
+  );
+  const rows = Array.isArray(result?.hostedpages) ? result.hostedpages : [];
+  return rows.find((row) => String(row.reference_id || "") === String(operationId)) || null;
+}
+
 export async function getZohoSubscription(subscriptionId) {
   const result = await zohoBillingRequest(`/subscriptions/${encodeURIComponent(subscriptionId)}`);
   return result?.subscription || result;
@@ -152,6 +160,45 @@ export async function changeZohoPlan(subscriptionId, tier, endOfTerm = true) {
       end_of_term: endOfTerm,
     },
   });
+}
+
+export function createZohoPortalSession() {
+  const url = new URL(requiredEnv("ZOHO_BILLING_PORTAL_URL"));
+  const host = url.hostname.toLowerCase();
+  const allowed =
+    url.protocol === "https:" &&
+    ["billing.zoho.com", "billing.zoho.in"].includes(host) &&
+    url.pathname.startsWith("/portal/") &&
+    !url.username &&
+    !url.password &&
+    !url.hash;
+  if (!allowed) throw new Error("ZOHO_BILLING_PORTAL_URL is not allowlisted");
+  return { portalUrl: url.toString() };
+}
+
+export async function createZohoRefund(paymentId, amount, description, operationId) {
+  if (!Number.isSafeInteger(amount) || amount <= 0) {
+    throw new Error("Zoho refund amount must be positive minor units");
+  }
+  return zohoBillingRequest(`/payments/${encodeURIComponent(paymentId)}/refunds`, {
+    method: "POST",
+    body: {
+      amount: amount / 100,
+      description: String(description || "Approved Atlas refund").slice(0, 500),
+      reference_number: String(operationId),
+    },
+  });
+}
+
+export async function findZohoRefundByReference(paymentId, operationId) {
+  const result = await zohoBillingRequest(`/payments/${encodeURIComponent(paymentId)}`);
+  const payment = result?.payment || result;
+  const refunds = Array.isArray(payment?.refunds) ? payment.refunds : [];
+  return (
+    refunds.find(
+      (refund) => String(refund.reference_number || "") === String(operationId)
+    ) || null
+  );
 }
 
 function equalDigest(actual, expected) {
@@ -222,6 +269,7 @@ export function normalizeZohoSubscriptionSnapshot(input) {
     eventType: input.eventType,
     providerSubscriptionId: String(subscription.subscription_id),
     providerCustomerId: subscription.customer_id ? String(subscription.customer_id) : undefined,
+    providerPaymentId: input.providerPaymentId || undefined,
     checkoutOperationId:
       subscription.reference_id || operationField?.value
         ? String(subscription.reference_id || operationField.value)
@@ -235,7 +283,7 @@ export function normalizeZohoSubscriptionSnapshot(input) {
       : null,
     graceUntil,
     cancelAtPeriodEnd: normalizedStatus === "canceled",
-    amountMinor: null,
-    currency: null,
+    amountMinor: input.amountMinor ?? null,
+    currency: input.currency ?? null,
   };
 }
