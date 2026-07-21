@@ -61,6 +61,11 @@ async function redeemCheckoutCoupon(operationId, eventId) {
   const couponCode =
     typeof operation?.couponCode === "string" ? operation.couponCode.trim().toUpperCase() : "";
   if (!couponCode) return;
+  const atlasCoupon = await getPlatformCouponByCode(couponCode);
+  if (!atlasCoupon) {
+    console.info("Checkout coupon skipped (no Atlas platform coupon record)", { couponCode, operationId });
+    return;
+  }
   const now = new Date().toISOString();
   try {
     await client.send(
@@ -76,10 +81,8 @@ async function redeemCheckoutCoupon(operationId, eventId) {
     if (error?.name === "ConditionalCheckFailedException") return;
     throw error;
   }
-  const atlasCoupon = await getPlatformCouponByCode(couponCode);
-  if (atlasCoupon) {
-    await incrementPlatformCouponUse(couponCode);
-  }
+  await incrementPlatformCouponUse(couponCode);
+  console.info("Atlas coupon redeemed", { couponCode, operationId, eventId });
 }
 
 function refundKey(provider, paymentId, idempotencyKey) {
@@ -373,6 +376,18 @@ export async function recordProviderCheckout(input) {
         ExpressionAttributeValues: {
           ":operationId": operationId,
           ":leaseUntil": Math.floor(Date.now() / 1000) - 1,
+          ":now": now,
+        },
+      },
+    },
+    {
+      Update: {
+        TableName: workspacesTable(),
+        Key: { pk: `WORKSPACE#${operation.workspaceId}`, sk: "META" },
+        UpdateExpression:
+          "SET billingLastCheckoutOperationId = :operationId, updatedAt = :now",
+        ExpressionAttributeValues: {
+          ":operationId": operationId,
           ":now": now,
         },
       },
@@ -771,16 +786,26 @@ export async function ensureProviderSubscriptionBinding(input) {
     provider,
     providerSubscriptionId: subscriptionId,
   });
+  const bindingKey = providerSubscriptionKey(provider, subscriptionId);
+  const existing = await client.send(
+    new GetCommand({
+      TableName: billingTable(),
+      Key: bindingKey,
+      ConsistentRead: true,
+    })
+  );
+  const operationId =
+    input.checkoutOperationId || existing.Item?.operationId || null;
   await client.send(
     new PutCommand({
       TableName: billingTable(),
       Item: {
-        ...providerSubscriptionKey(provider, subscriptionId),
+        ...bindingKey,
         entityType: "billing_subscription_binding",
         provider,
         providerSubscriptionId: subscriptionId,
         workspaceId,
-        operationId: input.checkoutOperationId || null,
+        operationId,
         updatedAt: new Date().toISOString(),
       },
       ConditionExpression: "attribute_not_exists(pk) OR workspaceId = :workspaceId",
@@ -876,18 +901,19 @@ export function buildBillingTransactionItems(event, transition, receivedAt) {
       },
     },
     {
-      Put: {
+      Update: {
         TableName: billingTable(),
-        Item: {
-          ...keys.binding,
-          entityType: "billing_subscription_binding",
-          provider: event.provider,
-          providerSubscriptionId: event.providerSubscriptionId,
-          workspaceId: event.workspaceId,
-          updatedAt: receivedAt,
-        },
+        Key: keys.binding,
+        UpdateExpression:
+          "SET entityType = :entityType, provider = :provider, providerSubscriptionId = :subscriptionId, workspaceId = :workspaceId, updatedAt = :updatedAt",
         ConditionExpression: "attribute_not_exists(pk) OR workspaceId = :workspaceId",
-        ExpressionAttributeValues: { ":workspaceId": event.workspaceId },
+        ExpressionAttributeValues: {
+          ":entityType": "billing_subscription_binding",
+          ":provider": event.provider,
+          ":subscriptionId": event.providerSubscriptionId,
+          ":workspaceId": event.workspaceId,
+          ":updatedAt": receivedAt,
+        },
       },
     },
     {
@@ -1091,7 +1117,19 @@ export async function applyVerifiedBillingEvent(input) {
             ConsistentRead: true,
           })
         );
-        await redeemCheckoutCoupon(binding.Item?.operationId, event.eventId);
+        let checkoutOperationId =
+          input.checkoutOperationId ?? binding.Item?.operationId ?? null;
+        if (!checkoutOperationId) {
+          const workspaceRow = await client.send(
+            new GetCommand({
+              TableName: workspacesTable(),
+              Key: { pk: `WORKSPACE#${event.workspaceId}`, sk: "META" },
+              ConsistentRead: true,
+            })
+          );
+          checkoutOperationId = workspaceRow.Item?.billingLastCheckoutOperationId ?? null;
+        }
+        await redeemCheckoutCoupon(checkoutOperationId, event.eventId);
       }
       return {
         duplicate: false,

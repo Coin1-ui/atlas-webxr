@@ -48,13 +48,15 @@ export function couponOfferSummary(coupon: CouponLike): string {
 }
 
 /** Uses line for owner list / banner suffix (plain text). */
-export function couponUsesLine(coupon: CouponLike): string | null {
-  if (coupon.maxUses == null || coupon.maxUses < 1) return null;
-  const remaining = couponUsesRemaining(coupon);
-  if (remaining === undefined) return null;
+export function couponUsesLine(coupon: CouponLike): string {
   const used = coupon.usesCount ?? 0;
-  if (remaining <= 0) return `${used} / ${coupon.maxUses} uses · sold out`;
-  return `${remaining} of ${coupon.maxUses} spots left`;
+  if (coupon.maxUses != null && coupon.maxUses >= 1) {
+    const remaining = couponUsesRemaining(coupon);
+    if (remaining === undefined) return `${used} used`;
+    if (remaining <= 0) return `${used} / ${coupon.maxUses} uses · sold out`;
+    return `${remaining} of ${coupon.maxUses} spots left · ${used} used`;
+  }
+  return `${used} used`;
 }
 
 /** HTML suffix for pricing banner (uses countdown + code). */

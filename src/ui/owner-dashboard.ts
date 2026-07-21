@@ -236,7 +236,7 @@ export function renderOwnerDashboard(
                  <code class="owner-coupon-code">${escapeHtml(c.code)}</code>${c.showOnPricing ? ` <span class="owner-coupon-badge">On pricing banner</span>` : ""}${!couponIsActive(c) ? ` <span class="owner-coupon-badge owner-coupon-badge-muted">Inactive</span>` : ""}
                  <p>${escapeHtml(c.label)} · ${escapeHtml(couponOfferSummary(c) || "—")}</p>
                  ${c.showOnPricing && c.bannerText ? `<p class="owner-meta">Banner: “${escapeHtml(c.bannerText)}”</p>` : ""}
-                 ${couponUsesLine(c) ? `<p class="owner-meta owner-coupon-uses">${escapeHtml(couponUsesLine(c)!)}</p>` : ""}
+                 <p class="owner-meta owner-coupon-uses">${escapeHtml(couponUsesLine(c))}</p>
                  ${c.expiresAt ? `<p class="owner-meta">Expires ${escapeHtml(c.expiresAt.slice(0, 10))}</p>` : ""}
                </div>
                <button type="button" class="btn btn-ghost btn-sm owner-btn-danger" data-delete-coupon="${escapeHtml(c.code)}">Delete</button>
