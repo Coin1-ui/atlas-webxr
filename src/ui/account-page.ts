@@ -3,7 +3,7 @@ import { brandedHeaderHtml, mountWorkspaceLogo } from "../branding/workspace-the
 import type { WorkspaceUsageResponse } from "../data/usage-api";
 import { formatStorageBytes, formatSessionsLimit, isUnlimitedSessionsLimit } from "../shared/plan-limits";
 import { estimateOverageUsd, planDisplayName, upgradeOptions, type PlanTier } from "../shared/plan-display";
-import { effectiveBillingTier, trialProfilePlanLine, accountTrialBannerHtml, trialSuspendedBannerHtml, mountTrialCountdown, planActionVerbForTier, hasLiveBillingSubscription, subscribedBillingTier, planChangeMatrix } from "../shared/trial";
+import { effectiveBillingTier, trialProfilePlanLine, accountTrialBannerHtml, trialSuspendedBannerHtml, mountTrialCountdown, planActionVerbForTier, hasLiveBillingSubscription, subscribedBillingTier, planChangeMatrix, isTrialActive, billingPlanDisplayStatus, billingPlanStatusLabel } from "../shared/trial";
 import { isOveragePaidLocally } from "../data/billing-api";
 import {
   billingCountryOptions,
@@ -121,7 +121,10 @@ export function renderAccountPage(
     : `<p class="auth-hint">Usage stats will appear when the usage API is connected.</p>`;
 
   const billingIsLive = hasLiveBillingSubscription(workspace);
-  const cancelScheduled = billingIsLive && workspace.billingCancelAtPeriodEnd === true;
+  const billingDisplayStatus = billingPlanDisplayStatus(workspace);
+  const billingStatusText = billingPlanStatusLabel(workspace);
+  const cancelScheduled = billingDisplayStatus === "cancel_scheduled";
+  const billingCanceled = billingDisplayStatus === "canceled";
   const paidBillingTier = subscribedBillingTier(workspace);
   const billingPlanName = paidBillingTier
     ? planDisplayName(workspace.plan, paidBillingTier)
@@ -139,9 +142,16 @@ export function renderAccountPage(
           ${upgrades
             .map((tier) => {
               const verb = planActionVerbForTier(workspace, tier.id);
-              if (verb === "Current") return "";
+              // Paid: Plan name is in Plan & billing — hide redundant Current card.
+              // Trial (no paid entitlement): keep Current so the trial plan is visible in the grid.
+              if (
+                verb === "Current" &&
+                !(isTrialActive(workspace) && !subscribedBillingTier(workspace))
+              ) {
+                return "";
+              }
               return `
-            <button type="button" class="account-plan-card" data-action="upgrade" data-tier="${escapeHtml(tier.id)}">
+            <button type="button" class="account-plan-card${verb === "Current" ? " account-plan-card--current" : ""}" data-action="upgrade" data-tier="${escapeHtml(tier.id)}"${verb === "Current" ? " disabled aria-current=\"true\"" : ""}>
               <span class="account-plan-name">${escapeHtml(tier.name)}</span>
               <span class="account-plan-price">${escapeHtml(tier.price)}</span>
               <span class="account-plan-cta">${escapeHtml(verb)}</span>
@@ -228,10 +238,24 @@ export function renderAccountPage(
               workspace.billingSubscriptionId
                 ? `<dl class="account-dl">
                     <div><dt>Plan</dt><dd><strong>${escapeHtml(billingPlanName)}</strong></dd></div>
-                    <div><dt>Status</dt><dd><strong>${escapeHtml(workspace.billingStatus ?? "pending")}</strong></dd></div>
+                    <div><dt>Status</dt><dd><strong>${escapeHtml(billingStatusText)}</strong></dd></div>
                     <div><dt>Provider</dt><dd>${escapeHtml(workspace.billingProvider === "zoho" ? "Zoho (India)" : "Dodo Payments")}</dd></div>
                     ${workspace.billingCurrentPeriodEnd ? `<div><dt>Current period ends</dt><dd>${escapeHtml(formatDate(workspace.billingCurrentPeriodEnd))}</dd></div>` : ""}
-                  </dl>`
+                  </dl>
+                  ${
+                    cancelScheduled
+                      ? `<p class="auth-hint">Cancellation is scheduled for the end of the current billing period. You keep access until then.</p>`
+                      : ""
+                  }
+                  ${
+                    billingCanceled
+                      ? `<p class="auth-hint">Subscription canceled.${
+                          isTrialActive(workspace)
+                            ? " Your trial limits still apply until the trial ends — subscribe below to continue on a paid plan."
+                            : " Subscribe below to restore paid access."
+                        }</p>`
+                      : ""
+                  }`
                 : ""
             }
             <div class="account-checkout-fields">
@@ -251,8 +275,7 @@ export function renderAccountPage(
             </div>
             ${upgradeHtml}
             ${handlers.onManageBilling && workspace.billingSubscriptionId && billingIsLive ? `<button type="button" class="mkt-btn mkt-btn-primary account-secondary-btn" data-action="manage-billing">Manage payment method &amp; invoices</button>` : ""}
-            ${handlers.onCancelBilling && workspace.billingSubscriptionId && billingIsLive && !workspace.billingCancelAtPeriodEnd ? `<button type="button" class="mkt-btn mkt-btn-ghost account-secondary-btn" data-action="cancel-billing">Cancel at renewal</button>` : ""}
-            ${cancelScheduled ? `<p class="auth-hint">Cancellation is scheduled for the end of the current billing period.</p>` : ""}
+            ${handlers.onCancelBilling && workspace.billingSubscriptionId && billingIsLive && !cancelScheduled ? `<button type="button" class="mkt-btn mkt-btn-ghost account-secondary-btn" data-action="cancel-billing">Cancel at renewal</button>` : ""}
             <button type="button" class="mkt-btn mkt-btn-ghost account-secondary-btn" data-action="pricing">Compare all plans</button>
           </section>
 

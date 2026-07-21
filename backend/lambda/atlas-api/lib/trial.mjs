@@ -112,6 +112,48 @@ export function isTrialExpired(ws) {
 }
 
 /**
+ * User-facing Plan & billing status (mirror of src/shared/trial.ts).
+ * @param {{ billingStatus?: string | null; billingSubscriptionId?: string | null; billingCancelAtPeriodEnd?: boolean | null; billingProvider?: string | null; billingEntitlementTier?: BillingTierId | null; billingCurrentPeriodEnd?: string | null; billingGraceUntil?: string | null; manualBillingTier?: BillingTierId | null; purchasedBillingTier?: BillingTierId | null }} ws
+ * @returns {"active" | "cancel_scheduled" | "canceled" | "past_due" | "pending" | "none"}
+ */
+export function billingPlanDisplayStatus(ws) {
+  const paid = paidBillingTier(ws);
+  if (ws.billingStatus === "past_due" && paid) return "past_due";
+  if (paid && ws.billingCancelAtPeriodEnd === true) return "cancel_scheduled";
+  if (paid) return "active";
+  if (ws.billingStatus === "pending" && !ws.billingSubscriptionId) return "pending";
+  if (
+    ws.billingStatus === "expired" ||
+    ws.billingStatus === "canceled" ||
+    (Boolean(ws.billingSubscriptionId) && !paid)
+  ) {
+    return "canceled";
+  }
+  if (ws.billingStatus === "pending") return "pending";
+  return "none";
+}
+
+/**
+ * @param {{ billingStatus?: string | null; billingSubscriptionId?: string | null; billingCancelAtPeriodEnd?: boolean | null; billingProvider?: string | null; billingEntitlementTier?: BillingTierId | null; billingCurrentPeriodEnd?: string | null; billingGraceUntil?: string | null; manualBillingTier?: BillingTierId | null; purchasedBillingTier?: BillingTierId | null }} ws
+ */
+export function billingPlanStatusLabel(ws) {
+  switch (billingPlanDisplayStatus(ws)) {
+    case "active":
+      return "Active";
+    case "cancel_scheduled":
+      return "Cancel scheduled";
+    case "canceled":
+      return "Canceled";
+    case "past_due":
+      return "Past due";
+    case "pending":
+      return "Pending";
+    default:
+      return "—";
+  }
+}
+
+/**
  * @param {{ trialPlan?: BillingTierId | null; purchasedBillingTier?: BillingTierId | null; billingEntitlementTier?: BillingTierId | null }} ws
  */
 export function hasPurchasedTrialFallback(ws) {

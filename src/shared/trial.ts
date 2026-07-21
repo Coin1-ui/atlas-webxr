@@ -24,6 +24,7 @@ export type TrialWorkspace = {
   billingStatus?: "pending" | "active" | "past_due" | "canceled" | "expired" | null;
   billingCurrentPeriodEnd?: string | null;
   billingGraceUntil?: string | null;
+  billingCancelAtPeriodEnd?: boolean | null;
   trialEndsAt?: string | null;
   trialPlan?: PlanTierId | null;
 };
@@ -175,6 +176,54 @@ export function subscribedBillingTier(ws: TrialWorkspace): PlanTierId | null {
 /** Paid entitlement still active — use plan change / portal / cancel, not new checkout. */
 export function hasLiveBillingSubscription(ws: TrialWorkspace): boolean {
   return subscribedBillingTier(ws) !== null;
+}
+
+/** User-facing Plan & billing status — drives labels and gated actions. */
+export type BillingPlanDisplayStatus =
+  | "active"
+  | "cancel_scheduled"
+  | "canceled"
+  | "past_due"
+  | "pending"
+  | "none";
+
+/**
+ * Derive Plan & billing display status from entitlement + cancel flags.
+ * Immediate Dodo cancel (Atlas expired) and ended entitlement → "canceled".
+ * cancelAtPeriodEnd while still entitled → "cancel_scheduled".
+ */
+export function billingPlanDisplayStatus(ws: TrialWorkspace): BillingPlanDisplayStatus {
+  const paid = subscribedBillingTier(ws);
+  if (ws.billingStatus === "past_due" && paid) return "past_due";
+  if (paid && ws.billingCancelAtPeriodEnd === true) return "cancel_scheduled";
+  if (paid) return "active";
+  if (ws.billingStatus === "pending" && !ws.billingSubscriptionId) return "pending";
+  if (
+    ws.billingStatus === "expired" ||
+    ws.billingStatus === "canceled" ||
+    (Boolean(ws.billingSubscriptionId) && !paid)
+  ) {
+    return "canceled";
+  }
+  if (ws.billingStatus === "pending") return "pending";
+  return "none";
+}
+
+export function billingPlanStatusLabel(ws: TrialWorkspace): string {
+  switch (billingPlanDisplayStatus(ws)) {
+    case "active":
+      return "Active";
+    case "cancel_scheduled":
+      return "Cancel scheduled";
+    case "canceled":
+      return "Canceled";
+    case "past_due":
+      return "Past due";
+    case "pending":
+      return "Pending";
+    default:
+      return "—";
+  }
 }
 
 export function hasPurchasedTrialFallback(ws: TrialWorkspace): boolean {
