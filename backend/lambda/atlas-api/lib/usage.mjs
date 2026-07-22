@@ -1,6 +1,7 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import {
   DynamoDBDocumentClient,
+  DeleteCommand,
   GetCommand,
   PutCommand,
   UpdateCommand,
@@ -123,4 +124,49 @@ export async function recordQualifiedSession(workspaceId, sessionId, placementCo
 
   await incrementUsage(workspaceId, { sessionDelta: 1 });
   return { counted: true };
+}
+
+/**
+ * Absolute write of monthly session counter (sandbox overage testing).
+ * Does not invent models/storage — those come from manifest/S3 in usage API.
+ *
+ * @param {string} workspaceId
+ * @param {number} sessionCount
+ * @param {{ month?: string }} [opts]
+ */
+export async function setMonthlySessionCount(workspaceId, sessionCount, opts = {}) {
+  const month = opts.month || monthKey();
+  const count = Math.max(0, Math.floor(Number(sessionCount) || 0));
+  const now = new Date().toISOString();
+  await client.send(
+    new PutCommand({
+      TableName: usageTable(),
+      Item: {
+        pk: `WORKSPACE#${workspaceId}`,
+        sk: `MONTH#${month}`,
+        workspaceId,
+        month,
+        sessionCount: count,
+        modelCount: 0,
+        storageBytes: 0,
+        sandboxSeededAt: now,
+        sandboxNote: "api-sandbox-seed",
+      },
+    })
+  );
+  return { month, sessionCount: count };
+}
+
+/**
+ * @param {string} workspaceId
+ * @param {string} [month]
+ */
+export async function clearMonthlyUsage(workspaceId, month = monthKey()) {
+  await client.send(
+    new DeleteCommand({
+      TableName: usageTable(),
+      Key: { pk: `WORKSPACE#${workspaceId}`, sk: `MONTH#${month}` },
+    })
+  );
+  return { month, cleared: true };
 }

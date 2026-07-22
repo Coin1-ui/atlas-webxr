@@ -66,6 +66,29 @@ export async function acceptOverageCharge(
   };
 }
 
+/** Sandbox-only: seed session overage via Cognito (no local AWS keys). */
+export async function seedSandboxUsage(
+  workspaceId: string,
+  body: { preset?: "overage"; sessions?: number; reset?: boolean; resetOverage?: boolean }
+): Promise<{ ok: true; estimatedOverageUsd?: number; usage?: { sessionCount: number; month: string } }> {
+  const base = getApiBase();
+  if (!base) throw new Error("API base is not configured");
+  const res = await fetch(apiUrl(`/v2/workspaces/${encodeURIComponent(workspaceId)}/sandbox/usage`), {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(text || `HTTP ${res.status}`);
+  }
+  return (await res.json()) as {
+    ok: true;
+    estimatedOverageUsd?: number;
+    usage?: { sessionCount: number; month: string };
+  };
+}
+
 /** Request plan upgrade — records purchase when billing API is deployed. */
 export async function requestPlanUpgrade(
   workspaceId: string,

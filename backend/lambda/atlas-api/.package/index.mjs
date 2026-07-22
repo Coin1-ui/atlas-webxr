@@ -15,6 +15,7 @@ import {
 } from "./handlers/v2-models.mjs";
 import { handleAnalyticsEvents } from "./handlers/v2-analytics.mjs";
 import { handleWorkspaceUsage } from "./handlers/v2-usage.mjs";
+import { handleSandboxSeedUsage } from "./handlers/v2-sandbox-usage.mjs";
 import { handleBillingStatus, handleBillingUpgrade } from "./handlers/v2-billing.mjs";
 import {
   handleDodoWebhook,
@@ -73,6 +74,11 @@ export async function handler(event) {
     const usageMatch = /^\/v2\/workspaces\/([^/]+)\/usage$/.exec(rawPath);
     if (usageMatch && method === "GET") {
       return await handleWorkspaceUsage(event, decodeURIComponent(usageMatch[1]));
+    }
+
+    const sandboxUsageMatch = /^\/v2\/workspaces\/([^/]+)\/sandbox\/usage$/.exec(rawPath);
+    if (sandboxUsageMatch && method === "POST") {
+      return await handleSandboxSeedUsage(event, decodeURIComponent(sandboxUsageMatch[1]));
     }
 
     const billingUpgradeMatch = /^\/v2\/workspaces\/([^/]+)\/billing\/upgrade$/.exec(rawPath);

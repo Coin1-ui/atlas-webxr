@@ -60,6 +60,7 @@ export function renderAccountPage(
     overagePaid?: boolean;
     overageAccepted?: boolean;
     usageUnrestricted?: boolean;
+    sandboxSeedEnabled?: boolean;
     scheduledPlanChange?: BillingScheduledPlanChange | null;
   },
   handlers: {
@@ -72,6 +73,8 @@ export function renderAccountPage(
     onCancelBilling?: () => void | Promise<void>;
     onCancelScheduledPlanChange?: () => void | Promise<void>;
     onPayOverage: (amountUsd: number) => void | Promise<void>;
+    onSeedSandboxOverage?: () => void | Promise<void>;
+    onClearSandboxUsage?: () => void | Promise<void>;
     onAdmin: () => void;
     onBranding?: () => void;
     onOwner?: () => void;
@@ -98,6 +101,9 @@ export function renderAccountPage(
     usage?.overagePaid ??
     (usage ? isOveragePaidLocally(workspace.id, usage.usage.month) : false);
   const overageAccepted = data.overageAccepted ?? usage?.overageAccepted ?? false;
+  const showSandboxSeed =
+    Boolean(handlers.onSeedSandboxOverage) &&
+    (Boolean(data.sandboxSeedEnabled) || Boolean(usage?.sandboxSeedEnabled));
 
   const usageHtml = usage
     ? `<div class="admin-usage-grid account-usage-grid${unrestricted ? " admin-usage-grid--operator" : ""}">
@@ -323,7 +329,17 @@ export function renderAccountPage(
                         : `<button type="button" class="mkt-btn mkt-btn-primary auth-submit" data-action="pay-overage" data-amount="${overageUsd}">Accept &amp; pay overage</button>`
                     }
                   </div>`
-                : `<p class="auth-hint">No overage charges this period — you are within included limits.</p>`
+                : `<p class="auth-hint">No overage charges this period — you are within included limits.</p>${
+                    showSandboxSeed
+                      ? `<p class="auth-hint" style="margin-top:0.75rem">Sandbox: simulate overage without real AR sessions.</p>
+                         <button type="button" class="mkt-btn mkt-btn-ghost auth-submit" data-action="seed-sandbox-overage">Seed overage (sandbox)</button>`
+                      : ""
+                  }`
+            }
+            ${
+              showSandboxSeed && hasOverage
+                ? `<button type="button" class="mkt-btn mkt-btn-ghost" data-action="clear-sandbox-usage" style="margin-top:0.5rem">Clear seeded usage</button>`
+                : ""
             }
           </section>
 
@@ -375,6 +391,12 @@ export function renderAccountPage(
   root.querySelector("[data-action=pay-overage]")?.addEventListener("click", () => {
     const amount = Number((root.querySelector("[data-action=pay-overage]") as HTMLElement).getAttribute("data-amount"));
     void handlers.onPayOverage(amount);
+  });
+  root.querySelector("[data-action=seed-sandbox-overage]")?.addEventListener("click", () => {
+    void handlers.onSeedSandboxOverage?.();
+  });
+  root.querySelector("[data-action=clear-sandbox-usage]")?.addEventListener("click", () => {
+    void handlers.onClearSandboxUsage?.();
   });
 
   root.querySelector("[data-action=admin]")?.addEventListener("click", handlers.onAdmin);

@@ -14,6 +14,7 @@ import {
   updatePlatformSettings,
   updatePlatformWorkspace,
 } from "../lib/dynamodb.mjs";
+import { syncAllPlatformCouponsFromDodo } from "../lib/coupon-dodo-sync.mjs";
 import { WORKSPACE_PLANS } from "../lib/tenant-types.mjs";
 
 /**
@@ -100,8 +101,8 @@ export async function handleListPlatformCoupons(event) {
   if (event.requestContext?.http?.method === "OPTIONS") return optionsResponse();
   try {
     await requirePlatformOwner(event);
-    const coupons = await listPlatformCoupons();
-    return jsonResponse(200, { coupons });
+    const coupons = await syncAllPlatformCouponsFromDodo();
+    return jsonResponse(200, { coupons, syncedFromDodo: true });
   } catch (e) {
     const status = /** @type {{ statusCode?: number }} */ (e).statusCode || 500;
     return jsonResponse(status, { error: e instanceof Error ? e.message : "Error" });

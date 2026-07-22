@@ -171,7 +171,7 @@ import {
   type BillingStatus,
 } from "./data/workspace-api";
 import { fetchWorkspaceUsage } from "./data/usage-api";
-import { acceptOverageCharge, isOveragePaidLocally } from "./data/billing-api";
+import { acceptOverageCharge, isOveragePaidLocally, seedSandboxUsage } from "./data/billing-api";
 import type { PlanTier } from "./shared/plan-display";
 import { planChangeScheduledMessage, planDisplayName } from "./shared/plan-display";
 import {
@@ -1222,6 +1222,7 @@ async function showAccountScreen(opts?: {
         usageUnrestricted: isPlatformOwner,
         overagePaid: usage?.overagePaid ?? (usage ? isOveragePaidLocally(workspace.id, usage.usage.month) : false),
         overageAccepted: usage?.overageAccepted ?? false,
+        sandboxSeedEnabled: Boolean(usage?.sandboxSeedEnabled) || isPlatformOwner,
         scheduledPlanChange,
         ...opts,
       },
@@ -1337,6 +1338,25 @@ async function showAccountScreen(opts?: {
                 ? `Overage of $${amountUsd.toFixed(2)} accepted for ${usage.usage.month}. Invoicing is pending.`
                 : `Overage of $${amountUsd.toFixed(2)} accepted for ${usage.usage.month}.`;
             void showAccountScreen({ billingSuccess: message });
+          } catch (e) {
+            void showAccountScreen({ billingError: e instanceof Error ? e.message : String(e) });
+          }
+        },
+        onSeedSandboxOverage: async () => {
+          try {
+            const result = await seedSandboxUsage(activeWorkspace!.id, { preset: "overage" });
+            void showAccountScreen({
+              billingSuccess: `Sandbox overage seeded (sessions ${result.usage?.sessionCount ?? "?"}, est. $${(result.estimatedOverageUsd ?? 0).toFixed(2)}).`,
+            });
+          } catch (e) {
+            void showAccountScreen({ billingError: e instanceof Error ? e.message : String(e) });
+          }
+        },
+        onClearSandboxUsage: async () => {
+          try {
+            await seedSandboxUsage(activeWorkspace!.id, { reset: true });
+            await seedSandboxUsage(activeWorkspace!.id, { resetOverage: true });
+            void showAccountScreen({ billingSuccess: "Sandbox usage and overage records cleared." });
           } catch (e) {
             void showAccountScreen({ billingError: e instanceof Error ? e.message : String(e) });
           }

@@ -1,6 +1,7 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import {
   DynamoDBDocumentClient,
+  DeleteCommand,
   GetCommand,
   PutCommand,
   TransactWriteCommand,
@@ -1237,5 +1238,19 @@ export async function markWorkspaceOveragePaidFromWebhook(workspaceId, month, pa
     })
   );
   return getWorkspaceOverage(workspaceId, month);
+}
+
+/**
+ * @param {string} workspaceId
+ * @param {string} month
+ */
+export async function deleteWorkspaceOverage(workspaceId, month) {
+  await client.send(
+    new DeleteCommand({
+      TableName: billingTable(),
+      Key: overageRecordKey(workspaceId, month),
+    })
+  );
+  return { workspaceId, month, deleted: true };
 }
 

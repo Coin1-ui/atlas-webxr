@@ -82,6 +82,7 @@ ATLAS_ZOHO_CHECKOUT_ENABLED
   - `GET /v2/workspaces/{workspaceId}/billing/status` — Cognito authorizer.
   - `GET /v2/workspaces/{workspaceId}/billing/overage` — Cognito authorizer.
   - `POST /v2/workspaces/{workspaceId}/billing/overage` — Cognito authorizer.
+  - `POST /v2/workspaces/{workspaceId}/sandbox/usage` — Cognito authorizer (overage seed; no local AWS keys).
 - CORS headers: `content-type, authorization, idempotency-key`.
 
 ### 7. Safe activation order
@@ -258,10 +259,52 @@ Usage API (`GET …/usage`) also returns `estimatedOverageUsd`, `overagePaid`, a
 4. If automatic charge is unavailable (legacy non–on-demand sub), status is stored as **`accepted`** — UI shows invoicing pending.
 5. `payment.succeeded` webhooks with `metadata.atlas_overage_month` mark the month **paid** in `atlas-billing`.
 
-### Sandbox test
+### Sandbox test (no AWS CLI / no access keys)
 
-1. Exceed a limit on a paid Starter/Launch/Growth workspace (or use test usage data).
+**Preferred:** Cognito-authenticated seed API (uses your Amplify login).
+
+1. Lambda env: `ATLAS_SANDBOX_USAGE_SEED=true` (workspace admins can seed; platform owners can always seed).
+2. API Gateway: `POST /v2/workspaces/{workspaceId}/sandbox/usage` — Cognito authorizer.
+3. Upload rebuilt Lambda zip.
+4. Sign in on Amplify → **Account** → **Seed overage (sandbox)** (shown when seed is enabled or you are platform owner).
+5. Click **Accept & pay overage**.
+6. **Clear seeded usage** when done.
+
+Or call the API while logged in (browser DevTools Network → copy any `Authorization: Bearer …` from Account):
+
+```http
+POST /v2/workspaces/65784606-8cdf-44a2-a22f-d80cf8d1a5be/sandbox/usage
+{ "preset": "overage" }
+```
+
+**Fallback (AWS Console only, no keys on laptop):** DynamoDB → table `atlas-usage` → Create item  
+`pk` = `WORKSPACE#65784606-8cdf-44a2-a22f-d80cf8d1a5be`, `sk` = `MONTH#2026-07`, `sessionCount` = `650` (number), `month` = `2026-07`.
+
+### Sandbox test (local AWS keys — optional)
+
+1. **Seed usage** (no real AR sessions needed):
+   ```powershell
+   cd D:\AI\atlas-webxr\atlas-webxr
+   # Default sandbox workspace from project memory:
+   $ws = "1ee2cb65-6252-4679-ab53-84ea36b2518f"
+   npm run seed:sandbox-usage -- $ws --preset overage
+   # Or explicit session count (Starter limit 500 → 650 = ~$20 overage):
+   npm run seed:sandbox-usage -- $ws --sessions 650
+   ```
+   Requires AWS credentials with `dynamodb:PutItem` on `atlas-usage` and read on `atlas-workspaces`.
+   Region defaults to `ap-south-1`. If you see auth errors, set a profile first:
+   ```powershell
+   $env:AWS_PROFILE = "default"   # or your admin profile name
+   $env:AWS_REGION = "ap-south-1"
+   ```
+   **Session count** is the easiest lever — model count comes from the manifest, storage from S3 totals.
+
 2. Open **Account** → confirm estimated overage > $0.
-3. Click **Accept & pay overage** — expect paid (Dodo charge) or accepted (manual fallback).
+3. Click **Accept & pay overage** — expect paid (Dodo charge) or accepted (manual fallback on legacy subs).
 4. Re-open account — button hidden; status shows paid or invoicing pending.
+5. **Cleanup** when done:
+   ```powershell
+   npm run seed:sandbox-usage -- $ws --reset
+   npm run seed:sandbox-usage -- $ws --reset-overage
+   ```
 

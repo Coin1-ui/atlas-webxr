@@ -60,6 +60,7 @@ export async function handleWorkspaceUsage(event, workspaceId) {
       overagePaid,
       overageAccepted: overageRecord?.status === "accepted",
       overageStatus: overageRecord?.status ?? (estimatedOverageUsd > 0 ? "unpaid" : "none"),
+      sandboxSeedEnabled: process.env.ATLAS_SANDBOX_USAGE_SEED === "true",
     });
   } catch (e) {
     const status = /** @type {{ statusCode?: number }} */ (e).statusCode || 500;

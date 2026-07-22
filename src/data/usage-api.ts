@@ -21,6 +21,7 @@ export type WorkspaceUsageResponse = {
   overagePaid?: boolean;
   overageAccepted?: boolean;
   overageStatus?: string;
+  sandboxSeedEnabled?: boolean;
 };
 
 function apiUrl(path: string): string {
