@@ -8,8 +8,9 @@ import { MKT_ASSETS } from "./marketing-assets";
 import type { OnboardingState } from "../shared/onboarding-progress";
 import { onboardingBannerHtml } from "./onboarding-get-started";
 
-function escapeHtml(s: string): string {
-  return s
+function escapeHtml(s: string | null | undefined): string {
+  if (s == null) return "";
+  return String(s)
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")

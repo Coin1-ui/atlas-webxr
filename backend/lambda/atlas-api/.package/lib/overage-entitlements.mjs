@@ -70,8 +70,9 @@ export function effectiveUsageLimits(planLimits, overageRecord) {
 
 /**
  * Usage counts to display — live usage, or billed snapshot when overage settled.
+ * Always preserves `month` and other live fields (UI calls escapeHtml on month).
  *
- * @param {{ modelCount: number; sessionCount: number; storageBytes: number }} liveUsage
+ * @param {{ month?: string; modelCount: number; sessionCount: number; storageBytes: number }} liveUsage
  * @param {{ status?: string; usageSnapshot?: object | null } | null} overageRecord
  */
 export function displayUsageCounts(liveUsage, overageRecord) {
@@ -80,6 +81,7 @@ export function displayUsageCounts(liveUsage, overageRecord) {
   if (!settled || !overageRecord?.usageSnapshot) return liveUsage;
   const snap = overageRecord.usageSnapshot;
   return {
+    ...liveUsage,
     modelCount: Number(snap.modelCount ?? liveUsage.modelCount),
     sessionCount: Number(snap.sessionCount ?? liveUsage.sessionCount),
     storageBytes: Number(snap.storageBytes ?? liveUsage.storageBytes),

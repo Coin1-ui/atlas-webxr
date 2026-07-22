@@ -25,13 +25,14 @@ assert.equal(noExtend.sessionsPerMonth, 5000);
 assert.equal(noExtend.overageExtended.sessions, false);
 
 const display = displayUsageCounts(
-  { modelCount: 0, sessionCount: 0, storageBytes: 0 },
+  { month: "2026-07", modelCount: 0, sessionCount: 0, storageBytes: 0 },
   {
     status: "paid",
     usageSnapshot: { modelCount: 1, sessionCount: 5150, storageBytes: 2_000_000 },
   }
 );
 assert.equal(display.sessionCount, 5150);
+assert.equal(display.month, "2026-07");
 
 assert.equal(isSandboxUsageContext("2026-07-22T00:00:00Z", null), true);
 assert.equal(isSandboxUsageContext(null, { sandbox: true }), true);

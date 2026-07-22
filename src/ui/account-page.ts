@@ -14,8 +14,9 @@ import {
 import { MKT } from "./marketing-copy";
 import { MKT_ASSETS } from "./marketing-assets";
 
-function escapeHtml(s: string): string {
-  return s
+function escapeHtml(s: string | null | undefined): string {
+  if (s == null) return "";
+  return String(s)
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
