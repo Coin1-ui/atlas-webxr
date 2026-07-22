@@ -116,7 +116,7 @@ Following up — here's what a design partner would use on day one:
 
 1. Upload a GLB from admin (PC)  
 2. Share `/w/[brand]` on a phone  
-3. Place on the **real floor** in Chrome (Android) or Quick Look (iPhone)
+3. Place on the **real floor** in Chrome (Android) or Safari AR (iPhone)
 
 Live demo (no account): [demo URL]/demo
 

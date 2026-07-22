@@ -124,9 +124,9 @@ export function renderAdminModels(
               <input type="file" name="icon" accept="image/png,image/jpeg,image/webp" required ${uploadGate.blocked ? "disabled" : ""} />
               <label class="field-label">3D model (.glb)</label>
               <input type="file" name="glb" accept=".glb,model/gltf-binary" required ${uploadGate.blocked ? "disabled" : ""} />
-              <label class="field-label">iOS AR model (.usdz) <span class="muted-id">optional — Safari Quick Look</span></label>
+              <label class="field-label">iOS AR model (.usdz) <span class="muted-id">optional — Safari AR</span></label>
               <input type="file" name="usdz" accept=".usdz,model/vnd.usdz+zip" ${uploadGate.blocked ? "disabled" : ""} />
-              <p class="home-sub">Auto-generate USDZ from GLB, or upload a Reality Converter USDZ for best iOS textures.</p>
+              <p class="home-sub">Auto-generate USDZ from GLB, or upload a USDZ for best iPhone textures.</p>
               <p class="upload-status camera-warning hidden" id="upload-size-warning" role="status" aria-live="polite"></p>
               <div class="upload-progress-wrap hidden" id="upload-progress-wrap">
                 <div class="upload-progress-bar"><div class="upload-progress-fill" id="upload-progress-fill"></div></div>
@@ -276,7 +276,7 @@ export function renderAdminModels(
       let usdzFile: File | null = null;
       if (manualUsdz instanceof File && manualUsdz.size > 0) {
         usdzFile = manualUsdz;
-        onProgress(10, `Using your USDZ (${Math.round(manualUsdz.size / 1024)} KB) for iOS Quick Look`);
+        onProgress(10, `Using your USDZ (${Math.round(manualUsdz.size / 1024)} KB) for Safari AR`);
       } else {
         onProgress(2, "Generating iOS USDZ from GLB…");
         const usdzResult = await convertGlbToUsdz(glb, (phase) => onProgress(8, phase));
@@ -287,7 +287,7 @@ export function renderAdminModels(
           onProgress(10, `USDZ ready (${Math.round(usdzResult.byteLength / 1024)} KB)`);
         } else {
           onProgress(10, `USDZ failed: ${usdzResult.error}`);
-          statusEl.textContent = `USDZ conversion failed: ${usdzResult.error}. Uploading GLB only — add a manual .usdz from Reality Converter for iOS.`;
+          statusEl.textContent = `USDZ conversion failed: ${usdzResult.error}. Uploading GLB only — add a manual .usdz for iPhone.`;
         }
       }
       try {
@@ -301,7 +301,7 @@ export function renderAdminModels(
         );
         if (result.ok) {
           statusEl.textContent = usdzFile
-            ? `Saved “${name}” with USDZ for iOS Quick Look.`
+            ? `Saved “${name}” with USDZ for Safari AR.`
             : `Saved “${name}” (GLB only).`;
           form.reset();
           handlers.onChanged();

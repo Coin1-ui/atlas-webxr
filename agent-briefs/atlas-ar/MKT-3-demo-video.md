@@ -1,19 +1,19 @@
 # Agent brief — MKT-3 Demo video script
 
 **Brief ID:** `MKT-3`  
-**Title:** Product demo video scripts — Android (WebXR) + iOS (Quick Look)  
+**Title:** Product demo video scripts — Android (Chrome browser AR) + iOS (Safari AR)  
 **Agent roles:** Video Optimization Specialist · Visual Storyteller · Content Creator · Product Manager  
 **Sprint / Phase:** Phase 2 · NEXUS-Sprint **Batch 26** (proposed)  
 **Priority:** P1  
 
 ### Context
 
-Prospects need a **short, shareable product demo** showing real floor AR on phone — not slides. Android uses **Chrome WebXR** (Start AR, floor scan, AR/3D toggle). iOS uses **Safari Quick Look** (View in AR, USDZ). Scripts must match actual product flows in `main.ts` and admin help.
+Prospects need a **short, shareable product demo** showing real floor AR on phone — not slides. Android uses **Chrome browser AR** (Start AR, floor scan, AR/3D toggle). iOS uses **Safari AR** (View in AR, USDZ). Scripts must match actual product flows in `main.ts` and admin help.
 
 ### Locked constraints
 
 - **No app store** narrative — browser only  
-- iOS: Quick Look only (no WebXR on iOS)  
+- iOS: Safari AR only (no Chrome-style floor AR on iOS)  
 - Android: Chrome floor AR + optional 3D inspect  
 - Demo URL: `https://main.d7vfdpujdozkj.amplifyapp.com/demo`
 - Win theme aligned with SAL-1 / MKT copy  

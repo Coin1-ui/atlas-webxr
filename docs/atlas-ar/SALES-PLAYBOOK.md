@@ -78,8 +78,8 @@
 - Cognito auth for admin; shoppers need no account
 - No native app = no store MDM rollout
 
-**Objection:** “WebXR isn’t enterprise.”  
-**Response:** “Shopper path is browser-only Quick Look / WebXR — no device agent. Admin is standard OAuth/JWT to our API.”
+**Objection:** “Browser AR isn’t enterprise.”  
+**Response:** “Shopper path is browser-only Safari AR / Chrome floor AR — no device agent. Admin is standard OAuth/JWT to our API.”
 
 **Objection (live sim):** “We need clarity on data privacy before pilot.”  
 **Response:** “Shoppers never create accounts; sessions are workspace-scoped. We’ll send tenant isolation + HTTPS-only links. Happy to walk your security reviewer through admin vs customer data paths.”
@@ -125,7 +125,7 @@
 
 ### Competitor PM (internal — month 9 injection)
 
-**Expected move:** Bundled onboarding calls + “enterprise security” FUD on WebXR.
+**Expected move:** Bundled onboarding calls + “enterprise security” FUD on browser AR.
 
 **Counter:** Price-sensitive pilots stay if **tenant isolation + HTTPS** are visible on landing; don’t over-promise SOC2 on first call — offer security FAQ + roadmap honesty.
 
@@ -170,7 +170,7 @@ Before promising a pilot close, confirm with QA/dev:
 
 - [ ] Signup → first floor placement ≤15 min (desktop admin + phone AR)
 - [ ] Security/privacy language matches [Priya checklist](#priya--it--security) above
-- [ ] iOS gets Quick Look path; Android gets WebXR Start AR
+- [ ] iOS gets Safari AR path; Android gets Chrome Start AR
 - [ ] Pricing page + signed-in nav show **Open dashboard** for evaluators
 
 See [MIROFISH-QA-SCENARIOS.md](./mirofish/MIROFISH-QA-SCENARIOS.md).

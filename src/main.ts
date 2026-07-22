@@ -626,7 +626,7 @@ function renderDirectModelLanding(
 
 function arStartFailureMessage(): string {
   if (isIOS()) {
-    return "WebXR AR is not available on iOS. Use View in AR (Safari AR) from the home screen.";
+    return "Browser AR is not available on iOS for this path. Use View in AR (Safari AR) from the home screen.";
   }
   return "AR could not start. Use Chrome on Android and allow camera access.";
 }

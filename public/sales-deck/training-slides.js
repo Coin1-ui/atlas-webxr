@@ -166,9 +166,9 @@ export const TRAINING_MODULES = [
     timing: "2:00",
     ask: "Is this a pilot budget, a line-item for this quarter, or a strategic platform decision?",
     say: [
-      "Starter — $5 a month. Five models, one hundred AR sessions per model each month. Proof, not a science project.",
-      "Launch — $59. Where most showrooms and pilot teams land.",
-      "Growth — $179. When IT and analytics need to sign off.",
+      "Starter — $5 a month. Five models, 1,000 AR sessions each month. Proof, not a science project.",
+      "Launch — $59. Where most showrooms and pilot teams land — thirty models, 5,000 sessions.",
+      "Growth — $179. When IT and analytics need to sign off — hundred models, 15,000 sessions.",
       "Scale — from $499 for multi-brand operators.",
       "14-day Growth trial, no card — we enable Growth limits on your workspace.",
       "Design partner — three slots only. Ninety days Growth at fifty-nine dollars a month with biweekly feedback.",

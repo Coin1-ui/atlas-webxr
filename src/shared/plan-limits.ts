@@ -9,7 +9,10 @@ export type PlanLimits = {
   storageBytes: number;
 };
 
-/** AR sessions included per catalog model per month (Starter, Launch, Growth). */
+/**
+ * Legacy helper: sessions ≈ model slots × 100 (kept for call sites that scale by catalog size).
+ * Workspace monthly caps are explicit in BILLING_TIER_LIMITS (1k / 5k / 15k).
+ */
 export const SESSIONS_PER_MODEL_PER_MONTH = 100;
 
 /** Scale tier — no monthly session cap (`0` skips usage warnings). */
@@ -23,21 +26,21 @@ export function isUnlimitedSessionsLimit(sessionsPerMonth: number): boolean {
   return sessionsPerMonth <= 0;
 }
 
-/** Storage = model slots × 50 MB max GLB × 2.5. Sessions = model slots × 100/mo (Scale: unlimited). */
+/** Storage = model slots × 50 MB max GLB × 2.5. Sessions = explicit workspace caps (Scale: unlimited). */
 export const BILLING_TIER_LIMITS: Record<PlanTierId, PlanLimits> = {
   starter: {
     models: 5,
-    sessionsPerMonth: sessionsPerMonthForModelSlots(5),
+    sessionsPerMonth: 1_000,
     storageBytes: storageBytesForModelCount(5),
   },
   launch: {
     models: 30,
-    sessionsPerMonth: sessionsPerMonthForModelSlots(30),
+    sessionsPerMonth: 5_000,
     storageBytes: storageBytesForModelCount(30),
   },
   growth: {
     models: 100,
-    sessionsPerMonth: sessionsPerMonthForModelSlots(100),
+    sessionsPerMonth: 15_000,
     storageBytes: storageBytesForModelCount(100),
   },
   scale: {

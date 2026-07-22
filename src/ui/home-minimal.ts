@@ -26,7 +26,7 @@ export function renderHomeMinimal(
     onAdmin?: () => void;
     onBack?: () => void;
     iosQuickLookOnly?: boolean;
-    /** Show “Download session log (JSON)” on landing (iOS Quick Look / demo). */
+    /** Show “Download session log (JSON)” on landing (iPhone Safari AR / demo). */
     sessionLogDownload?: boolean;
     onDownloadLog?: () => void;
     /** Hide Start AR when owner disabled it for this workspace. */

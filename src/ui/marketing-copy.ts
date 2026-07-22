@@ -11,7 +11,7 @@ export const MKT = {
   demoSubtitleAndroid: "Browser-based AR in Chrome — place models on your floor. No account required.",
   demoSubtitleIos: "Safari AR — tap a model, scan the floor, tap to place. No app install.",
   demoSubtitleDesktop: "Try the live demo on your phone — scan the QR or open this site on mobile.",
-  stepUploadIos: "On PC: upload GLB (+ optional Reality Converter USDZ) for Safari AR.",
+  stepUploadIos: "On PC: upload GLB (+ optional USDZ) for Safari AR.",
   homeFooterIos: "HTTPS required · Safari AR · optional USDZ on PC upload",
   homeFooterAndroid: "HTTPS required · Chrome · browser-based floor AR · no app install",
   catalogTrust1: "Secure HTTPS",
@@ -90,7 +90,7 @@ export const MKT = {
     "Floor placement for spatial confidence, 3D inspect for detail — both in the mobile browser your buyers already use.",
 } as const;
 
-/** Short device line for demo landing — no WebXR / Quick Look labels. */
+/** Short device line for demo landing — no engine brand labels. */
 export function customerDeviceLine(): string {
   const ua = navigator.userAgent;
   const platform = /iPhone|iPad|iPod/i.test(ua) ? "iOS" : /Android/i.test(ua) ? "Android" : "Desktop";

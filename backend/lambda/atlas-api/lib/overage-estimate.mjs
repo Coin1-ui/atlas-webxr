@@ -21,19 +21,19 @@ export function estimateOverageUsd(tier, usage, limits) {
   );
 
   if (tier === "starter") {
-    total += Math.ceil(sessionOver / 100) * 20;
+    total += Math.ceil(sessionOver / 100) * 5;
     total += modelOver * 3;
     total += Math.ceil(storageOverGb / 5) * 8;
   } else if (tier === "launch") {
-    total += Math.ceil(sessionOver / 1000) * 15;
+    total += Math.ceil(sessionOver / 1000) * 8;
     total += Math.ceil(modelOver / 10) * 12;
     total += Math.ceil(storageOverGb / 10) * 6;
   } else if (tier === "growth") {
-    total += Math.ceil(sessionOver / 1000) * 10;
+    total += Math.ceil(sessionOver / 1000) * 5;
     total += Math.ceil(modelOver / 10) * 8;
     total += Math.ceil(storageOverGb / 10) * 4;
   } else {
-    total += Math.ceil(sessionOver / 1000) * 10;
+    total += Math.ceil(sessionOver / 1000) * 5;
   }
   return Math.round(total * 100) / 100;
 }

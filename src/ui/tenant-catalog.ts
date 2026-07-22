@@ -13,7 +13,7 @@ export type TenantCatalogHandlers = {
 };
 
 export type TenantCatalogOptions = {
-  /** Safari AR (Quick Look) — show placement steps instead of WebXR ring hints. */
+  /** Safari AR path — show placement steps instead of Android floor-ring hints. */
   iosSafariAr?: boolean;
 };
 

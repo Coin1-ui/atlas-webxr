@@ -22,9 +22,9 @@ assert.equal(limitsForBillingTier("launch").storageBytes, Math.round(30 * MAX * 
 assert.equal(limitsForBillingTier("growth").storageBytes, Math.round(100 * MAX * MULT));
 assert.equal(limitsForBillingTier("scale").storageBytes, Math.round(10000 * MAX * MULT));
 
-assert.equal(limitsForBillingTier("starter").sessionsPerMonth, 500);
-assert.equal(limitsForBillingTier("launch").sessionsPerMonth, 3000);
-assert.equal(limitsForBillingTier("growth").sessionsPerMonth, 10000);
+assert.equal(limitsForBillingTier("starter").sessionsPerMonth, 1000);
+assert.equal(limitsForBillingTier("launch").sessionsPerMonth, 5000);
+assert.equal(limitsForBillingTier("growth").sessionsPerMonth, 15000);
 assert.equal(limitsForBillingTier("scale").sessionsPerMonth, 0);
 
 const growthTrial = {

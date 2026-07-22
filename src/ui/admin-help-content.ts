@@ -15,7 +15,7 @@ export const ADMIN_HELP_SECTIONS: AdminHelpSection[] = [  {
     title: "Upload your first 3D model",
     paragraphs: [
       "Use Manage 3D models on desktop admin only. Each product needs a display name, a square icon image (PNG, JPEG, or WebP), and a GLB file.",
-      "When upload succeeds, Atlas AR stores the model in your workspace prefix and generates USDZ for iPhone Quick Look automatically.",
+      "When upload succeeds, Atlas AR stores the model in your workspace prefix and generates USDZ for Safari AR automatically.",
       "Max 50 MB per GLB or USDZ file on every plan. Each model uses about 2.5× the GLB size in workspace storage (GLB + iOS USDZ).",
     ],
     bullets: [
@@ -47,8 +47,8 @@ export const ADMIN_HELP_SECTIONS: AdminHelpSection[] = [  {
     ],
     bullets: [
       "Android (Chrome): Start AR → scan floor → place at true scale → AR/3D toggle to inspect",
-      "iPhone (Safari): View in AR opens Quick Look with USDZ generated at upload",
-      "iOS WebXR (Babylon picker): model tiles are icon + label buttons — VoiceOver reads the model name; ensure each icon has alt text or is decorative",
+      "iPhone (Safari): View in AR opens Safari AR with USDZ generated at upload",
+      "iPhone model picker: model tiles are icon + label buttons — VoiceOver reads the model name; ensure each icon has alt text or is decorative",
       "3D mode — rotate and zoom the placed catalog model without leaving the session (Android)",
       "Desktop admin is for uploads and branding; AR preview always happens on a phone",
     ],

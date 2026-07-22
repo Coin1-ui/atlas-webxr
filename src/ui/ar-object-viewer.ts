@@ -277,7 +277,7 @@ function ensurePreviewCanvasElement(stage?: HTMLElement | null): HTMLCanvasEleme
   return canvas;
 }
 
-/** During WebXR, only #ar-overlay descendants composite — mount viewer there. */
+/** During immersive AR, only #ar-overlay descendants composite — mount viewer there. */
 function overlayHost(): HTMLElement {
   if (document.body.classList.contains("xr-session-active")) {
     const overlay = document.getElementById("ar-overlay");

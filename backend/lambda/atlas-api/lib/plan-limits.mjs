@@ -3,35 +3,30 @@
 
 import { effectiveBillingTier, isTrialSuspended, SUSPENDED_LIMITS } from "./trial.mjs";
 
-/** Max GLB/USDZ per file (all tiers). Storage = models × this × 2.5. Sessions = models × 100/mo (Scale unlimited). */
+/** Max GLB/USDZ per file (all tiers). Storage = models × this × 2.5. Sessions = explicit workspace caps (Scale unlimited). */
 const MAX_ASSET_BYTES = 50 * 1024 * 1024;
 const MODEL_STORAGE_MULTIPLIER = 2.5;
-const SESSIONS_PER_MODEL_PER_MONTH = 100;
 const UNLIMITED_SESSIONS_PER_MONTH = 0;
 
 function storageBytesForModelCount(models) {
   return Math.round(models * MAX_ASSET_BYTES * MODEL_STORAGE_MULTIPLIER);
 }
 
-function sessionsPerMonthForModelSlots(models) {
-  return models * SESSIONS_PER_MODEL_PER_MONTH;
-}
-
 /** @type {Record<BillingTierId, { models: number; sessionsPerMonth: number; storageBytes: number }>} */
 export const BILLING_TIER_LIMITS = {
   starter: {
     models: 5,
-    sessionsPerMonth: sessionsPerMonthForModelSlots(5),
+    sessionsPerMonth: 1000,
     storageBytes: storageBytesForModelCount(5),
   },
   launch: {
     models: 30,
-    sessionsPerMonth: sessionsPerMonthForModelSlots(30),
+    sessionsPerMonth: 5000,
     storageBytes: storageBytesForModelCount(30),
   },
   growth: {
     models: 100,
-    sessionsPerMonth: sessionsPerMonthForModelSlots(100),
+    sessionsPerMonth: 15000,
     storageBytes: storageBytesForModelCount(100),
   },
   scale: {

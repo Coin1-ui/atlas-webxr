@@ -311,7 +311,7 @@ export function renderOwnerDashboard(
             ${
               operatorWorkspace
                 ? `<p class="auth-hint owner-demo-slug-hint">Operator workspace slug: <code>${escapeHtml(operatorWorkspace.slug)}</code> — set <code>VITE_DEMO_WORKSPACE_SLUG=${escapeHtml(operatorWorkspace.slug)}</code> in Amplify.</p>
-                  <p class="auth-hint">iOS uses USDZ from each upload. If textures look wrong in Quick Look, re-upload with embedded textures or check USDZ was generated (see upload status).</p>
+                  <p class="auth-hint">iPhone uses a USDZ from each upload. If textures look wrong in Safari AR, re-upload with embedded textures or check USDZ was generated (see upload status).</p>
                   <div class="admin-card admin-card-highlight owner-demo-json-card">
                     <p class="admin-label">Live demo AR controls</p>
                     <p class="auth-hint">The <strong>JSON</strong> button in live demo AR follows your operator workspace toggle (same row in Customer accounts).</p>

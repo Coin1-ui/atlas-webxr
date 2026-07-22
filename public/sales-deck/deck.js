@@ -1,7 +1,7 @@
 import { SLIDES } from "./slides.js";
 import { loadSalesDeckActive, renderSalesDeckInactive } from "./deck-access.js";
 
-/** No-op WebGL so slides still render if Three.js fails to load. */
+/** No-op WebGL so slides still render if the background library fails to load. */
 class NullDeckWebGL {
   setMode() {}
   dispose() {}

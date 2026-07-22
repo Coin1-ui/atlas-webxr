@@ -16,7 +16,7 @@
 | **Field reps / viewers** | Unlimited | Unlimited | Unlimited | Unlimited |
 | **GLB models** | 5 | 30 | 100 | Custom |
 | **Max GLB / USDZ file** | 50 MB | 50 MB | 50 MB | 50 MB |
-| **AR sessions / mo** | 100/model (500 max) | 100/model (3,000 max) | 100/model (10,000 max) | Unlimited |
+| **AR sessions / mo** | 1,000 | 5,000 | 15,000 | Unlimited |
 | **Storage** (models × 50 MB × 2.5) | 625 MB | 3.7 GB | 12.2 GB | ~1.2 TB |
 | **White-label customer UI** | Branded link | Full | Full | Full + custom domain |
 | **Browser-based AR (Chrome & Safari)** | ✓ | ✓ | ✓ | ✓ |
@@ -29,7 +29,7 @@
 
 | Meter | Starter | Launch | Growth |
 |-------|---------|--------|--------|
-| Extra sessions | +$20 / 100 | +$15 / 1,000 | +$10 / 1,000 |
+| Extra sessions | +$5 / 100 | +$8 / 1,000 | +$5 / 1,000 |
 | Extra models | +$3 each | +$12 / 10 | +$8 / 10 |
 | Extra storage | +$8 / 5 GB | +$6 / 10 GB | +$4 / 10 GB |
 
@@ -57,7 +57,7 @@
 3. Trial state: `trialEndsAt`, `trialPlan: growth`
 4. **Max file size:** **50 MB** per GLB, USDZ, or icon on **all** plans (`upload-limits.mjs`)
 5. **Storage quota:** `models × 50 MB × 2.5` per tier (Starter 625 MB · Launch 3.7 GB · Growth 12.2 GB · Scale ~1.2 TB)
-6. **AR sessions:** **100 per model / month** on Starter, Launch, Growth (workspace caps: 500 / 3,000 / 10,000); **Scale unlimited**
+6. **AR sessions:** workspace monthly caps **1,000 / 5,000 / 15,000** on Starter, Launch, Growth; **Scale unlimited**. Overage: **$5/100** · **$8/1,000** · **$5/1,000**. Atlas meters **placed AR sessions** (session end + ≥1 placement), not 5-second viewer opens used by typical embed platforms.
 7. MVP limits: **hard-block** model upload at plan cap; warn on session/storage overage; client preflight on file size
 8. Session = `session-start` → `session-end` with ≥1 placement
 

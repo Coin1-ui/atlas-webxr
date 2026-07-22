@@ -37,7 +37,7 @@ export function renderDeviceTestRunning(
   };
 }
 
-/** Shown immediately before AR — must be a direct tap to grant camera + WebXR on Android. */
+/** Shown immediately before AR — must be a direct tap to grant camera + AR on Android. */
 export function renderDeviceTestArStart(
   root: HTMLElement,
   onStart: () => void,

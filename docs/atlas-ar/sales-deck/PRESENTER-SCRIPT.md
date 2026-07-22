@@ -197,11 +197,11 @@ For finance: one avoided **$2,000 return** is roughly **thirty-four months** of 
 “Is this a pilot budget, a line-item for this quarter, or a strategic platform decision?”
 
 **[SAY]**  
-“**Starter — $5 a month.** Five models, hundred sessions. Proof, not a science project.
+“**Starter — $5 a month.** Five models, 1,000 sessions. Proof, not a science project.
 
-**Launch — $59.** Where most showrooms and pilot teams land — thirty models.
+**Launch — $59.** Where most showrooms and pilot teams land — thirty models, 5,000 sessions.
 
-**Growth — $179.** When IT and analytics need to sign off — hundred models, full usage picture.
+**Growth — $179.** When IT and analytics need to sign off — hundred models, 15,000 sessions, full usage picture.
 
 **Scale — from $499** for multi-brand operators.
 

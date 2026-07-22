@@ -3,7 +3,7 @@
 **Batch 26 · Video Optimization Specialist + Visual Storyteller + Content Creator**  
 **Status:** Draft — awaiting Batch 26 user confirmation  
 **Live demo:** https://main.d7vfdpujdozkj.amplifyapp.com/demo
-**Product truth:** Android = Chrome WebXR floor AR + 3D toggle · iOS = Safari Quick Look (USDZ)
+**Product truth:** Android = Chrome browser AR (floor AR) + 3D toggle · iOS = Safari AR (USDZ)
 
 ---
 
@@ -11,9 +11,9 @@
 
 | Cut | Platform | Length | Use |
 |-----|----------|--------|-----|
-| **A1 — Android hero** | Chrome / WebXR | ~90 sec | Landing hero, LinkedIn, sales email |
-| **A2 — Android extended** | Chrome / WebXR | ~3 min | Website “How it works”, onboarding |
-| **B1 — iOS hero** | Safari / Quick Look | ~75 sec | Landing, retail associates, App-less AR proof |
+| **A1 — Android hero** | Chrome / browser AR | ~90 sec | Landing hero, LinkedIn, sales email |
+| **A2 — Android extended** | Chrome / browser AR | ~3 min | Website “How it works”, onboarding |
+| **B1 — iOS hero** | Safari / Safari AR | ~75 sec | Landing, retail associates, App-less AR proof |
 | **C1 — Admin B-roll** | Desktop | ~30 sec | Insert in A2 / landing (upload → link) |
 
 Record on **real devices** with good floor lighting. Screen-record phone; second camera optional for hands/floor.
@@ -27,7 +27,7 @@ Record on **real devices** with good floor lighting. Screen-record phone; second
 **Proof:** Branded `/demo` or `/w/your-brand` link on phone.  
 **Close:** “Start at $5 a month — link in description.”
 
-**Avoid:** “Metaverse”, “revolutionary AR”, competitor names, “WebXR” in customer-facing VO (say “browser AR in Chrome”).
+**Avoid:** “Metaverse”, “revolutionary AR”, competitor names, engine jargon in customer-facing VO (say “browser AR in Chrome”).
 
 ---
 
@@ -114,11 +114,11 @@ Record on **real devices** with good floor lighting. Screen-record phone; second
 
 | Time | Visual | Audio (VO) | On-screen text |
 |------|--------|------------|----------------|
-| 0:00–0:03 | Quick Look: model in room | *(music)* | — |
+| 0:00–0:03 | Safari AR: model in room | *(music)* | — |
 | 0:03–0:10 | iPhone opens `/demo` in Safari | “Same catalog link — now on iPhone.” | **Safari · No app** |
 | 0:10–0:20 | Tap **View in AR** → model picker if shown | “Tap View in AR.” | — |
-| 0:20–0:40 | Quick Look placement — move/scale in room | “Place the product in their space with Apple Quick Look — USDZ generated when you upload.” | **True scale in Safari** |
-| 0:40–0:52 | Close Quick Look → back to catalog | “No App Store approval. No MDM rollout.” | — |
+| 0:20–0:40 | Safari AR placement — move/scale in room | “Place the product in their space with Safari AR — USDZ generated when you upload.” | **True scale in Safari** |
+| 0:40–0:52 | Close Safari AR → back to catalog | “No App Store approval. No MDM rollout.” | — |
 | 0:52–1:05 | Split: associate QR on tag (mock) → customer phone | “QR on tags or link in SMS — associates share one branded URL.” | **Retail & field ready** |
 | 1:05–1:15 | CTA end card | “Atlas AR — from five dollars a month.” | **Try /demo** |
 
@@ -126,7 +126,7 @@ Record on **real devices** with good floor lighting. Screen-record phone; second
 
 > On iPhone, your buyers use Safari — not another app.  
 > Open your branded demo link and tap View in AR.  
-> Quick Look places your product in their room at real scale. USDZ is created automatically when you upload a GLB.  
+> Safari AR places your product in their room at real scale. USDZ is created automatically when you upload a GLB.  
 > Share one link by QR, SMS, or email — no App Store, no IT project.  
 > Atlas AR — browser AR for Chrome and Safari, from five dollars a month.
 
@@ -135,7 +135,7 @@ Record on **real devices** with good floor lighting. Screen-record phone; second
 - Use **Safari** only (not in-app browsers from Instagram/email if avoidable)  
 - Record **iOS screen** + room camera for hero shots  
 - If USDZ missing, re-upload GLB on desktop first  
-- Do **not** promise WebXR on iOS  
+- Do **not** promise in-browser floor AR parity on iOS (Safari AR / USDZ path)  
 
 ---
 
@@ -161,7 +161,7 @@ Edit order for **single embed** on marketing page:
 1. Hook placement (Android) — 5 sec  
 2. VO problem/solution — 10 sec  
 3. Android Start AR flow — 35 sec  
-4. iOS Quick Look — 25 sec  
+4. iOS Safari AR — 25 sec  
 5. Admin upload + link — 20 sec  
 6. Pricing + CTA — 15 sec  
 
@@ -186,7 +186,7 @@ Pricing from $5/mo: [landing URL]
 Chapters:
 0:00 Intro
 0:20 Android demo
-1:05 iPhone Quick Look
+1:05 iPhone Safari AR
 1:40 Upload & share
 
 #floorAR #retail #fieldsales #WebAR
@@ -201,7 +201,7 @@ Chapters:
 ### Shorts / Reels repurposing
 
 - Clip A1 0:22–0:48 (scan + place) as standalone 30 sec  
-- Clip B1 0:20–0:40 Quick Look only  
+- Clip B1 0:20–0:40 Safari AR only  
 - End card: QR to `/demo`
 
 ---

@@ -107,9 +107,9 @@ export const SLIDES = [
     template: "pricing",
     headline: "Start at $5. Scale without seat fees.",
     tiers: [
-      { name: "Starter", price: "$5/mo", detail: "First tests · 5 models · 100 sessions / model" },
-      { name: "Launch", price: "$59/mo", detail: "Showroom or pilot · 30 models · 100 / model", featured: true },
-      { name: "Growth", price: "$179/mo", detail: "IT sign-off · 100 models · 100 / model" },
+      { name: "Starter", price: "$5/mo", detail: "First tests · 5 models · 1,000 sessions" },
+      { name: "Launch", price: "$59/mo", detail: "Showroom or pilot · 30 models · 5,000 sessions", featured: true },
+      { name: "Growth", price: "$179/mo", detail: "IT sign-off · 100 models · 15,000 sessions" },
       { name: "Scale", price: "From $499", detail: "Multi-brand · unlimited sessions" },
     ],
     offers: "14-day Growth trial (no card) · Founding 10: Growth @ Launch price × 12 mo",

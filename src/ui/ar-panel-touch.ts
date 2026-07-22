@@ -1,4 +1,4 @@
-/** Reliable tap handling for AR HTML panels on iOS WebXR Viewer (immersive mode blocks click bubbling). */
+/** Reliable tap handling for AR HTML panels on iOS immersive AR (immersive mode blocks click bubbling). */
 const touchAbortKey = "__arPanelTouchAbort";
 
 /** Horizontal drag beyond this is treated as scroll, not tile selection. */
@@ -7,7 +7,7 @@ const TILE_DRAG_THRESHOLD_PX = 10;
 /** Survives re-bind during patchArModelPicker — blocks pointerup+click double fire. */
 const ACTION_DEBOUNCE_MS = 420;
 const lastActionFireAt = new Map<string, number>();
-/** pointerup on Android WebXR dom-overlay also emits click ~4ms later — suppress duplicate. */
+/** pointerup on Android AR dom-overlay also emits click ~4ms later — suppress duplicate. */
 const suppressClickAfterPointerUntil = new Map<string, number>();
 
 type RowTouchStart = {
@@ -104,7 +104,7 @@ export function bindArPanelTouch(
     capture: true,
     signal: ac.signal,
   });
-  // Android Chrome WebXR dom-overlay: click fallback when pointerup is swallowed.
+  // Android Chrome AR dom-overlay: click fallback when pointerup is swallowed.
   root.addEventListener("click", onPointerUp as (e: Event) => void, {
     capture: true,
     signal: ac.signal,
