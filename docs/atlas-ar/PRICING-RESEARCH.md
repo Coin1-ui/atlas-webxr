@@ -19,7 +19,7 @@
 | **14-day no-card trial** = PLG standard (62% of B2B SaaS) | Required for quick onboarding at sub-$2k ACV |
 | Median trial→paid **18.5%**; top quartile **35–45%** with fast activation | Price + **time-to-first-AR-placement** matter more than feature lists |
 
-**Recommended go-to-market price (v2):** Launch **$59/mo** · Growth **$179/mo** · Scale **custom from $499/mo** · **14-day Growth trial, no credit card** · **Founding 10: Growth at Launch price for 12 months**.
+**Recommended go-to-market price (v2):** Launch **$59/mo incl. tax** · Growth **$179/mo incl. tax** · Scale **custom from $499/mo** · **14-day Growth trial, no credit card** · **Founding 10: Growth at Launch price for 12 months**. Published plan list prices are **tax-inclusive**.
 
 ---
 
@@ -47,7 +47,7 @@
 | **Roomle** Material Configurator | **€280/mo** | Configuration logic |
 | **Zolak** blog anchor | **$140–190/mo** | Configurator / showroom modules |
 
-**Atlas position:** **Launch $59** undercuts Zolak Start and Roomle viewer while offering **true floor browser AR + Safari AR + white-label workspace** — not just an iframe viewer.
+**Atlas position:** **Launch $59** undercuts Zolak Start and Roomle viewer while offering **true floor WebXR + Quick Look + white-label workspace** — not just an iframe viewer.
 
 ### Tier C — White-label WebAR / field sales (secondary ICP)
 
@@ -95,7 +95,7 @@
 
 ## Recommended pricing v2 (sales-ready)
 
-**File & storage policy (all tiers):** max **50 MB** per GLB or USDZ file. Workspace storage = **model slots × 50 MB × 2.5**. AR sessions = workspace monthly caps **1,000 / 5,000 / 15,000** on Starter, Launch, Growth; **Scale unlimited**. Overage: **$5/100** · **$8/1,000** · **$5/1,000**.
+**File & storage policy (all tiers):** max **50 MB** per GLB or USDZ file. Workspace storage = **model slots × 50 MB × 2.5**. AR sessions = **100 per model / month** on Starter, Launch, Growth; **Scale unlimited**.
 
 ### Launch — $59/mo ($47/mo billed annually)
 
@@ -107,10 +107,10 @@
 | Admin seats | 2 |
 | GLB models | 30 |
 | Max GLB / USDZ file | 50 MB |
-| AR sessions / mo | 5,000 |
+| AR sessions / mo | 100 per model (3,000 max) |
 | Storage | 3.7 GB |
-| Chrome (Android) browser AR | ✓ |
-| Safari AR (USDZ) | ✓ |
+| Android WebXR floor AR | ✓ |
+| iOS Quick Look (USDZ) | ✓ |
 | Branded `/w/{slug}` link | ✓ |
 | Analytics | Basic |
 | Support | Email 48h |
@@ -125,7 +125,7 @@
 | Admin seats | 10 |
 | GLB models | 100 |
 | Max GLB / USDZ file | 50 MB |
-| AR sessions / mo | 15,000 |
+| AR sessions / mo | 100 per model (10,000 max) |
 | Storage | 12.2 GB |
 | White-label (no Atlas badge on customer UI) | ✓ |
 | Analytics + CSV export | ✓ |
@@ -140,13 +140,13 @@
 
 ### Overage (hybrid — warn in MVP, invoice manually)
 
-| Meter | Starter | Launch | Growth |
-|-------|---------|--------|--------|
-| Extra sessions | $5 / 100 | $8 / 1,000 | $5 / 1,000 |
-| Extra models | $3 each | $12 / 10 | $8 / 10 |
-| Extra storage | $8 / 5 GB | $6 / 10 GB | $4 / 10 GB |
+| Meter | Launch | Growth |
+|-------|--------|--------|
+| Extra sessions (per 1,000) | $15 | $10 |
+| Extra models (per 10) | $12 | $8 |
+| Extra storage (per 10 GB) | $6 | $4 |
 
-*Workspace session caps (2026-07): Starter **1,000** · Launch **5,000** · Growth **15,000**. Atlas meters **placed AR sessions**; typical embed platforms meter short viewer opens — do not compare 1:1 with 250k–2M “views” buckets.*
+*Effective per-session overage at Growth: **$0.01/session** — competitive vs legacy WebAR view metering when sold as B2B workspace value.*
 
 ---
 
@@ -180,11 +180,11 @@
 
 ### vs Zolak / Roomle ($99–450/mo)
 
-> “Same floor AR outcome, self-serve in an afternoon — no demo gate, no implementation quote. Launch is **$59/mo** with **5,000 sessions** included.”
+> “Same floor AR outcome, self-serve in an afternoon — no demo gate, no implementation quote. Launch is **$59/mo** with 100 sessions per model (3,000 included).”
 
 ### vs Shopify AR app ($10–65/mo)
 
-> “Shopify apps are one store, one embed. Atlas is a **branded workspace** your reps and showrooms share — one catalog, one link, Chrome (Android) browser AR + Safari AR.”
+> “Shopify apps are one store, one embed. Atlas is a **branded workspace** your reps and showrooms share — one catalog, one link, Android WebXR + iOS Quick Look.”
 
 ### vs custom AR app ($100k+)
 
@@ -214,7 +214,7 @@
 |----|-----|-----------|
 | Starter $99 | Launch **$59** | Undercut Zolak $99; faster yes |
 | Pro $299 | Growth **$179** | Still premium vs Shopify; below Roomle €280 |
-| 500 sessions Starter | **1,000** workspace | Workspace monthly caps (Starter / Launch / Growth) |
+| 500 sessions Starter | **500** (5 × 100/model) | Per-model session buckets scale with catalog slots |
 | 25 models Starter | **30** | Round number; enough for pilot catalog |
 | No trial spec | **14-day Growth trial** | PLG standard |
 

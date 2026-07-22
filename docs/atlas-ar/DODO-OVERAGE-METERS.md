@@ -2,7 +2,27 @@
 
 **Status:** Catalog seeded 2026-07-22 via test API (Option A — no `on_demand`, plan changes stay available).  
 **Event ingest (code):** wired 2026-07-22/23 — `dodo-usage-ingest.mjs` from session analytics + model upload (best-effort; off if `ATLAS_DODO_USAGE_INGEST=false`).  
-**Hybrid checkout:** still **off** by default — live `DODO_PRODUCT_*_MONTHLY` unchanged until QA + explicit `ATLAS_DODO_USAGE_HYBRID=true` or `DODO_PRODUCT_*_USAGE` env.
+**Hybrid checkout:** still **off** by default — live `DODO_PRODUCT_*_MONTHLY` unchanged until QA + explicit `ATLAS_DODO_USAGE_HYBRID=true` or `DODO_PRODUCT_*_USAGE` env.  
+**List prices:** Atlas plan amounts are **tax-inclusive** (`tax_inclusive: true` on Dodo products; marketing/docs match).
+
+## Best Dodo combination (plan + usage overage)
+
+Per [Dodo Products](https://docs.dodopayments.com/features/products) and [Hybrid billing — Subscription + Usage](https://docs.dodopayments.com/features/hybrid-billing):
+
+| Setting | Choose | Why |
+|---------|--------|-----|
+| **Pricing model / Pricing Type** | **Usage-Based** | API `price.type: usage_based_price` — fixed monthly fee **plus** meter overage on one invoice |
+| **Product shape** | One product per tier (Starter / Launch / Growth) with meters attached | Dashboard: Create Product → attach usage meter (Hybrid Model 1 / Tiered base + overage) |
+| **Tax category** | `saas` | Matches Atlas SaaS |
+| **Tax inclusive** | **`true`** | Displayed plan price = what customer pays; Dodo breaks out tax on checkout/invoice |
+| **Meters (primary)** | Sessions — Count on `atlas.ar_session` | Matches included session allowances + overage rates |
+| **Do not use for plan SKUs** | Pure **Subscription** (`recurring_price` only) | No automatic usage overage |
+| **Do not use for new checkouts** | **On-demand** subscription | Blocks Dodo `change-plan` (Option A) |
+| **Optional add-on** | Session Pack (prepaid) | Top-ups; keep off the hybrid meter path to avoid conflicting usage rules |
+
+**Not recommended as the plan SKU:** One-Time products, pure usage-only (no `fixed_price`), or Subscription + On-Demand charges for overage.
+
+Atlas already seeded hybrids with this shape (`usage_based_price` + session meter + free thresholds). Switch Lambda `DODO_PRODUCT_*` only after ingest QA.
 
 ## Can Dodo do this?
 
@@ -43,10 +63,11 @@ Attached to existing Launch product `pdt_0NjSYfJ2iwd7x9Qyfydwv` as optional add-
 ## Recommended architecture (best path under Option A)
 
 1. Keep **checkout without `on_demand`** so Upgrade/Downgrade works.
-2. Prefer **hybrid `usage_based_price` products** for automatic session overage at period end (Dodo meters + event ingest).
-3. Keep Atlas **Accept & pay** for models/storage settle (or add those meters later with careful unit design).
-4. Use **Session Pack add-on** for optional prepaid top-ups in portal/checkout.
-5. Only switch Lambda `DODO_PRODUCT_*` to hybrid IDs after: event ingest from Atlas session analytics + webhook reconciliation + plan-change QA.
+2. Prefer **Usage-Based (`usage_based_price`) products** for plan + automatic session overage at period end (Dodo meters + event ingest).
+3. Set **`tax_inclusive: true`** so list prices match tax-inclusive marketing copy.
+4. Keep Atlas **Accept & pay** for models/storage settle (or add those meters later with careful unit design).
+5. Use **Session Pack add-on** for optional prepaid top-ups in portal/checkout.
+6. Only switch Lambda `DODO_PRODUCT_*` to hybrid IDs after: event ingest from Atlas session analytics + webhook reconciliation + plan-change QA.
 
 ## Event ingest (implemented in Lambda source)
 

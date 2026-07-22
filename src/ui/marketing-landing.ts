@@ -261,7 +261,7 @@ export function renderMarketingLanding(root: HTMLElement, handlers: MarketingLan
           <div>
             <h2>Start free — pay when AR is live</h2>
             <p>
-              <strong>Starter from $5/mo</strong> · <strong>14-day Growth trial</strong> · no credit card · Growth <strong>$179/mo</strong>. Unlimited field reps.
+              <strong>Starter from $5/mo incl. tax</strong> · <strong>14-day Growth trial</strong> · no credit card · Growth <strong>$179/mo incl. tax</strong>. Unlimited field reps.
             </p>
           </div>
           <button type="button" class="mkt-btn mkt-btn-primary" data-action="pricing">See pricing</button>

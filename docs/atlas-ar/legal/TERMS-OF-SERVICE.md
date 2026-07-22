@@ -21,7 +21,7 @@ You retain ownership of models, images, logos, and other materials you upload (â
 
 ## 4. Fees, trials, and taxes
 
-Paid plans, trials, overage, and enterprise orders are described on our pricing page or in an order form. New workspaces receive a **14-day Growth trial** with no credit card required unless stated otherwise. Unless stated otherwise, fees are billed in advance, non-refundable except where required by law, and exclusive of taxes, which you are responsible for where applicable. We may change list prices on notice. Continued use after a price change constitutes acceptance for renewal periods.
+Paid plans, trials, overage, and enterprise orders are described on our pricing page or in an order form. New workspaces receive a **14-day Growth trial** with no credit card required unless stated otherwise. Unless an order form states otherwise, published Starter, Launch, and Growth plan prices include applicable taxes. Checkout and invoices may show the tax portion broken out from that total. Fees are billed in advance and are non-refundable except where required by law. We may change list prices on notice. Continued use after a price change constitutes acceptance for renewal periods.
 
 ## 5. Acceptable use
 

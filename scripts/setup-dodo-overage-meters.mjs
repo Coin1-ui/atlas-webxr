@@ -126,7 +126,7 @@ for (const h of HYBRIDS) {
     type: "usage_based_price",
     currency: "USD",
     fixed_price: h.fixed,
-    tax_inclusive: false,
+    tax_inclusive: true,
     discount: 0,
     purchasing_power_parity: false,
     payment_frequency_count: 1,

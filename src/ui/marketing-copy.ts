@@ -11,7 +11,7 @@ export const MKT = {
   demoSubtitleAndroid: "Browser-based AR in Chrome — place models on your floor. No account required.",
   demoSubtitleIos: "Safari AR — tap a model, scan the floor, tap to place. No app install.",
   demoSubtitleDesktop: "Try the live demo on your phone — scan the QR or open this site on mobile.",
-  stepUploadIos: "On PC: upload GLB (+ optional USDZ) for Safari AR.",
+  stepUploadIos: "On PC: upload GLB (+ optional Reality Converter USDZ) for Safari AR.",
   homeFooterIos: "HTTPS required · Safari AR · optional USDZ on PC upload",
   homeFooterAndroid: "HTTPS required · Chrome · browser-based floor AR · no app install",
   catalogTrust1: "Secure HTTPS",
@@ -27,7 +27,7 @@ export const MKT = {
   /** MiroFish prediction — outcome stats for landing strip */
   outcomeLiveMinutes: "Live in under 10 minutes",
   outcomeNoSeatFees: "Unlimited reps & shoppers",
-  outcomePriceAnchor: "From $5/mo — no demo gate",
+  outcomePriceAnchor: "From $5/mo incl. tax — no demo gate",
   /** MiroFish — workspace vs plugin objection */
   workspaceVsPlugin:
     "Not a single-store plugin — a white-label workspace with your catalog, brand, and analytics in one link.",
@@ -46,7 +46,7 @@ export const MKT = {
   objectionAppTitle: "No app store approval",
   objectionAppBody: "Shoppers use Chrome or Safari only. IT gets HTTPS links, tenant isolation, and no MDM rollout.",
   objectionSwitchTitle: "Switching from viewer SaaS",
-  objectionSwitchBody: "Self-serve Launch at $59/mo with unlimited viewers — vs. demo-gated contracts at 2–3× the price.",
+  objectionSwitchBody: "Self-serve Launch at $59/mo incl. tax with unlimited viewers — vs. demo-gated contracts at 2–3× the price.",
   /** MiroFish live sim P0 — security/privacy late-stage blocker */
   securitySectionTitle: "Security & privacy for IT reviewers",
   securitySectionLead:
@@ -90,7 +90,7 @@ export const MKT = {
     "Floor placement for spatial confidence, 3D inspect for detail — both in the mobile browser your buyers already use.",
 } as const;
 
-/** Short device line for demo landing — no engine brand labels. */
+/** Short device line for demo landing — no WebXR / Quick Look labels. */
 export function customerDeviceLine(): string {
   const ua = navigator.userAgent;
   const platform = /iPhone|iPad|iPod/i.test(ua) ? "iOS" : /Android/i.test(ua) ? "Android" : "Desktop";

@@ -12,9 +12,9 @@ export type PlanTier = {
 
 /** Marketing tier labels mapped to backend plan enum. */
 export const PLAN_TIERS: PlanTier[] = [
-  { id: "starter", name: "Starter", price: "$5/mo", backendPlan: "starter" },
-  { id: "launch", name: "Launch", price: "$59/mo", backendPlan: "starter" },
-  { id: "growth", name: "Growth", price: "$179/mo", backendPlan: "pro" },
+  { id: "starter", name: "Starter", price: "$5/mo incl. tax", backendPlan: "starter" },
+  { id: "launch", name: "Launch", price: "$59/mo incl. tax", backendPlan: "starter" },
+  { id: "growth", name: "Growth", price: "$179/mo incl. tax", backendPlan: "pro" },
   { id: "scale", name: "Scale", price: "From $499/mo", backendPlan: "enterprise" },
 ];
 
@@ -98,11 +98,6 @@ export function estimateOverageUsd(
   usage: { modelCount: number; sessionCount: number; storageBytes: number },
   limits: { models: number; sessionsPerMonth: number; storageBytes: number }
 ): number {
-  // Suspended / inactive plans use zero caps — never treat retained models as payable overage.
-  if (limits.models <= 0 && limits.sessionsPerMonth <= 0 && limits.storageBytes <= 0) {
-    return 0;
-  }
-
   let total = 0;
   const sessionOver =
     limits.sessionsPerMonth <= 0
@@ -112,19 +107,19 @@ export function estimateOverageUsd(
   const storageOverGb = Math.max(0, (usage.storageBytes - limits.storageBytes) / (1024 * 1024 * 1024));
 
   if (tier === "starter") {
-    total += Math.ceil(sessionOver / 100) * 5;
+    total += Math.ceil(sessionOver / 100) * 20;
     total += modelOver * 3;
     total += Math.ceil(storageOverGb / 5) * 8;
   } else if (tier === "launch") {
-    total += Math.ceil(sessionOver / 1000) * 8;
+    total += Math.ceil(sessionOver / 1000) * 15;
     total += Math.ceil(modelOver / 10) * 12;
     total += Math.ceil(storageOverGb / 10) * 6;
   } else if (tier === "growth") {
-    total += Math.ceil(sessionOver / 1000) * 5;
+    total += Math.ceil(sessionOver / 1000) * 10;
     total += Math.ceil(modelOver / 10) * 8;
     total += Math.ceil(storageOverGb / 10) * 4;
   } else {
-    total += Math.ceil(sessionOver / 1000) * 5;
+    total += Math.ceil(sessionOver / 1000) * 10;
   }
   return Math.round(total * 100) / 100;
 }

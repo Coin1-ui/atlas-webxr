@@ -15,7 +15,7 @@ const VARIANT_COPY: Record<
   },
   signup: {
     title: "Start placing furniture in AR",
-    subtitle: "Create your workspace in minutes — 14-day Growth trial, then subscribe to Starter ($5/mo) to stay live.",
+    subtitle: "Create your workspace in minutes — 14-day Growth trial, then subscribe to Starter ($5/mo incl. tax) to stay live.",
     image: MKT_ASSETS.authHero,
     perks: ["14-day Growth trial · no card", "Subscribe before trial ends to keep your showroom", "Share /w/your-brand link"],
   },

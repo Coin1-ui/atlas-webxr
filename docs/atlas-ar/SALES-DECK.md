@@ -1,7 +1,7 @@
 # Atlas AR — Sales deck (10 slides)
 
 **SAL-1 · Batch 23**  
-**Win theme:** Same floor AR outcome as showroom incumbents — self-serve in an afternoon, from $5/mo, no per-seat tax on field reps.  
+**Win theme:** Same floor AR outcome as showroom incumbents — self-serve in an afternoon, from $5/mo incl. tax, no per-seat fees on field reps.  
 **Design spec:** [sales-deck/DESIGN-SYSTEM.md](./sales-deck/DESIGN-SYSTEM.md)  
 **Playbook:** [SALES-PLAYBOOK.md](./SALES-PLAYBOOK.md) · **Presenter script:** [sales-deck/PRESENTER-SCRIPT.md](./sales-deck/PRESENTER-SCRIPT.md) · **Sales training (SAL-3):** [sales-deck/training.html](../../public/sales-deck/training.html) · **Live demo:** https://main.d7vfdpujdozkj.amplifyapp.com/demo
 
@@ -126,9 +126,9 @@
 
 | Tier | Price | Best for |
 |------|-------|----------|
-| **Starter** | $5/mo | First tests · 5 models · 1,000 sessions |
-| **Launch** | $59/mo | Showroom or pilot team · 30 models · 5,000 sessions |
-| **Growth** | $179/mo | IT sign-off · 100 models · 15,000 sessions · full analytics |
+| **Starter** | $5/mo | First tests · 5 models · 100 sessions |
+| **Launch** | $59/mo | Showroom or pilot team · 30 models |
+| **Growth** | $179/mo | IT sign-off · 100 models · full analytics |
 | **Scale** | From $499 | Multi-brand · custom limits |
 
 **Offers:** 14-day Growth trial (no card) · Founding 10: Growth @ Launch price × 12 mo
@@ -179,7 +179,7 @@
 **Alt local URL:** https://localhost:5173/sales-deck.html  
 **URL (production, after deploy):** https://main.d7vfdpujdozkj.amplifyapp.com/sales-deck/index.html
 
-Built with HTML, CSS, JS, and WebGL backgrounds on slides 1, 3, 9, and 10.
+Built with HTML, CSS, JS, and Three.js WebGL backgrounds on slides 1, 3, 9, and 10.
 
 | File | Role |
 |------|------|
@@ -193,7 +193,7 @@ Built with HTML, CSS, JS, and WebGL backgrounds on slides 1, 3, 9, and 10.
 | [public/sales-deck/outreach.html](../../public/sales-deck/outreach.html) | SAL-2 design partner outreach |
 | [public/sales-deck/outreach.js](../../public/sales-deck/outreach.js) | Outreach navigation + progress |
 | [public/sales-deck/outreach-slides.js](../../public/sales-deck/outreach-slides.js) | Outreach templates + scripts |
-| [public/sales-deck/webgl.js](../../public/sales-deck/webgl.js) | WebGL backgrounds |
+| [public/sales-deck/webgl.js](../../public/sales-deck/webgl.js) | Three.js backgrounds |
 
 **Training (SAL-3):** `npm run deck:training` → `/sales-deck/training.html` · **Outreach (SAL-2):** `npm run deck:outreach` → `/sales-deck/outreach.html` · Linked from deck toolbar
 

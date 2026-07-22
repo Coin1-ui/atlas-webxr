@@ -48,7 +48,7 @@ export const ABOUT = {
 
   highlights: [
     "Browser AR in Chrome & Safari — no app install",
-    "Plans from $5/mo · self-serve signup",
+    "Plans from $5/mo incl. tax · self-serve signup",
     "Unlimited viewers and field reps",
     "Not a single-store plugin — a white-label workspace",
   ],
@@ -73,7 +73,7 @@ export const ABOUT = {
 
   contact: {
     headline: "Get started or ask a question",
-    body: "Try Starter at $5/mo, start a 14-day Growth trial from pricing, or email support@atlas-ar.com for enterprise SSO or design-partner pilots.",
+    body: "Try Starter at $5/mo incl. tax, start a 14-day Growth trial from pricing, or email support@atlas-ar.com for enterprise SSO or design-partner pilots.",
     email: "support@atlas-ar.com",
   },
 

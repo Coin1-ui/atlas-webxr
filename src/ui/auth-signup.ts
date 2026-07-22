@@ -76,7 +76,7 @@ export function renderAuthSignup(
       <p class="auth-card-sub">${
         handlers.subtitle
           ? escapeHtml(handlers.subtitle)
-          : "Starter from <strong>$5/mo</strong> · 14-day Growth trial — subscribe before it ends to keep service"
+          : "Starter from <strong>$5/mo incl. tax</strong> · 14-day Growth trial — subscribe before it ends to keep service"
       }</p>
     </header>
     ${handlers.error ? `<div class="camera-warning" role="alert">${escapeHtml(handlers.error)}</div>` : ""}

@@ -59,7 +59,7 @@ export const LEGAL_DOCS: Record<LegalDocId, LegalDocument> = {
         id: "fees",
         title: "4. Fees, trials, and taxes",
         paragraphs: [
-          "Paid plans, trials, overage, and enterprise orders are described on our pricing page or in an order form. Unless stated otherwise, fees are billed in advance, non-refundable except where required by law, and exclusive of taxes, which you are responsible for where applicable.",
+          "Paid plans, trials, overage, and enterprise orders are described on our pricing page or in an order form. Unless an order form states otherwise, published Starter, Launch, and Growth plan prices include applicable taxes. Checkout and invoices may show the tax portion broken out from that total. Fees are billed in advance and are non-refundable except where required by law.",
           "We may change list prices on notice. Continued use after a price change constitutes acceptance for renewal periods.",
         ],
       },

@@ -30,12 +30,12 @@ const TIERS = [
     id: "starter",
     name: "Starter",
     price: "$5",
-    annual: "$4/mo billed yearly",
+    annual: "Incl. tax · monthly billing · cancel at renewal",
     period: "/mo",
     description: "Try floor AR with a tiny catalog — perfect for first tests",
     features: [
       "1 workspace · 5 GLB models",
-      "1,000 AR sessions / month",
+      "100 AR sessions / model / month (500 included)",
       "625 MB storage",
       "Unlimited shoppers & field reps",
       MKT.pricingFeatureAr,
@@ -50,12 +50,12 @@ const TIERS = [
     id: "launch",
     name: "Launch",
     price: "$59",
-    annual: "$47/mo billed yearly",
+    annual: "Incl. tax · monthly billing · cancel at renewal",
     period: "/mo",
     description: "Single showroom or pilot team — live this week",
     features: [
       "1 workspace · 30 GLB models",
-      "5,000 AR sessions / month",
+      "100 AR sessions / model / month (3,000 included)",
       "3.7 GB storage",
       "Unlimited field reps & shoppers",
       MKT.pricingFeatureAr,
@@ -69,12 +69,12 @@ const TIERS = [
     id: "growth",
     name: "Growth",
     price: "$179",
-    annual: "$143/mo billed yearly",
+    annual: "Incl. tax · monthly billing · cancel at renewal",
     period: "/mo",
     description: "Regional retail & active field sales",
     features: [
       "1 workspace · 100 GLB models",
-      "15,000 AR sessions / month",
+      "100 AR sessions / model / month (10,000 included)",
       "12.2 GB storage",
       "Full white-label customer experience",
       "Analytics export for sales ops",
@@ -88,7 +88,7 @@ const TIERS = [
     id: "scale",
     name: "Scale",
     price: "From $499",
-    annual: "Custom annual contracts",
+    annual: "Custom contracts · tax as agreed",
     period: "/mo",
     description: "Multi-brand, SSO & compliance",
     features: [
@@ -199,8 +199,12 @@ function marketLadderHtml(): string {
 
 const FAQ = [
   {
+    q: "Do plan prices include tax?",
+    a: "Yes. Starter, Launch, and Growth list prices include applicable tax. Checkout and invoices show the tax portion broken out from the same total. Scale and custom contracts may state tax separately in the order form.",
+  },
+  {
     q: "What is the $5 Starter plan?",
-    a: "Starter is for first tests: 5 models, 1,000 AR sessions per month, 625 MB storage, and your own /w/your-brand link. Upgrade to Launch when you need a full showroom catalog.",
+    a: "Starter is for first tests: 5 models, 100 AR sessions per model per month (500 included), 625 MB storage, and your own /w/your-brand link. Upgrade to Launch when you need a full showroom catalog.",
   },
   {
     q: "Is there really a free trial?",
@@ -220,7 +224,7 @@ const FAQ = [
   },
   {
     q: "What happens when we exceed included AR sessions?",
-    a: "Starter, Launch, and Growth include 1,000 / 5,000 / 15,000 placed AR sessions per month (a session counts when someone places a model on the floor — not a 5-second page open). Scale is unlimited. Soft notice in admin first, then overage billing or upgrade.",
+    a: "Each model includes 100 AR sessions per month on Starter, Launch, and Growth (500 / 3,000 / 10,000 totals at full catalog). Scale is unlimited. Soft notice in admin first, then overage billing or upgrade.",
   },
 ];
 
@@ -269,7 +273,7 @@ export function renderPricingPage(root: HTMLElement, handlers: PricingHandlers):
       <header class="mkt-page-header">
         <h1>Pricing built for fast onboarding</h1>
         <p class="mkt-lead mkt-lead-center">
-          Start at <strong>$5/mo</strong> for pilots. Scale to full showrooms without per-seat fees for field reps.
+          Start at <strong>$5/mo</strong> for pilots <span class="mkt-price-tax-note">(all plan prices include tax)</span>. Scale to full showrooms without per-seat fees for field reps.
         </p>
       </header>
 
@@ -299,7 +303,7 @@ export function renderPricingPage(root: HTMLElement, handlers: PricingHandlers):
           <div class="mkt-pricing-overage-card">
             <h3>Starter</h3>
             <ul class="mkt-checklist">
-              <li>+$5 per 100 extra sessions</li>
+              <li>+$20 per 100 extra sessions</li>
               <li>+$3 per extra model</li>
               <li>+$8 per 5 GB storage</li>
             </ul>
@@ -307,7 +311,7 @@ export function renderPricingPage(root: HTMLElement, handlers: PricingHandlers):
           <div class="mkt-pricing-overage-card">
             <h3>Launch</h3>
             <ul class="mkt-checklist">
-              <li>+$8 per 1,000 extra sessions</li>
+              <li>+$15 per 1,000 extra sessions</li>
               <li>+$12 per 10 extra models</li>
               <li>+$6 per 10 GB storage</li>
             </ul>
@@ -315,7 +319,7 @@ export function renderPricingPage(root: HTMLElement, handlers: PricingHandlers):
           <div class="mkt-pricing-overage-card mkt-pricing-overage-featured">
             <h3>Growth</h3>
             <ul class="mkt-checklist">
-              <li>+$5 per 1,000 extra sessions</li>
+              <li>+$10 per 1,000 extra sessions</li>
               <li>+$8 per 10 extra models</li>
               <li>+$4 per 10 GB storage</li>
             </ul>

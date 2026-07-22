@@ -34,7 +34,7 @@ export function renderAuthOnboard(
   }
 ): void {
   const trialName = handlers.trialPlan === "launch" ? "Launch" : "Growth";
-  const trialFallback = handlers.trialPlan === "launch" ? "Launch ($59/mo)" : "Starter ($5/mo)";
+  const trialFallback = handlers.trialPlan === "launch" ? "Launch ($59/mo incl. tax)" : "Starter ($5/mo incl. tax)";
   const body = `
     <header class="auth-card-header">
       <h1>Create workspace</h1>
