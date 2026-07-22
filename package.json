@@ -40,6 +40,7 @@
     "test:billing-plan-status": "node scripts/test-billing-plan-display-status-unit.mjs",
     "test:scheduled-plan-change": "node scripts/test-scheduled-plan-change-dodo-unit.mjs",
     "test:overage-estimate": "node scripts/test-overage-estimate-unit.mjs",
+    "test:overage-entitlements": "node scripts/test-overage-entitlements-unit.mjs",
     "seed:sandbox-usage": "node scripts/seed-sandbox-usage.mjs",
     "generate:dodo-billing-countries": "node scripts/generate-dodo-billing-countries.mjs",
     "create:dodo-discount": "node scripts/create-dodo-discount.mjs",

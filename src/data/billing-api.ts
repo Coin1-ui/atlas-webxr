@@ -73,7 +73,7 @@ export async function acceptOverageCharge(
 /** Sandbox-only: seed session overage via Cognito (no local AWS keys). */
 export async function seedSandboxUsage(
   workspaceId: string,
-  body: { preset?: "overage"; sessions?: number; reset?: boolean; resetAll?: boolean; resetOverage?: boolean }
+  body: { preset?: "overage"; sessions?: number; reset?: boolean; resetAll?: boolean; resetOverage?: boolean; force?: boolean }
 ): Promise<{
   ok: true;
   estimatedOverageUsd?: number;

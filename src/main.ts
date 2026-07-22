@@ -1355,11 +1355,14 @@ async function showAccountScreen(opts?: {
         }
           : undefined,
         onClearSandboxUsage:
-          usage?.sandboxClearAvailable || usage?.usageIsSandboxSeeded
+          usage?.sandboxClearAvailable || (isPlatformOwner && (usage?.overagePaid || usage?.overageAccepted || usage?.usageIsSandboxSeeded))
             ? async () => {
           try {
             const month = usage?.usage.month ?? "";
-            await seedSandboxUsage(activeWorkspace!.id, { resetAll: true });
+            await seedSandboxUsage(activeWorkspace!.id, {
+              resetAll: true,
+              ...(isPlatformOwner ? { force: true } : {}),
+            });
             if (month) clearOveragePaidLocally(activeWorkspace!.id, month);
             void showAccountScreen({ billingSuccess: "Sandbox usage and overage records cleared." });
           } catch (e) {

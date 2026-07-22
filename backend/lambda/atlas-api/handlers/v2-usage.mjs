@@ -13,6 +13,12 @@ import {
 } from "../lib/trial.mjs";
 import { estimateOverageUsd } from "../lib/overage-estimate.mjs";
 import { getWorkspaceOverage } from "../lib/billing-store.mjs";
+import {
+  displayUsageCounts,
+  effectiveUsageLimits,
+  isSandboxUsageContext,
+  OVERAGE_ENTITLEMENT_MATRIX,
+} from "../lib/overage-entitlements.mjs";
 
 /**
  * @param {import("aws-lambda").APIGatewayProxyEventV2} event
@@ -44,6 +50,7 @@ export async function handleWorkspaceUsage(event, workspaceId) {
       storageBytes,
     };
     const limits = limitsForWorkspace(workspace);
+    const planLimits = { ...limits };
     const warnings = buildUsageWarnings(workspace, usage);
     const billingTier = effectiveBillingTier(workspace);
     const trialSuspended = isTrialSuspended(workspace);
@@ -57,14 +64,9 @@ export async function handleWorkspaceUsage(event, workspaceId) {
     const overageAmountUsd =
       typeof overageRecord?.amountUsd === "number" ? overageRecord.amountUsd : null;
     const sandboxSeededAt = monthly.sandboxSeededAt ?? null;
-    const billedUsage =
-      overageRecord?.usageSnapshot && (overagePaid || overageAccepted)
-        ? {
-            modelCount: Number(overageRecord.usageSnapshot.modelCount ?? usage.modelCount),
-            sessionCount: Number(overageRecord.usageSnapshot.sessionCount ?? usage.sessionCount),
-            storageBytes: Number(overageRecord.usageSnapshot.storageBytes ?? usage.storageBytes),
-          }
-        : null;
+    const sandboxContext = isSandboxUsageContext(sandboxSeededAt, overageRecord);
+    const effectiveLimits = effectiveUsageLimits(planLimits, overageRecord);
+    const displayUsage = displayUsageCounts(usage, overageRecord);
 
     return jsonResponse(200, {
       plan: workspace.plan,
@@ -75,8 +77,11 @@ export async function handleWorkspaceUsage(event, workspaceId) {
       trialPlan: workspace.trialPlan ?? null,
       trialEndsAt: workspace.trialEndsAt ?? null,
       hasPurchasedTrialFallback: hasPurchasedTrialFallback(workspace),
-      limits,
-      usage,
+      limits: planLimits,
+      effectiveLimits,
+      overageEntitlements: OVERAGE_ENTITLEMENT_MATRIX,
+      usage: displayUsage,
+      liveUsage: usage,
       warnings,
       estimatedOverageUsd,
       overageBillable,
@@ -84,12 +89,12 @@ export async function handleWorkspaceUsage(event, workspaceId) {
       overageAccepted,
       overageAmountUsd,
       overageStatus: overageRecord?.status ?? (estimatedOverageUsd > 0 ? "unpaid" : "none"),
+      overageSandbox: Boolean(overageRecord?.sandbox),
       modelsRetained: trialSuspended && usage.modelCount > 0,
       sandboxSeedEnabled: process.env.ATLAS_SANDBOX_USAGE_SEED === "true",
       sandboxSeededAt,
       usageIsSandboxSeeded: Boolean(sandboxSeededAt),
-      sandboxClearAvailable: Boolean(sandboxSeededAt || overageRecord),
-      billedUsage,
+      sandboxClearAvailable: sandboxContext,
     });
   } catch (e) {
     const status = /** @type {{ statusCode?: number }} */ (e).statusCode || 500;

@@ -5,7 +5,7 @@ import type { BillingScheduledPlanChange } from "../data/workspace-api";
 import { formatStorageBytes, formatSessionsLimit, isUnlimitedSessionsLimit } from "../shared/plan-limits";
 import { estimateOverageUsd, planDisplayName, upgradeOptions, type PlanTier } from "../shared/plan-display";
 import { effectiveBillingTier, trialProfilePlanLine, accountTrialBannerHtml, trialSuspendedBannerHtml, mountTrialCountdown, planActionVerbForTier, hasLiveBillingSubscription, isOverageBillable, isTrialSuspended, subscribedBillingTier, planChangeMatrix, isTrialActive, billingPlanDisplayStatus, billingPlanStatusLabel } from "../shared/trial";
-import { isOveragePaidLocally } from "../data/billing-api";
+import { effectiveUsageLimits } from "../shared/overage-entitlements";
 import {
   billingCountryOptions,
   formatBillingCountryLabel,
@@ -88,10 +88,11 @@ export function renderAccountPage(
 ): void {
   const { workspace, usage } = data;
   const unrestricted = Boolean(data.usageUnrestricted);
-  const usageCounts =
-    usage?.billedUsage && (usage.overagePaid || usage.overageAccepted)
-      ? { ...usage.usage, ...usage.billedUsage }
-      : usage?.usage;
+  const usageCounts = usage?.usage;
+  const planLimits = usage?.limits;
+  const effectiveLimits =
+    usage?.effectiveLimits ??
+    (planLimits ? effectiveUsageLimits(planLimits, null) : null);
   const trialBanner = unrestricted ? "" : accountTrialBannerHtml(workspace);
   const suspendedBanner = unrestricted ? "" : trialSuspendedBannerHtml(workspace);
   const upgrades = unrestricted ? [] : upgradeOptions(workspace);
@@ -106,20 +107,12 @@ export function renderAccountPage(
         : estimateOverageUsd(effectiveBillingTier(workspace), usageCounts, usage.limits)
       : 0;
   const hasOverage = overageBillable && overageUsd > 0;
-  const overagePaid =
-    data.overagePaid ??
-    usage?.overagePaid ??
-    (usage && data.overagePaid === undefined && usage.overagePaid === undefined
-      ? isOveragePaidLocally(workspace.id, usage.usage.month)
-      : false);
+  const overagePaid = data.overagePaid ?? usage?.overagePaid ?? false;
   const overageAccepted = data.overageAccepted ?? usage?.overageAccepted ?? false;
   const overageAmountUsd =
     typeof usage?.overageAmountUsd === "number" ? usage.overageAmountUsd : overageUsd > 0 ? overageUsd : null;
   const sandboxModeActive = Boolean(data.sandboxSeedEnabled ?? usage?.sandboxSeedEnabled);
-  const showSandboxClear = Boolean(
-    handlers.onClearSandboxUsage &&
-      (usage?.sandboxClearAvailable || usage?.usageIsSandboxSeeded),
-  );
+  const showSandboxClear = Boolean(handlers.onClearSandboxUsage);
   const showSandboxSeed = Boolean(handlers.onSeedSandboxOverage) && sandboxModeActive;
   const planInactive = !unrestricted && isTrialSuspended(workspace);
   const modelsRetained =
@@ -140,28 +133,39 @@ export function renderAccountPage(
         </div>`
       : "";
 
-  const usageHtml = usage && usageCounts
+  const sessionLimitDisplay =
+    effectiveLimits && planLimits
+      ? isUnlimitedSessionsLimit(effectiveLimits.sessionsPerMonth)
+        ? `<span class="admin-stat-unlimited"> · unlimited</span>`
+        : effectiveLimits.overageExtended?.sessions
+          ? `<span> / ${formatSessionsLimit(effectiveLimits.sessionsPerMonth)} <span class="auth-hint">(+overage)</span></span>`
+          : `<span> / ${formatSessionsLimit(planLimits.sessionsPerMonth)}</span>`
+      : "";
+
+  const usageHtml = usage && usageCounts && planLimits && effectiveLimits
     ? `<div class="admin-usage-grid account-usage-grid${unrestricted ? " admin-usage-grid--operator" : ""}">
         <div class="admin-stat">
           <span class="admin-stat-label">Models</span>
-          <span class="admin-stat-val">${usageCounts.modelCount}${unrestricted ? `<span class="admin-stat-unlimited"> · tracked · no limit</span>` : planInactive ? `<span> · retained</span>` : `<span> / ${usage.limits.models}</span>`}</span>
+          <span class="admin-stat-val">${usageCounts.modelCount}${unrestricted ? `<span class="admin-stat-unlimited"> · tracked · no limit</span>` : planInactive ? `<span> · retained</span>` : `<span> / ${planLimits.models}</span>`}</span>
         </div>
         <div class="admin-stat">
           <span class="admin-stat-label">AR sessions</span>
-          <span class="admin-stat-val">${usageCounts.sessionCount}${unrestricted ? `<span class="admin-stat-unlimited"> · tracked · no limit</span>` : planInactive ? `<span> · tracked</span>` : isUnlimitedSessionsLimit(usage.limits.sessionsPerMonth) ? `<span class="admin-stat-unlimited"> · unlimited</span>` : `<span> / ${formatSessionsLimit(usage.limits.sessionsPerMonth)}</span>`}</span>
+          <span class="admin-stat-val">${usageCounts.sessionCount}${unrestricted ? `<span class="admin-stat-unlimited"> · tracked · no limit</span>` : planInactive ? `<span> · tracked</span>` : sessionLimitDisplay}</span>
         </div>
         <div class="admin-stat">
           <span class="admin-stat-label">Storage</span>
-          <span class="admin-stat-val">${formatStorageBytes(usageCounts.storageBytes)}${unrestricted ? `<span class="admin-stat-unlimited"> · tracked · no limit</span>` : planInactive ? `<span> · retained</span>` : `<span> / ${formatStorageBytes(usage.limits.storageBytes)}</span>`}</span>
+          <span class="admin-stat-val">${formatStorageBytes(usageCounts.storageBytes)}${unrestricted ? `<span class="admin-stat-unlimited"> · tracked · no limit</span>` : planInactive ? `<span> · retained</span>` : `<span> / ${formatStorageBytes(planLimits.storageBytes)}</span>`}</span>
         </div>
         ${usageOverageStat}
       </div>
       ${
         unrestricted
           ? `<p class="auth-hint admin-usage-operator-note">Platform operator account — usage tracked for visibility; no plan limits or overage.</p>`
-          : usage.billedUsage && (overagePaid || overageAccepted)
-            ? `<p class="auth-hint">Usage reflects the meter reading billed for ${escapeHtml(usage.usage.month)} overage.</p>`
-            : modelsRetained
+          : (overagePaid || overageAccepted) && effectiveLimits?.overageExtended?.sessions
+            ? `<p class="auth-hint">Session cap raised for ${escapeHtml(usage.usage.month)} after overage payment. Models and storage stay on plan limits — upgrade to add catalog slots.</p>`
+            : (overagePaid || overageAccepted)
+              ? `<p class="auth-hint">Overage settled for ${escapeHtml(usage.usage.month)}. Models and storage follow your plan tier; session overage extends your monthly cap when applicable.</p>`
+              : modelsRetained
             ? `<p class="auth-hint">Plan inactive — models stay in your workspace. Public showroom and new uploads stay paused until you subscribe. Usage overage is not charged while the plan is canceled or expired.</p>`
             : usage.warnings.length
               ? usage.warnings

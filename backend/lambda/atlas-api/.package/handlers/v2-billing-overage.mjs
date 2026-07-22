@@ -26,6 +26,7 @@ async function loadUsageSnapshot(workspaceId) {
     modelCount,
     sessionCount: monthly.sessionCount,
     storageBytes,
+    sandboxSeededAt: monthly.sandboxSeededAt ?? null,
   };
 }
 
@@ -114,6 +115,7 @@ export async function handleBillingOverage(event, workspaceId) {
       sessionCount: usage.sessionCount,
       storageBytes: usage.storageBytes,
     };
+    const overageSandbox = Boolean(usage.sandboxSeededAt);
 
     const existing = await getWorkspaceOverage(workspaceId, month);
     if (existing?.status === "paid") {
@@ -158,6 +160,7 @@ export async function handleBillingOverage(event, workspaceId) {
           operationId,
           paidAt: new Date().toISOString(),
           usageSnapshot,
+          sandbox: overageSandbox,
         });
         return jsonResponse(200, {
           ok: true,
@@ -175,6 +178,7 @@ export async function handleBillingOverage(event, workspaceId) {
           operationId,
           note: message.slice(0, 500),
           usageSnapshot,
+          sandbox: overageSandbox,
         });
         return jsonResponse(200, {
           ok: true,
@@ -196,6 +200,7 @@ export async function handleBillingOverage(event, workspaceId) {
       operationId,
       note: subscription ? "No chargeable subscription" : "No active subscription",
       usageSnapshot,
+      sandbox: overageSandbox,
     });
     return jsonResponse(200, {
       ok: true,

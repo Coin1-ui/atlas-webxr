@@ -11,6 +11,7 @@ import {
   setMonthlySessionCount,
 } from "../lib/usage.mjs";
 import { deleteWorkspaceOverage, getWorkspaceOverage } from "../lib/billing-store.mjs";
+import { isSandboxUsageContext } from "../lib/overage-entitlements.mjs";
 
 function sandboxSeedEnabled() {
   return process.env.ATLAS_SANDBOX_USAGE_SEED === "true";
@@ -69,27 +70,43 @@ export async function handleSandboxSeedUsage(event, workspaceId) {
 
     if (body.resetOverage === true) {
       const monthly = await getMonthlyUsage(workspaceId);
+      const overage = await getWorkspaceOverage(workspaceId, monthly.month);
+      const force = body.force === true && asOwner;
+      if (!force && !isSandboxUsageContext(monthly.sandboxSeededAt, overage)) {
+        return jsonResponse(403, {
+          error: "Only sandbox test overage can be cleared. Production overage records are kept.",
+          code: "OVERAGE_NOT_SANDBOX",
+        });
+      }
       await deleteWorkspaceOverage(workspaceId, monthly.month);
       return jsonResponse(200, {
         ok: true,
         action: "reset-overage",
         month: monthly.month,
         asOwner,
+        forced: force,
       });
     }
 
     if (body.reset === true || body.resetAll === true) {
       const monthly = await getMonthlyUsage(workspaceId);
-      const cleared = await clearMonthlyUsage(workspaceId, monthly.month);
-      if (body.resetAll === true || body.reset === true) {
-        await deleteWorkspaceOverage(workspaceId, monthly.month);
+      const overage = await getWorkspaceOverage(workspaceId, monthly.month);
+      const force = body.force === true && asOwner;
+      if (!force && !isSandboxUsageContext(monthly.sandboxSeededAt, overage)) {
+        return jsonResponse(403, {
+          error: "Only sandbox test usage can be cleared.",
+          code: "USAGE_NOT_SANDBOX",
+        });
       }
+      const cleared = await clearMonthlyUsage(workspaceId, monthly.month);
+      await deleteWorkspaceOverage(workspaceId, monthly.month);
       return jsonResponse(200, {
         ok: true,
-        action: body.resetAll === true ? "reset-all" : "reset-usage",
+        action: "reset-all",
         ...cleared,
-        overageCleared: body.resetAll === true || body.reset === true,
+        overageCleared: true,
         asOwner,
+        forced: force,
       });
     }
 

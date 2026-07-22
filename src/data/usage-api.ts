@@ -10,6 +10,12 @@ export type WorkspaceUsageResponse = {
     sessionsPerMonth: number;
     storageBytes: number;
   };
+  effectiveLimits?: {
+    models: number;
+    sessionsPerMonth: number;
+    storageBytes: number;
+    overageExtended?: { sessions: boolean; models: boolean; storage: boolean };
+  };
   usage: {
     month: string;
     modelCount: number;
@@ -23,16 +29,12 @@ export type WorkspaceUsageResponse = {
   overageAmountUsd?: number | null;
   overageStatus?: string;
   overageBillable?: boolean;
+  overageSandbox?: boolean;
   modelsRetained?: boolean;
   sandboxSeedEnabled?: boolean;
   sandboxSeededAt?: string | null;
   usageIsSandboxSeeded?: boolean;
   sandboxClearAvailable?: boolean;
-  billedUsage?: {
-    modelCount: number;
-    sessionCount: number;
-    storageBytes: number;
-  } | null;
 };
 
 function apiUrl(path: string): string {
