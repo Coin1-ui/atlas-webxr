@@ -41,23 +41,34 @@ assert.equal(
   isSandboxUsageContext(null, {
     status: "accepted",
     providerPaymentId: null,
-    note: "No chargeable subscription",
   }),
   true
 );
-assert.equal(
-  isSandboxUsageContext(null, {
-    status: "accepted",
-    providerPaymentId: null,
-  }),
-  true
-);
+// Orphaned paid row after usage reset (sessions 0) — clearable even with payment id.
 assert.equal(
   isSandboxUsageContext(
     null,
-    { status: "paid", providerPaymentId: "pay_real", note: "" },
-    { sessionsPerMonth: 15000 },
-    { sessionCount: 15150 }
+    {
+      status: "paid",
+      providerPaymentId: "pay_test",
+      usageSnapshot: { sessionCount: 5150, modelCount: 1 },
+    },
+    { sessionsPerMonth: 5000, models: 30 },
+    { sessionCount: 0, modelCount: 1 }
+  ),
+  true
+);
+// Still in overage with live excess + real payment — not clearable.
+assert.equal(
+  isSandboxUsageContext(
+    null,
+    {
+      status: "paid",
+      providerPaymentId: "pay_real",
+      usageSnapshot: { sessionCount: 6000 },
+    },
+    { sessionsPerMonth: 5000 },
+    { sessionCount: 6000 }
   ),
   false
 );

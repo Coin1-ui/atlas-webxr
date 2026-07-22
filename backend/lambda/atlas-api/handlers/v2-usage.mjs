@@ -68,7 +68,7 @@ export async function handleWorkspaceUsage(event, workspaceId) {
       sandboxSeededAt,
       overageRecord,
       planLimits,
-      overageRecord?.usageSnapshot || usage,
+      usage,
     );
     const effectiveLimits = effectiveUsageLimits(planLimits, overageRecord);
     const displayUsage = displayUsageCounts(usage, overageRecord);

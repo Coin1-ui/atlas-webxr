@@ -1375,14 +1375,17 @@ async function showAccountScreen(opts?: {
                 force: isPlatformOwner,
               });
             } catch (billingClearErr) {
-              // Fallback for older Lambdas that only expose sandbox/usage clear.
+              const msg = billingClearErr instanceof Error ? billingClearErr.message : String(billingClearErr);
+              // Only fall back when Lambda doesn't know clearTestOverage yet.
+              const unsupported =
+                /accept must be true/i.test(msg) ||
+                /Method not allowed/i.test(msg) ||
+                /Unexpected/i.test(msg);
+              if (!unsupported) throw billingClearErr;
               await seedSandboxUsage(activeWorkspace!.id, {
                 resetAll: true,
                 force: isPlatformOwner,
               });
-              if (!(billingClearErr instanceof Error)) {
-                /* ignore */
-              }
             }
             if (month) clearOveragePaidLocally(activeWorkspace!.id, month);
             void showAccountScreen({ billingSuccess: "Test overage and seeded usage cleared." });

@@ -90,21 +90,35 @@ export function displayUsageCounts(liveUsage, overageRecord) {
 
 /**
  * @param {string | null | undefined} sandboxSeededAt
- * @param {{ sandbox?: boolean; status?: string; providerPaymentId?: string | null; note?: string | null; amountUsd?: number | null } | null} overageRecord
- * @param {{ sessionsPerMonth?: number } | null} [planLimits]
- * @param {{ sessionCount?: number } | null} [usage]
+ * @param {{ sandbox?: boolean; status?: string; providerPaymentId?: string | null; note?: string | null; amountUsd?: number | null; usageSnapshot?: { sessionCount?: number; modelCount?: number } | null } | null} overageRecord
+ * @param {{ sessionsPerMonth?: number; models?: number } | null} [planLimits]
+ * @param {{ sessionCount?: number; modelCount?: number } | null} [liveUsage]
  */
-export function isSandboxUsageContext(sandboxSeededAt, overageRecord, planLimits = null, usage = null) {
+export function isSandboxUsageContext(sandboxSeededAt, overageRecord, planLimits = null, liveUsage = null) {
   if (sandboxSeededAt) return true;
   if (overageRecord?.sandbox === true) return true;
   const note = String(overageRecord?.note || "").toLowerCase();
   if (note.includes("sandbox") || note.includes("api-sandbox-seed")) return true;
 
-  // Settled overage with no Dodo payment id = test accept / invoicing stub (seed → Accept).
-  // Real card charges always store providerPaymentId — those stay protected.
   const settled =
     overageRecord?.status === "paid" || overageRecord?.status === "accepted";
-  if (settled && !overageRecord?.providerPaymentId) return true;
+  if (!settled) return false;
+
+  // Settled overage with no Dodo payment id = test accept / invoicing stub.
+  if (!overageRecord?.providerPaymentId) return true;
+
+  // Orphaned test charge: usage already reset (or back within plan) but OVERAGE row remains.
+  // Example: seed → pay $40 → clear sessions → still shows Paid $40 with 0 / 5000 sessions.
+  const planSessions = Number(planLimits?.sessionsPerMonth || 0);
+  const liveSessions = Number(liveUsage?.sessionCount ?? 0);
+  const snapSessions = Number(overageRecord?.usageSnapshot?.sessionCount ?? 0);
+  const withinPlan =
+    planSessions <= 0 ? liveSessions === 0 : liveSessions <= planSessions;
+  const snapshotWasOverage = planSessions > 0 && snapSessions > planSessions;
+  const seedPattern = planSessions > 0 && snapSessions === planSessions + 150;
+  if (withinPlan && (liveSessions === 0 || snapshotWasOverage || seedPattern || !overageRecord?.usageSnapshot)) {
+    return true;
+  }
 
   return false;
 }

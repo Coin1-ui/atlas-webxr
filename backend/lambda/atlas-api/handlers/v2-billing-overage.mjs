@@ -78,7 +78,7 @@ export async function handleBillingOverage(event, workspaceId) {
         monthly.sandboxSeededAt,
         record,
         limits,
-        record?.usageSnapshot || usage,
+        monthly,
       );
       return jsonResponse(200, {
         ...overageResponse(record, estimatedAmountUsd),
@@ -103,16 +103,18 @@ export async function handleBillingOverage(event, workspaceId) {
         /* workspace admin below */
       }
       const force = body.force === true && asOwner;
+      // Always evaluate clearable against LIVE monthly counters (orphaned paid rows).
       const clearable = isSandboxUsageContext(
         monthly.sandboxSeededAt,
         record,
         limits,
-        record?.usageSnapshot || monthly,
+        monthly,
       );
-      if (!force && !clearable) {
+      const seedEnv = process.env.ATLAS_SANDBOX_USAGE_SEED === "true";
+      if (!force && !clearable && !seedEnv) {
         return jsonResponse(403, {
           error:
-            "Only test overage (no card payment id) can be cleared. Real paid overage is kept.",
+            "Only leftover test overage can be cleared (seed rows or paid overage left after usage was reset). Real in-period overage with active excess usage is kept.",
           code: "OVERAGE_NOT_CLEARABLE",
         });
       }
@@ -123,6 +125,7 @@ export async function handleBillingOverage(event, workspaceId) {
         cleared: true,
         month,
         forced: force,
+        seedEnvBypass: !force && !clearable && seedEnv,
       });
     }
 

@@ -65,11 +65,11 @@ export async function handleSandboxSeedUsage(event, workspaceId) {
         monthly.sandboxSeededAt,
         overage,
         limits,
-        overage?.usageSnapshot || monthly,
+        monthly,
       );
       if (!force && !sandboxCtx) {
         return jsonResponse(403, {
-          error: "Only sandbox test overage can be cleared. Production overage records are kept.",
+          error: "Only leftover test overage can be cleared.",
           code: "OVERAGE_NOT_SANDBOX",
         });
       }
@@ -92,11 +92,11 @@ export async function handleSandboxSeedUsage(event, workspaceId) {
         monthly.sandboxSeededAt,
         overage,
         limits,
-        overage?.usageSnapshot || monthly,
+        monthly,
       );
       if (!force && !sandboxCtx) {
         return jsonResponse(403, {
-          error: "Only sandbox test usage can be cleared.",
+          error: "Only leftover test usage can be cleared.",
           code: "USAGE_NOT_SANDBOX",
         });
       }
