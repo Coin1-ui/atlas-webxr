@@ -89,6 +89,12 @@ export async function seedSandboxUsage(
   });
   if (!res.ok) {
     const text = await res.text();
+    try {
+      const json = JSON.parse(text) as { error?: string };
+      if (json.error) throw new Error(json.error);
+    } catch (e) {
+      if (e instanceof Error && !e.message.startsWith("{") && e.message !== text) throw e;
+    }
     throw new Error(text || `HTTP ${res.status}`);
   }
   return (await res.json()) as {

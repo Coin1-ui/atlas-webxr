@@ -36,23 +36,20 @@ assert.equal(display.month, "2026-07");
 
 assert.equal(isSandboxUsageContext("2026-07-22T00:00:00Z", null), true);
 assert.equal(isSandboxUsageContext(null, { sandbox: true }), true);
-assert.equal(isSandboxUsageContext(null, { sandbox: false, status: "paid" }), false);
+assert.equal(isSandboxUsageContext(null, { sandbox: false, status: "paid" }), true);
 assert.equal(
-  isSandboxUsageContext(
-    null,
-    { status: "accepted", providerPaymentId: null, note: "No chargeable subscription" },
-    { sessionsPerMonth: 15000 },
-    { sessionCount: 15150 }
-  ),
+  isSandboxUsageContext(null, {
+    status: "accepted",
+    providerPaymentId: null,
+    note: "No chargeable subscription",
+  }),
   true
 );
 assert.equal(
-  isSandboxUsageContext(
-    null,
-    { status: "accepted", providerPaymentId: null },
-    { sessionsPerMonth: 15000 },
-    { sessionCount: 15150 }
-  ),
+  isSandboxUsageContext(null, {
+    status: "accepted",
+    providerPaymentId: null,
+  }),
   true
 );
 assert.equal(

@@ -100,17 +100,11 @@ export function isSandboxUsageContext(sandboxSeededAt, overageRecord, planLimits
   const note = String(overageRecord?.note || "").toLowerCase();
   if (note.includes("sandbox") || note.includes("api-sandbox-seed")) return true;
 
-  // Leftover test accept/pay with no real card charge (common after seed → Accept).
+  // Settled overage with no Dodo payment id = test accept / invoicing stub (seed → Accept).
+  // Real card charges always store providerPaymentId — those stay protected.
   const settled =
     overageRecord?.status === "paid" || overageRecord?.status === "accepted";
-  const noProviderPayment = settled && !overageRecord?.providerPaymentId;
-  if (noProviderPayment) {
-    const limit = Number(planLimits?.sessionsPerMonth || 0);
-    const sessions = Number(usage?.sessionCount || 0);
-    // Seed preset is always planLimit + 150.
-    if (limit > 0 && sessions === limit + 150) return true;
-    // Accepted with explicit "no chargeable subscription" after seed testing.
-    if (note.includes("no chargeable") || note.includes("no active subscription")) return true;
-  }
+  if (settled && !overageRecord?.providerPaymentId) return true;
+
   return false;
 }

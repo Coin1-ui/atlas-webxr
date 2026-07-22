@@ -114,13 +114,13 @@ export function renderAccountPage(
   const overageAmountUsd =
     typeof usage?.overageAmountUsd === "number" ? usage.overageAmountUsd : overageUsd > 0 ? overageUsd : null;
   const sandboxModeActive = Boolean(data.sandboxSeedEnabled ?? usage?.sandboxSeedEnabled);
-  const showSandboxClear = Boolean(
-    handlers.onClearSandboxUsage &&
-      (usage?.sandboxClearAvailable ||
-        usage?.usageIsSandboxSeeded ||
-        usage?.overageSandbox ||
-        ((usage?.overagePaid || usage?.overageAccepted) && usage?.overageHasPayment === false)),
-  );
+  const canClearSandbox =
+    Boolean(usage?.sandboxClearAvailable) ||
+    Boolean(usage?.usageIsSandboxSeeded) ||
+    Boolean(usage?.overageSandbox) ||
+    ((Boolean(usage?.overagePaid) || Boolean(usage?.overageAccepted)) &&
+      usage?.overageHasPayment !== true);
+  const showSandboxClear = Boolean(handlers.onClearSandboxUsage && canClearSandbox);
   const showSandboxSeed = Boolean(handlers.onSeedSandboxOverage) && sandboxModeActive;
   const planInactive = !unrestricted && isTrialSuspended(workspace);
   const modelsRetained =

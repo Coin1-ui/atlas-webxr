@@ -1358,14 +1358,16 @@ async function showAccountScreen(opts?: {
           usage?.sandboxClearAvailable ||
           usage?.usageIsSandboxSeeded ||
           usage?.overageSandbox ||
-          ((usage?.overagePaid || usage?.overageAccepted) && usage?.overageHasPayment === false) ||
-          (isPlatformOwner && (usage?.overagePaid || usage?.overageAccepted))
+          ((usage?.overagePaid || usage?.overageAccepted) && usage?.overageHasPayment !== true) ||
+          (isPlatformOwner && (usage?.overagePaid || usage?.overageAccepted || usage?.sandboxClearAvailable))
             ? async () => {
           try {
             const month = usage?.usage?.month ?? usage?.liveUsage?.month ?? "";
+            // Always force as platform owner; non-owners clear when API marks sandboxClearAvailable
+            // (settled overage with no card payment id).
             await seedSandboxUsage(activeWorkspace!.id, {
               resetAll: true,
-              ...(isPlatformOwner ? { force: true } : {}),
+              force: isPlatformOwner,
             });
             if (month) clearOveragePaidLocally(activeWorkspace!.id, month);
             void showAccountScreen({ billingSuccess: "Sandbox usage and overage records cleared." });
