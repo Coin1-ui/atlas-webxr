@@ -25,6 +25,14 @@ export type WorkspaceUsageResponse = {
   overageBillable?: boolean;
   modelsRetained?: boolean;
   sandboxSeedEnabled?: boolean;
+  sandboxSeededAt?: string | null;
+  usageIsSandboxSeeded?: boolean;
+  sandboxClearAvailable?: boolean;
+  billedUsage?: {
+    modelCount: number;
+    sessionCount: number;
+    storageBytes: number;
+  } | null;
 };
 
 function apiUrl(path: string): string {

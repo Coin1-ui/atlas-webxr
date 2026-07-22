@@ -176,6 +176,19 @@ export function isTrialSuspended(ws) {
   return isTrialExpired(ws) && Boolean(ws.trialPlan) && !hasPurchasedTrialFallback(ws);
 }
 
+/** Paid entitlement still active — required for meter overage charges. */
+export function hasLiveBillingSubscription(ws) {
+  return paidBillingTier(ws) !== null;
+}
+
+/**
+ * Meter overage is a paid-plan add-on only (active / cancel-scheduled / past-due grace).
+ * @param {Parameters<typeof isTrialSuspended>[0]} ws
+ */
+export function isOverageBillable(ws) {
+  return hasLiveBillingSubscription(ws) && !isTrialSuspended(ws);
+}
+
 /**
  * @param {number} [days]
  */

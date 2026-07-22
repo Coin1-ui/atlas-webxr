@@ -1177,6 +1177,7 @@ export async function getWorkspaceOverage(workspaceId, month) {
  *   operationId?: string | null;
  *   paidAt?: string | null;
  *   note?: string | null;
+ *   usageSnapshot?: { modelCount: number; sessionCount: number; storageBytes: number } | null;
  * }} input
  */
 export async function recordWorkspaceOverageCharge(input) {
@@ -1192,6 +1193,7 @@ export async function recordWorkspaceOverageCharge(input) {
     operationId: input.operationId ?? null,
     paidAt: input.paidAt ?? (input.status === "paid" ? now : null),
     note: input.note ?? null,
+    usageSnapshot: input.usageSnapshot ?? null,
     updatedAt: now,
     createdAt: now,
   };

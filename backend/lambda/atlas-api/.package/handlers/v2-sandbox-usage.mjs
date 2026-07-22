@@ -16,6 +16,31 @@ function sandboxSeedEnabled() {
   return process.env.ATLAS_SANDBOX_USAGE_SEED === "true";
 }
 
+/** Seed requires env or platform owner; clear also allowed for leftover test rows. */
+async function assertSandboxAccess(event, workspaceId) {
+  let asOwner = false;
+  try {
+    await requirePlatformOwner(event);
+    asOwner = true;
+  } catch {
+    await requireWorkspaceAdmin(event, workspaceId, { allowSuspended: true });
+    if (!sandboxSeedEnabled()) {
+      const monthly = await getMonthlyUsage(workspaceId);
+      const overage = await getWorkspaceOverage(workspaceId, monthly.month);
+      if (!monthly.sandboxSeededAt && !overage) {
+        return {
+          asOwner: false,
+          denied: jsonResponse(403, {
+            error:
+              "Sandbox usage seed is disabled. Set Lambda env ATLAS_SANDBOX_USAGE_SEED=true, or sign in as platform owner.",
+          }),
+        };
+      }
+    }
+  }
+  return { asOwner, denied: null };
+}
+
 /**
  * Seed or clear monthly session usage for overage testing — no local AWS keys.
  * Auth: platform owner always, or workspace admin when ATLAS_SANDBOX_USAGE_SEED=true.
@@ -33,19 +58,9 @@ export async function handleSandboxSeedUsage(event, workspaceId) {
   }
 
   try {
-    let asOwner = false;
-    try {
-      await requirePlatformOwner(event);
-      asOwner = true;
-    } catch {
-      if (!sandboxSeedEnabled()) {
-        return jsonResponse(403, {
-          error:
-            "Sandbox usage seed is disabled. Set Lambda env ATLAS_SANDBOX_USAGE_SEED=true, or sign in as platform owner.",
-        });
-      }
-      await requireWorkspaceAdmin(event, workspaceId, { allowSuspended: true });
-    }
+    const access = await assertSandboxAccess(event, workspaceId);
+    if (access.denied) return access.denied;
+    const { asOwner } = access;
 
     const workspace = await getWorkspaceById(workspaceId);
     if (!workspace) return jsonResponse(404, { error: "Workspace not found" });
@@ -63,9 +78,26 @@ export async function handleSandboxSeedUsage(event, workspaceId) {
       });
     }
 
-    if (body.reset === true) {
-      const cleared = await clearMonthlyUsage(workspaceId);
-      return jsonResponse(200, { ok: true, action: "reset-usage", ...cleared, asOwner });
+    if (body.reset === true || body.resetAll === true) {
+      const monthly = await getMonthlyUsage(workspaceId);
+      const cleared = await clearMonthlyUsage(workspaceId, monthly.month);
+      if (body.resetAll === true || body.reset === true) {
+        await deleteWorkspaceOverage(workspaceId, monthly.month);
+      }
+      return jsonResponse(200, {
+        ok: true,
+        action: body.resetAll === true ? "reset-all" : "reset-usage",
+        ...cleared,
+        overageCleared: body.resetAll === true || body.reset === true,
+        asOwner,
+      });
+    }
+
+    if (!sandboxSeedEnabled() && !asOwner) {
+      return jsonResponse(403, {
+        error:
+          "Sandbox usage seed is disabled. Set Lambda env ATLAS_SANDBOX_USAGE_SEED=true, or sign in as platform owner.",
+      });
     }
 
     const limits = limitsForWorkspace(workspace);

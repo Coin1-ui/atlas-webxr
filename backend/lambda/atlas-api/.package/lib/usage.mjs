@@ -80,6 +80,7 @@ export async function getMonthlyUsage(workspaceId) {
     modelCount: Number(row.Item?.modelCount ?? 0),
     sessionCount: Number(row.Item?.sessionCount ?? 0),
     storageBytes: Number(row.Item?.storageBytes ?? 0),
+    sandboxSeededAt: row.Item?.sandboxSeededAt ?? null,
   };
 }
 

@@ -171,7 +171,7 @@ import {
   type BillingStatus,
 } from "./data/workspace-api";
 import { fetchWorkspaceUsage } from "./data/usage-api";
-import { acceptOverageCharge, isOveragePaidLocally, seedSandboxUsage } from "./data/billing-api";
+import { acceptOverageCharge, clearOveragePaidLocally, seedSandboxUsage } from "./data/billing-api";
 import type { PlanTier } from "./shared/plan-display";
 import { planChangeScheduledMessage, planDisplayName } from "./shared/plan-display";
 import {
@@ -1220,9 +1220,9 @@ async function showAccountScreen(opts?: {
         workspace: workspace,
         usage,
         usageUnrestricted: isPlatformOwner,
-        overagePaid: usage?.overagePaid ?? (usage ? isOveragePaidLocally(workspace.id, usage.usage.month) : false),
+        overagePaid: usage?.overagePaid ?? false,
         overageAccepted: usage?.overageAccepted ?? false,
-        sandboxSeedEnabled: Boolean(usage?.sandboxSeedEnabled) || isPlatformOwner,
+        sandboxSeedEnabled: Boolean(usage?.sandboxSeedEnabled),
         scheduledPlanChange,
         ...opts,
       },
@@ -1342,7 +1342,8 @@ async function showAccountScreen(opts?: {
             void showAccountScreen({ billingError: e instanceof Error ? e.message : String(e) });
           }
         },
-        onSeedSandboxOverage: async () => {
+        onSeedSandboxOverage: usage?.sandboxSeedEnabled
+          ? async () => {
           try {
             const result = await seedSandboxUsage(activeWorkspace!.id, { preset: "overage" });
             void showAccountScreen({
@@ -1351,16 +1352,21 @@ async function showAccountScreen(opts?: {
           } catch (e) {
             void showAccountScreen({ billingError: e instanceof Error ? e.message : String(e) });
           }
-        },
-        onClearSandboxUsage: async () => {
+        }
+          : undefined,
+        onClearSandboxUsage:
+          usage?.sandboxClearAvailable || usage?.usageIsSandboxSeeded
+            ? async () => {
           try {
-            await seedSandboxUsage(activeWorkspace!.id, { reset: true });
-            await seedSandboxUsage(activeWorkspace!.id, { resetOverage: true });
+            const month = usage?.usage.month ?? "";
+            await seedSandboxUsage(activeWorkspace!.id, { resetAll: true });
+            if (month) clearOveragePaidLocally(activeWorkspace!.id, month);
             void showAccountScreen({ billingSuccess: "Sandbox usage and overage records cleared." });
           } catch (e) {
             void showAccountScreen({ billingError: e instanceof Error ? e.message : String(e) });
           }
-        },
+        }
+            : undefined,
         onAdmin: () => navigateTo("/admin"),
         onBranding: isMobileExperience() ? () => navigateTo("/admin/branding") : undefined,
         onOwner: isPlatformOwnerEmail(user.email) ? () => navigateTo("/owner") : undefined,

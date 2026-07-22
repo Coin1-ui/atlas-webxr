@@ -4,7 +4,13 @@ import { getWorkspaceById } from "../lib/dynamodb.mjs";
 import { readManifest, sumWorkspaceStorageBytes } from "../lib/models-store.mjs";
 import { getMonthlyUsage } from "../lib/usage.mjs";
 import { buildUsageWarnings, limitsForWorkspace } from "../lib/plan-limits.mjs";
-import { effectiveBillingTier, hasPurchasedTrialFallback, isTrialActive, isTrialSuspended } from "../lib/trial.mjs";
+import {
+  effectiveBillingTier,
+  hasPurchasedTrialFallback,
+  isOverageBillable,
+  isTrialActive,
+  isTrialSuspended,
+} from "../lib/trial.mjs";
 import { estimateOverageUsd } from "../lib/overage-estimate.mjs";
 import { getWorkspaceOverage } from "../lib/billing-store.mjs";
 
@@ -40,15 +46,31 @@ export async function handleWorkspaceUsage(event, workspaceId) {
     const limits = limitsForWorkspace(workspace);
     const warnings = buildUsageWarnings(workspace, usage);
     const billingTier = effectiveBillingTier(workspace);
-    const estimatedOverageUsd = estimateOverageUsd(billingTier, usage, limits);
+    const trialSuspended = isTrialSuspended(workspace);
+    const overageBillable = isOverageBillable(workspace);
+    const estimatedOverageUsd = overageBillable
+      ? estimateOverageUsd(billingTier, usage, limits)
+      : 0;
     const overageRecord = await getWorkspaceOverage(workspaceId, usage.month);
     const overagePaid = overageRecord?.status === "paid";
+    const overageAccepted = overageRecord?.status === "accepted";
+    const overageAmountUsd =
+      typeof overageRecord?.amountUsd === "number" ? overageRecord.amountUsd : null;
+    const sandboxSeededAt = monthly.sandboxSeededAt ?? null;
+    const billedUsage =
+      overageRecord?.usageSnapshot && (overagePaid || overageAccepted)
+        ? {
+            modelCount: Number(overageRecord.usageSnapshot.modelCount ?? usage.modelCount),
+            sessionCount: Number(overageRecord.usageSnapshot.sessionCount ?? usage.sessionCount),
+            storageBytes: Number(overageRecord.usageSnapshot.storageBytes ?? usage.storageBytes),
+          }
+        : null;
 
     return jsonResponse(200, {
       plan: workspace.plan,
       billingTier,
       trialActive: isTrialActive(workspace),
-      trialSuspended: isTrialSuspended(workspace),
+      trialSuspended,
       purchasedBillingTier: workspace.purchasedBillingTier ?? null,
       trialPlan: workspace.trialPlan ?? null,
       trialEndsAt: workspace.trialEndsAt ?? null,
@@ -57,10 +79,17 @@ export async function handleWorkspaceUsage(event, workspaceId) {
       usage,
       warnings,
       estimatedOverageUsd,
+      overageBillable,
       overagePaid,
-      overageAccepted: overageRecord?.status === "accepted",
+      overageAccepted,
+      overageAmountUsd,
       overageStatus: overageRecord?.status ?? (estimatedOverageUsd > 0 ? "unpaid" : "none"),
+      modelsRetained: trialSuspended && usage.modelCount > 0,
       sandboxSeedEnabled: process.env.ATLAS_SANDBOX_USAGE_SEED === "true",
+      sandboxSeededAt,
+      usageIsSandboxSeeded: Boolean(sandboxSeededAt),
+      sandboxClearAvailable: Boolean(sandboxSeededAt || overageRecord),
+      billedUsage,
     });
   } catch (e) {
     const status = /** @type {{ statusCode?: number }} */ (e).statusCode || 500;

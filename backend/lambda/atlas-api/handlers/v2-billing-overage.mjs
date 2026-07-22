@@ -109,6 +109,12 @@ export async function handleBillingOverage(event, workspaceId) {
       });
     }
 
+    const usageSnapshot = {
+      modelCount: usage.modelCount,
+      sessionCount: usage.sessionCount,
+      storageBytes: usage.storageBytes,
+    };
+
     const existing = await getWorkspaceOverage(workspaceId, month);
     if (existing?.status === "paid") {
       return jsonResponse(200, {
@@ -151,6 +157,7 @@ export async function handleBillingOverage(event, workspaceId) {
           providerPaymentId: charge.paymentId,
           operationId,
           paidAt: new Date().toISOString(),
+          usageSnapshot,
         });
         return jsonResponse(200, {
           ok: true,
@@ -167,6 +174,7 @@ export async function handleBillingOverage(event, workspaceId) {
           provider: subscription.provider,
           operationId,
           note: message.slice(0, 500),
+          usageSnapshot,
         });
         return jsonResponse(200, {
           ok: true,
@@ -187,6 +195,7 @@ export async function handleBillingOverage(event, workspaceId) {
       provider: subscription?.provider ?? null,
       operationId,
       note: subscription ? "No chargeable subscription" : "No active subscription",
+      usageSnapshot,
     });
     return jsonResponse(200, {
       ok: true,

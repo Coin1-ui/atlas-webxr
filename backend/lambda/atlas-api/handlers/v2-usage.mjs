@@ -56,6 +56,15 @@ export async function handleWorkspaceUsage(event, workspaceId) {
     const overageAccepted = overageRecord?.status === "accepted";
     const overageAmountUsd =
       typeof overageRecord?.amountUsd === "number" ? overageRecord.amountUsd : null;
+    const sandboxSeededAt = monthly.sandboxSeededAt ?? null;
+    const billedUsage =
+      overageRecord?.usageSnapshot && (overagePaid || overageAccepted)
+        ? {
+            modelCount: Number(overageRecord.usageSnapshot.modelCount ?? usage.modelCount),
+            sessionCount: Number(overageRecord.usageSnapshot.sessionCount ?? usage.sessionCount),
+            storageBytes: Number(overageRecord.usageSnapshot.storageBytes ?? usage.storageBytes),
+          }
+        : null;
 
     return jsonResponse(200, {
       plan: workspace.plan,
@@ -77,6 +86,10 @@ export async function handleWorkspaceUsage(event, workspaceId) {
       overageStatus: overageRecord?.status ?? (estimatedOverageUsd > 0 ? "unpaid" : "none"),
       modelsRetained: trialSuspended && usage.modelCount > 0,
       sandboxSeedEnabled: process.env.ATLAS_SANDBOX_USAGE_SEED === "true",
+      sandboxSeededAt,
+      usageIsSandboxSeeded: Boolean(sandboxSeededAt),
+      sandboxClearAvailable: Boolean(sandboxSeededAt || overageRecord),
+      billedUsage,
     });
   } catch (e) {
     const status = /** @type {{ statusCode?: number }} */ (e).statusCode || 500;

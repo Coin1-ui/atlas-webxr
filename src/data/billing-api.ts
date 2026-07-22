@@ -28,6 +28,10 @@ export function markOveragePaidLocally(workspaceId: string, month: string): void
   localStorage.setItem(overagePaidKey(workspaceId, month), "1");
 }
 
+export function clearOveragePaidLocally(workspaceId: string, month: string): void {
+  localStorage.removeItem(overagePaidKey(workspaceId, month));
+}
+
 /** Accept & pay usage overage — API when deployed, local ack in dev. */
 export async function acceptOverageCharge(
   workspaceId: string,
@@ -69,8 +73,13 @@ export async function acceptOverageCharge(
 /** Sandbox-only: seed session overage via Cognito (no local AWS keys). */
 export async function seedSandboxUsage(
   workspaceId: string,
-  body: { preset?: "overage"; sessions?: number; reset?: boolean; resetOverage?: boolean }
-): Promise<{ ok: true; estimatedOverageUsd?: number; usage?: { sessionCount: number; month: string } }> {
+  body: { preset?: "overage"; sessions?: number; reset?: boolean; resetAll?: boolean; resetOverage?: boolean }
+): Promise<{
+  ok: true;
+  estimatedOverageUsd?: number;
+  usage?: { sessionCount: number; month: string };
+  overageCleared?: boolean;
+}> {
   const base = getApiBase();
   if (!base) throw new Error("API base is not configured");
   const res = await fetch(apiUrl(`/v2/workspaces/${encodeURIComponent(workspaceId)}/sandbox/usage`), {
@@ -86,6 +95,7 @@ export async function seedSandboxUsage(
     ok: true;
     estimatedOverageUsd?: number;
     usage?: { sessionCount: number; month: string };
+    overageCleared?: boolean;
   };
 }
 
