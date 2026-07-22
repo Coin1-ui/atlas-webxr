@@ -107,12 +107,17 @@ export function renderAccountPage(
     typeof usage?.overageAmountUsd === "number" ? usage.overageAmountUsd : overageUsd > 0 ? overageUsd : null;
   const sandboxModeActive = Boolean(data.sandboxSeedEnabled ?? usage?.sandboxSeedEnabled);
   const canClearSandbox =
-    Boolean(usage?.sandboxClearAvailable) ||
-    Boolean(usage?.usageIsSandboxSeeded) ||
-    Boolean(usage?.overageSandbox) ||
-    ((Boolean(usage?.overagePaid) || Boolean(usage?.overageAccepted)) &&
-      usage?.overageHasPayment !== true);
-  const showSandboxClear = Boolean(handlers.onClearSandboxUsage && canClearSandbox);
+    Boolean(handlers.onClearSandboxUsage) &&
+    (overagePaid ||
+      overageAccepted ||
+      Boolean(usage?.sandboxClearAvailable) ||
+      Boolean(usage?.usageIsSandboxSeeded) ||
+      Boolean(usage?.overageSandbox));
+  const showSandboxClear = canClearSandbox;
+  const clearOverageBtn = showSandboxClear
+    ? `<button type="button" class="mkt-btn mkt-btn-ghost auth-submit" data-action="clear-sandbox-usage" style="margin-top:0.75rem">Clear test overage</button>
+       <p class="auth-hint" style="margin-top:0.35rem">Removes leftover seed / invoicing-pending test rows. Real card payments are not deleted.</p>`
+    : "";
   const showSandboxSeed = Boolean(handlers.onSeedSandboxOverage) && sandboxModeActive;
   const planInactive = !unrestricted && isTrialSuspended(workspace);
   const modelsRetained =
@@ -364,10 +369,12 @@ export function renderAccountPage(
                 ? `<div class="account-overage-box">
                     <p class="camera-success" role="status">Usage overage${usageMonth ? ` for ${escapeHtml(usageMonth)}` : ""} is paid${overageAmountUsd != null ? ` ($${overageAmountUsd.toFixed(2)})` : ""}.</p>
                     <p class="auth-hint">Meter-based add-on for usage above included plan limits.</p>
+                    ${clearOverageBtn}
                   </div>`
                 : overageAccepted
                 ? `<div class="account-overage-box">
                     <p class="camera-success" role="status">Usage overage${usageMonth ? ` for ${escapeHtml(usageMonth)}` : ""} accepted — invoicing is pending${overageAmountUsd != null ? ` ($${overageAmountUsd.toFixed(2)})` : ""}.</p>
+                    ${clearOverageBtn}
                   </div>`
                 : !overageBillable
                 ? `<p class="auth-hint">Usage overage is a meter add-on for active paid plans. It is not charged while your plan is canceled or expired. Models stay saved — subscribe to restore the showroom.</p>`
@@ -376,18 +383,14 @@ export function renderAccountPage(
                     <p class="account-overage-amount">Estimated overage: <strong>$${overageUsd.toFixed(2)}</strong></p>
                     <p class="auth-hint">Based on usage above your included plan limits. Pay to restore full service and avoid interruption.</p>
                     <button type="button" class="mkt-btn mkt-btn-primary auth-submit" data-action="pay-overage" data-amount="${overageUsd}">Accept &amp; pay overage</button>
+                    ${clearOverageBtn}
                   </div>`
                 : `<p class="auth-hint">No overage charges this period — you are within included limits.</p>${
                     showSandboxSeed
                       ? `<p class="auth-hint" style="margin-top:0.75rem">Sandbox: simulate overage without real AR sessions.</p>
                          <button type="button" class="mkt-btn mkt-btn-ghost auth-submit" data-action="seed-sandbox-overage">Seed overage (sandbox)</button>`
                       : ""
-                  }`
-            }
-            ${
-              showSandboxClear && handlers.onClearSandboxUsage
-                ? `<button type="button" class="mkt-btn mkt-btn-ghost" data-action="clear-sandbox-usage" style="margin-top:0.5rem">Clear sandbox data</button>`
-                : ""
+                  }${clearOverageBtn}`
             }
           </section>
 

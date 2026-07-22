@@ -171,7 +171,7 @@ import {
   type BillingStatus,
 } from "./data/workspace-api";
 import { fetchWorkspaceUsage } from "./data/usage-api";
-import { acceptOverageCharge, clearOveragePaidLocally, seedSandboxUsage } from "./data/billing-api";
+import { acceptOverageCharge, clearOveragePaidLocally, clearTestOverage, seedSandboxUsage } from "./data/billing-api";
 import type { PlanTier } from "./shared/plan-display";
 import { planChangeScheduledMessage, planDisplayName } from "./shared/plan-display";
 import {
@@ -1361,22 +1361,31 @@ async function showAccountScreen(opts?: {
         }
           : undefined,
         onClearSandboxUsage:
+          usage?.overageAccepted ||
+          usage?.overagePaid ||
           usage?.sandboxClearAvailable ||
           usage?.usageIsSandboxSeeded ||
-          usage?.overageSandbox ||
-          ((usage?.overagePaid || usage?.overageAccepted) && usage?.overageHasPayment !== true) ||
-          (isPlatformOwner && (usage?.overagePaid || usage?.overageAccepted || usage?.sandboxClearAvailable))
+          usage?.overageSandbox
             ? async () => {
           try {
             const month = usage?.usage?.month ?? usage?.liveUsage?.month ?? "";
-            // Always force as platform owner; non-owners clear when API marks sandboxClearAvailable
-            // (settled overage with no card payment id).
-            await seedSandboxUsage(activeWorkspace!.id, {
-              resetAll: true,
-              force: isPlatformOwner,
-            });
+            try {
+              await clearTestOverage(activeWorkspace!.id, {
+                month: month || undefined,
+                force: isPlatformOwner,
+              });
+            } catch (billingClearErr) {
+              // Fallback for older Lambdas that only expose sandbox/usage clear.
+              await seedSandboxUsage(activeWorkspace!.id, {
+                resetAll: true,
+                force: isPlatformOwner,
+              });
+              if (!(billingClearErr instanceof Error)) {
+                /* ignore */
+              }
+            }
             if (month) clearOveragePaidLocally(activeWorkspace!.id, month);
-            void showAccountScreen({ billingSuccess: "Sandbox usage and overage records cleared." });
+            void showAccountScreen({ billingSuccess: "Test overage and seeded usage cleared." });
           } catch (e) {
             void showAccountScreen({ billingError: e instanceof Error ? e.message : String(e) });
           }

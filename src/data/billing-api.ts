@@ -32,6 +32,35 @@ export function clearOveragePaidLocally(workspaceId: string, month: string): voi
   localStorage.removeItem(overagePaidKey(workspaceId, month));
 }
 
+/** Clear leftover seed/test overage via billing API (works when sandbox seed env is off). */
+export async function clearTestOverage(
+  workspaceId: string,
+  opts?: { month?: string; force?: boolean }
+): Promise<{ ok: true; cleared: true; month: string }> {
+  const base = getApiBase();
+  if (!base) throw new Error("API base is not configured");
+  const res = await fetch(apiUrl(`/v2/workspaces/${encodeURIComponent(workspaceId)}/billing/overage`), {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({
+      clearTestOverage: true,
+      month: opts?.month,
+      force: opts?.force === true,
+    }),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    try {
+      const json = JSON.parse(text) as { error?: string };
+      if (json.error) throw new Error(json.error);
+    } catch (e) {
+      if (e instanceof Error && e.message !== text && !e.message.startsWith("{")) throw e;
+    }
+    throw new Error(text || `HTTP ${res.status}`);
+  }
+  return (await res.json()) as { ok: true; cleared: true; month: string };
+}
+
 /** Accept & pay usage overage — API when deployed, local ack in dev. */
 export async function acceptOverageCharge(
   workspaceId: string,

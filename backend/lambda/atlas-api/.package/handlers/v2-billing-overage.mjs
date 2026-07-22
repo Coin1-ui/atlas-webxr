@@ -3,7 +3,7 @@ import { requireWorkspaceAdmin } from "../lib/authz.mjs";
 import { jsonResponse, optionsResponse, parseJsonBody } from "../lib/http.mjs";
 import { getWorkspaceById } from "../lib/dynamodb.mjs";
 import { readManifest, sumWorkspaceStorageBytes } from "../lib/models-store.mjs";
-import { getMonthlyUsage } from "../lib/usage.mjs";
+import { clearMonthlyUsage, getMonthlyUsage } from "../lib/usage.mjs";
 import { limitsForWorkspace } from "../lib/plan-limits.mjs";
 import { effectiveBillingTier, isOverageBillable } from "../lib/trial.mjs";
 import { estimateOverageUsd, normalizeOverageMonth } from "../lib/overage-estimate.mjs";
@@ -11,8 +11,11 @@ import {
   getBillingSubscription,
   getWorkspaceOverage,
   recordWorkspaceOverageCharge,
+  deleteWorkspaceOverage,
 } from "../lib/billing-store.mjs";
 import { createDodoOverageCharge } from "../lib/billing-provider-dodo.mjs";
+import { isSandboxUsageContext } from "../lib/overage-entitlements.mjs";
+import { requirePlatformOwner } from "../lib/platform-authz.mjs";
 
 async function loadUsageSnapshot(workspaceId) {
   const [monthly, manifest, storageBytes] = await Promise.all([
@@ -70,9 +73,56 @@ export async function handleBillingOverage(event, workspaceId) {
           ? normalizeOverageMonth(event.queryStringParameters.month)
           : usage.month;
       const record = await getWorkspaceOverage(workspaceId, month);
+      const monthly = await getMonthlyUsage(workspaceId);
+      const clearable = isSandboxUsageContext(
+        monthly.sandboxSeededAt,
+        record,
+        limits,
+        record?.usageSnapshot || usage,
+      );
       return jsonResponse(200, {
         ...overageResponse(record, estimatedAmountUsd),
         overageBillable,
+        clearable,
+        overageHasPayment: Boolean(record?.providerPaymentId),
+      });
+    }
+
+    const body = parseJsonBody(event) || {};
+
+    // Clear leftover seed/test overage (works even when ATLAS_SANDBOX_USAGE_SEED=false).
+    if (body.clearTestOverage === true) {
+      const month = normalizeOverageMonth(body.month ?? usage.month);
+      const record = await getWorkspaceOverage(workspaceId, month);
+      const monthly = await getMonthlyUsage(workspaceId);
+      let asOwner = false;
+      try {
+        await requirePlatformOwner(event);
+        asOwner = true;
+      } catch {
+        /* workspace admin below */
+      }
+      const force = body.force === true && asOwner;
+      const clearable = isSandboxUsageContext(
+        monthly.sandboxSeededAt,
+        record,
+        limits,
+        record?.usageSnapshot || monthly,
+      );
+      if (!force && !clearable) {
+        return jsonResponse(403, {
+          error:
+            "Only test overage (no card payment id) can be cleared. Real paid overage is kept.",
+          code: "OVERAGE_NOT_CLEARABLE",
+        });
+      }
+      await deleteWorkspaceOverage(workspaceId, month);
+      await clearMonthlyUsage(workspaceId, month);
+      return jsonResponse(200, {
+        ok: true,
+        cleared: true,
+        month,
+        forced: force,
       });
     }
 
@@ -84,11 +134,10 @@ export async function handleBillingOverage(event, workspaceId) {
       });
     }
 
-    const body = parseJsonBody(event);
-    if (body?.accept !== true) {
+    if (body.accept !== true) {
       return jsonResponse(400, { error: "accept must be true" });
     }
-    const month = normalizeOverageMonth(body?.month ?? usage.month);
+    const month = normalizeOverageMonth(body.month ?? usage.month);
     if (month !== usage.month) {
       return jsonResponse(400, { error: "Overage can only be accepted for the current usage month" });
     }
@@ -100,7 +149,7 @@ export async function handleBillingOverage(event, workspaceId) {
     }
 
     const clientAmountUsd =
-      typeof body?.amountUsd === "number" && Number.isFinite(body.amountUsd)
+      typeof body.amountUsd === "number" && Number.isFinite(body.amountUsd)
         ? Math.round(body.amountUsd * 100) / 100
         : null;
     if (clientAmountUsd !== null && Math.abs(clientAmountUsd - estimatedAmountUsd) > 0.02) {
