@@ -723,19 +723,25 @@ function openTenantShowroom(slug: string): void {
 }
 
 async function afterAuthRoute(): Promise<void> {
-  const next = await ensureWorkspaceAfterAuth();
-  if (next === "onboard") {
-    navigateTo("/onboard", true);
-    return;
+  try {
+    const next = await ensureWorkspaceAfterAuth();
+    if (next === "onboard") {
+      navigateTo("/onboard", true);
+      return;
+    }
+    activeWorkspace = next;
+    if (isDesktopAdmin()) {
+      void navigateAdminEntry(next);
+      return;
+    }
+    activeTenantSlug = next.slug;
+    setCatalogWorkspaceSlug(next.slug);
+    openTenantShowroom(next.slug);
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    console.error("afterAuthRoute failed", e);
+    showLoginScreen(msg || "Signed in, but loading your workspace failed. Try again.");
   }
-  activeWorkspace = next;
-  if (isDesktopAdmin()) {
-    void navigateAdminEntry(next);
-    return;
-  }
-  activeTenantSlug = next.slug;
-  setCatalogWorkspaceSlug(next.slug);
-  openTenantShowroom(next.slug);
 }
 
 function showMobileAdminDesktopOnlyGate(): void {

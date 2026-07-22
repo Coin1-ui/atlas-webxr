@@ -4,18 +4,10 @@ import { workspaceApiHint } from "../data/workspace-api";
 import type { WorkspaceUsageResponse } from "../data/usage-api";
 import { formatStorageBytes, formatSessionsLimit, isUnlimitedSessionsLimit } from "../shared/plan-limits";
 import { workspacePlanLabel, trialBannerHtml, mountTrialCountdown } from "../shared/trial";
+import { escapeHtml } from "../shared/escape-html";
 import { MKT_ASSETS } from "./marketing-assets";
 import type { OnboardingState } from "../shared/onboarding-progress";
 import { onboardingBannerHtml } from "./onboarding-get-started";
-
-function escapeHtml(s: string | null | undefined): string {
-  if (s == null) return "";
-  return String(s)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-}
 
 function usageStatHtml(
   usage: WorkspaceUsageResponse,
@@ -43,14 +35,12 @@ function usageStatHtml(
       ${
         unrestricted
           ? `<p class="auth-hint admin-usage-operator-note">Platform operator account — usage is tracked for visibility; no plan limits apply.</p>`
-          : usage.warnings.length
-            ? usage.warnings
-                .map(
-                  (w) =>
-                    `<div class="${w.level === "critical" ? "camera-warning" : "camera-success"}" role="status">${escapeHtml(w.message)}</div>`,
-                )
-                .join("")
-            : ""
+          : (usage.warnings ?? [])
+            .map(
+              (w) =>
+                `<div class="${w.level === "critical" ? "camera-warning" : "camera-success"}" role="status">${escapeHtml(w.message)}</div>`,
+            )
+            .join("")
       }`;
 }
 
@@ -81,9 +71,10 @@ export function renderAdminDashboard(
   const unrestricted = Boolean(handlers.usageUnrestricted);
   const planLabel = workspacePlanLabel(workspace);
   const trialBanner = unrestricted ? "" : trialBannerHtml(workspace);
+  const usageMonth = usage?.usage?.month || usage?.liveUsage?.month || "";
   const usageHtml =
-    usage != null
-      ? `<section class="admin-section"><h2 class="admin-section-title">Usage (${escapeHtml(usage.usage.month)})</h2>${usageStatHtml(usage, unrestricted)}</section>`
+    usage != null && usage.usage
+      ? `<section class="admin-section"><h2 class="admin-section-title">Usage${usageMonth ? ` (${escapeHtml(usageMonth)})` : ""}</h2>${usageStatHtml(usage, unrestricted)}</section>`
       : `<section class="admin-section"><p class="auth-hint">Usage data unavailable — check API connection or refresh after uploading models.</p></section>`;
   const modelCount = usage?.usage.modelCount ?? handlers.onboarding?.modelCount ?? 0;
   const onboardingBanner =

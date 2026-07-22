@@ -381,13 +381,7 @@ export function trialSuspendedBannerHtml(ws: TrialWorkspace): string {
   </div>`;
 }
 
-function escapeHtml(s: string): string {
-  return s
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-}
+import { escapeHtml } from "./escape-html";
 
 /** Wire live countdown ticks on any [data-trial-countdown] nodes under root. */
 export function mountTrialCountdown(root: HTMLElement, ws: TrialWorkspace): void {

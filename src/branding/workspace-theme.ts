@@ -53,6 +53,8 @@ export function mountWorkspaceLogo(root: ParentNode, slug: string, branding: Wor
   img.src = url;
 }
 
+import { escapeHtml } from "../shared/escape-html";
+
 export function brandedHeaderHtml(title: string, subtitle?: string): string {
   return `
     <header class="home-header branded-header">
@@ -60,12 +62,4 @@ export function brandedHeaderHtml(title: string, subtitle?: string): string {
       <h1>${escapeHtml(title)}</h1>
       ${subtitle ? `<p class="home-sub">${escapeHtml(subtitle)}</p>` : ""}
     </header>`;
-}
-
-function escapeHtml(s: string): string {
-  return s
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
 }

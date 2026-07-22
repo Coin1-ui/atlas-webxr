@@ -6,6 +6,7 @@ import { formatStorageBytes, formatSessionsLimit, isUnlimitedSessionsLimit } fro
 import { estimateOverageUsd, planDisplayName, upgradeOptions, type PlanTier } from "../shared/plan-display";
 import { effectiveBillingTier, trialProfilePlanLine, accountTrialBannerHtml, trialSuspendedBannerHtml, mountTrialCountdown, planActionVerbForTier, hasLiveBillingSubscription, isOverageBillable, isTrialSuspended, subscribedBillingTier, planChangeMatrix, isTrialActive, billingPlanDisplayStatus, billingPlanStatusLabel } from "../shared/trial";
 import { effectiveUsageLimits } from "../shared/overage-entitlements";
+import { escapeHtml } from "../shared/escape-html";
 import {
   billingCountryOptions,
   formatBillingCountryLabel,
@@ -13,15 +14,6 @@ import {
 } from "../shared/dodo-billing-countries";
 import { MKT } from "./marketing-copy";
 import { MKT_ASSETS } from "./marketing-assets";
-
-function escapeHtml(s: string | null | undefined): string {
-  if (s == null) return "";
-  return String(s)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-}
 
 function readBillingCountry(root: HTMLElement): string {
   return (

@@ -50,6 +50,48 @@ function apiUrl(path: string): string {
   return path.startsWith("/") ? path : `/${path}`;
 }
 
+/** Keep Account/Admin renderers safe when Lambda omits month after overage settle. */
+export function normalizeUsageResponse(raw: Record<string, unknown>): WorkspaceUsageResponse {
+  const live = (raw.liveUsage as WorkspaceUsageResponse["liveUsage"] | undefined) ?? undefined;
+  const usageIn = (raw.usage as WorkspaceUsageResponse["usage"] | undefined) ?? undefined;
+  const month =
+    (typeof usageIn?.month === "string" && usageIn.month) ||
+    (typeof live?.month === "string" && live.month) ||
+    "";
+  const limitsIn = raw.limits as WorkspaceUsageResponse["limits"] | undefined;
+  return {
+    ...(raw as unknown as WorkspaceUsageResponse),
+    plan: (raw.plan as WorkspacePlan) || "starter",
+    limits: {
+      models: Number(limitsIn?.models ?? 0),
+      sessionsPerMonth: Number(limitsIn?.sessionsPerMonth ?? 0),
+      storageBytes: Number(limitsIn?.storageBytes ?? 0),
+    },
+    usage: {
+      month,
+      modelCount: Number(usageIn?.modelCount ?? live?.modelCount ?? 0),
+      sessionCount: Number(usageIn?.sessionCount ?? live?.sessionCount ?? 0),
+      storageBytes: Number(usageIn?.storageBytes ?? live?.storageBytes ?? 0),
+    },
+    liveUsage: live
+      ? {
+          month: live.month || month,
+          modelCount: Number(live.modelCount ?? 0),
+          sessionCount: Number(live.sessionCount ?? 0),
+          storageBytes: Number(live.storageBytes ?? 0),
+        }
+      : usageIn
+        ? {
+            month,
+            modelCount: Number(usageIn.modelCount ?? 0),
+            sessionCount: Number(usageIn.sessionCount ?? 0),
+            storageBytes: Number(usageIn.storageBytes ?? 0),
+          }
+        : undefined,
+    warnings: Array.isArray(raw.warnings) ? (raw.warnings as UsageWarning[]) : [],
+  };
+}
+
 export async function fetchWorkspaceUsage(workspaceId: string): Promise<WorkspaceUsageResponse | null> {
   const token = authBearerToken(loadSession());
   if (!token) return null;
@@ -62,5 +104,6 @@ export async function fetchWorkspaceUsage(workspaceId: string): Promise<Workspac
     const text = await res.text();
     throw new Error(text || `HTTP ${res.status}`);
   }
-  return (await res.json()) as WorkspaceUsageResponse;
+  const raw = (await res.json()) as Record<string, unknown>;
+  return normalizeUsageResponse(raw);
 }
