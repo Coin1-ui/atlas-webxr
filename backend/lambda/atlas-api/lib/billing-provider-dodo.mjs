@@ -115,11 +115,9 @@ export async function createDodoCheckout(operation, input) {
       metadata: {
         atlas_billing_operation_id: operation.operationId,
       },
-      subscription_data: {
-        on_demand: {
-          mandate_only: false,
-        },
-      },
+      // Do NOT set subscription_data.on_demand — Dodo rejects change-plan on
+      // on-demand subs (ON_DEMAND_PLAN_CHANGE_NOT_SUPPORTED). Overage card charge
+      // requires on_demand; without it Accept & pay stores status "accepted".
       ...(operation.couponCode ? { discount_codes: [operation.couponCode] } : {}),
     },
   });

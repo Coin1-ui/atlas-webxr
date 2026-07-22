@@ -1376,16 +1376,15 @@ async function showAccountScreen(opts?: {
               });
             } catch (billingClearErr) {
               const msg = billingClearErr instanceof Error ? billingClearErr.message : String(billingClearErr);
-              // Only fall back when Lambda doesn't know clearTestOverage yet.
-              const unsupported =
-                /accept must be true/i.test(msg) ||
-                /Method not allowed/i.test(msg) ||
-                /Unexpected/i.test(msg);
-              if (!unsupported) throw billingClearErr;
-              await seedSandboxUsage(activeWorkspace!.id, {
-                resetAll: true,
-                force: isPlatformOwner,
-              });
+              // Old Lambda ignores clearTestOverage and replies "accept must be true".
+              // Do not fall back to sandbox reset — that path fails when seed env is off
+              // and surfaces a misleading "Only leftover test usage…" error.
+              if (/accept must be true/i.test(msg)) {
+                throw new Error(
+                  "API Lambda is outdated (missing clearTestOverage). Upload backend/lambda/atlas-api-deploy.zip to atlas-api, then retry Clear.",
+                );
+              }
+              throw billingClearErr;
             }
             if (month) clearOveragePaidLocally(activeWorkspace!.id, month);
             void showAccountScreen({ billingSuccess: "Test overage and seeded usage cleared." });

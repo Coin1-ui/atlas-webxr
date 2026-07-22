@@ -163,11 +163,38 @@ export async function setMonthlySessionCount(workspaceId, sessionCount, opts = {
  * @param {string} [month]
  */
 export async function clearMonthlyUsage(workspaceId, month = monthKey()) {
-  await client.send(
-    new DeleteCommand({
-      TableName: usageTable(),
-      Key: { pk: `WORKSPACE#${workspaceId}`, sk: `MONTH#${month}` },
-    })
-  );
-  return { month, cleared: true };
+  const pk = `WORKSPACE#${workspaceId}`;
+  const sk = `MONTH#${month}`;
+  try {
+    await client.send(
+      new DeleteCommand({
+        TableName: usageTable(),
+        Key: { pk, sk },
+      })
+    );
+    return { month, cleared: true, method: "delete" };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    const accessDenied =
+      err?.name === "AccessDeniedException" ||
+      /not authorized|AccessDenied|dynamodb:DeleteItem/i.test(msg);
+    if (!accessDenied) throw err;
+    // PutItem is on the Lambda role; zero the counters instead of deleting.
+    await client.send(
+      new PutCommand({
+        TableName: usageTable(),
+        Item: {
+          pk,
+          sk,
+          workspaceId,
+          month,
+          modelCount: 0,
+          sessionCount: 0,
+          storageBytes: 0,
+          updatedAt: new Date().toISOString(),
+        },
+      })
+    );
+    return { month, cleared: true, method: "soft-clear" };
+  }
 }

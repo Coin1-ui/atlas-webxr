@@ -13,8 +13,10 @@ import {
 import { deleteWorkspaceOverage, getWorkspaceOverage } from "../lib/billing-store.mjs";
 import { isSandboxUsageContext } from "../lib/overage-entitlements.mjs";
 
+import { isSandboxUsageSeedEnabled } from "../lib/sandbox-seed-flag.mjs";
+
 function sandboxSeedEnabled() {
-  return process.env.ATLAS_SANDBOX_USAGE_SEED === "true";
+  return isSandboxUsageSeedEnabled();
 }
 
 /** Seed requires env or platform owner; clear also allowed for leftover test rows. */
@@ -156,13 +158,11 @@ export async function handleSandboxSeedUsage(event, workspaceId) {
     });
   } catch (error) {
     const status = error?.statusCode || 500;
+    const message = error instanceof Error ? error.message : "Error";
     return jsonResponse(status, {
-      error:
-        status >= 500
-          ? "Unable to seed sandbox usage"
-          : error instanceof Error
-            ? error.message
-            : "Error",
+      error: status >= 500 ? "Unable to seed sandbox usage" : message,
+      detail: status >= 500 ? message : undefined,
+      code: error?.name || error?.code,
     });
   }
 }

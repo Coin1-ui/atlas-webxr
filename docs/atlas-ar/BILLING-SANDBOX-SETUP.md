@@ -74,8 +74,12 @@ ATLAS_ZOHO_CHECKOUT_ENABLED
 
 - Create `atlas-billing` using `node backend/scripts/create-dynamodb-tables.mjs`.
 - Give the Lambda role:
-  - `dynamodb:GetItem`, `PutItem`, `UpdateItem`, `Scan`, and `TransactWriteItems` on `atlas-billing`.
+  - `dynamodb:GetItem`, `PutItem`, `UpdateItem`, `DeleteItem`, `Scan`, and `TransactWriteItems` on `atlas-billing`.
+  - `dynamodb:GetItem`, `PutItem`, `UpdateItem`, `DeleteItem` on `atlas-usage`.
   - `dynamodb:UpdateItem` and `TransactWriteItems` on `atlas-workspaces`.
+  - Prefer **not** granting `dynamodb:DeleteItem` in production IAM. Clear uses **soft-clear Put** (`status: cleared`) when Delete is denied, so sandbox cleanup works without DeleteItem.
+  - If you added DeleteItem for testing, remove that inline policy before go-live — IAM cannot limit DeleteItem to “sandbox rows only” on the same `atlas-billing` / `atlas-usage` tables.
+  - App gate: `clearTestOverage` only deletes/clears when `isSandboxUsageContext` (or platform-owner `force`). Real in-period overage is never cleared.
 - API Gateway routes:
   - `POST /v2/billing/webhooks/dodo` — no Cognito authorizer.
   - `POST /v2/workspaces/{workspaceId}/billing/checkout` — Cognito authorizer.
@@ -172,9 +176,15 @@ Expected webhooks: `payment.succeeded` + `subscription.renewed` (+ often `subscr
 
 **Clock advance caveat (this sandbox):** advancing `next_billing_date` with
 `PATCH /subscriptions/{id}` has repeatedly moved active subs to **`expired` without a
-renewal charge**. Cancel-at-period-end clock advance still works. For renewal proof here,
-prefer waiting for the natural `next_billing_date`, or confirm with Dodo support why
-accelerated renewals expire instead of charging.
+renewal charge**. Cancel-at-period-end clock advance still works.
+
+**Natural daily NBD caveat (observed 2026-07-22):** waiting for real `next_billing_date`
+on a **Day**-frequency Growth test sub (`sub_0Njf5rgrGbzHmpClzzG0B`, card `4242`, no clock
+advance) also ended **`expired` ~15s after NBD with only the initial checkout payment** —
+no renewal `payment.succeeded` / no failed retry. Atlas correctly applied
+`subscription.expired`. Escalate to Dodo with that subscription id; do not treat as an
+Atlas webhook bug. Prefer proving renewal on a **Month**-frequency product, or Track C
+immediate `change-plan`, until Dodo confirms daily renewals in test.
 
 **Full renewal test plan (scenarios 1 & 2):** see
 [`BILLING-RENEWAL-TEST-PLAN.md`](./BILLING-RENEWAL-TEST-PLAN.md) — Track A (Atlas unit),
@@ -244,6 +254,8 @@ Then at **Account → Plan & billing**, enter `ATLAS20` in **Coupon (optional)**
 
 Account → **Usage overage** shows an estimated USD total when models, sessions, or storage exceed plan limits (see `PRICING.md`).
 
+**Dodo meters / add-ons (test catalog):** see [`DODO-OVERAGE-METERS.md`](./DODO-OVERAGE-METERS.md) — hybrid `usage_based_price` products + session pack add-on (keeps plan changes; avoids `on_demand`).
+
 ### API routes (Cognito authorizer)
 
 - `GET /v2/workspaces/{workspaceId}/billing/overage?month=YYYY-MM` — overage status for a month
@@ -254,21 +266,24 @@ Usage API (`GET …/usage`) also returns `estimatedOverageUsd`, `overagePaid`, a
 ### Charge path
 
 1. Server recomputes overage (client `amountUsd` is validated, not trusted).
-2. For active **Dodo** subscriptions, Atlas calls `POST /subscriptions/{id}/charge` (on-demand mandate).
-3. New checkouts include `subscription_data.on_demand` so future subs support usage charges.
-4. If automatic charge is unavailable (legacy non–on-demand sub), status is stored as **`accepted`** — UI shows invoicing pending.
+2. For active **Dodo** subscriptions that are **on-demand**, Atlas calls `POST /subscriptions/{id}/charge`.
+3. New checkouts are **standard recurring** (not on-demand) so **Upgrade/Downgrade** via `change-plan` works. Dodo forbids plan changes on on-demand subs.
+4. If automatic charge is unavailable (non–on-demand / legacy), status is stored as **`accepted`** — UI shows invoicing pending.
 5. `payment.succeeded` webhooks with `metadata.atlas_overage_month` mark the month **paid** in `atlas-billing`.
+
+**Note:** Existing on-demand test subs (created while checkout set `on_demand`) still cannot use `change-plan`. Resubscribe via a new checkout after this deploy to get a schedulable plan.
 
 ### Sandbox test (no AWS CLI / no access keys)
 
 **Preferred:** Cognito-authenticated seed API (uses your Amplify login).
 
-1. Lambda env: `ATLAS_SANDBOX_USAGE_SEED=true` (workspace admins can seed; platform owners can always seed).
-2. API Gateway: `POST /v2/workspaces/{workspaceId}/sandbox/usage` — Cognito authorizer.
-3. Upload rebuilt Lambda zip.
-4. Sign in on Amplify → **Account** → **Seed overage (sandbox)** (shown when seed is enabled or you are platform owner).
-5. Click **Accept & pay overage**.
-6. **Clear seeded usage** when done.
+1. **Lambda** env (not Amplify): `ATLAS_SANDBOX_USAGE_SEED=true` on function **`atlas-api`** → Configuration → Environment variables. Amplify env vars do **not** control Seed UI.
+2. Confirm after zip upload: `GET https://rusf3nnyu7.execute-api.ap-south-1.amazonaws.com/health` must include `"sandboxUsageSeed":true` and `"clearTestOverage":true`.
+3. API Gateway: `POST /v2/workspaces/{workspaceId}/sandbox/usage` — Cognito authorizer.
+4. Upload rebuilt Lambda zip (`backend/lambda/atlas-api-deploy.zip`).
+5. Sign in on Amplify → **Account** → **Seed overage (sandbox)** (shown when usage API returns `sandboxSeedEnabled: true`).
+6. Click **Accept & pay overage**.
+7. **Clear test overage** when done.
 
 Or call the API while logged in (browser DevTools Network → copy any `Authorization: Bearer …` from Account):
 

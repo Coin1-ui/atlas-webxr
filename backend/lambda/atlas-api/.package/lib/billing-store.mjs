@@ -1163,7 +1163,10 @@ export async function getWorkspaceOverage(workspaceId, month) {
       ConsistentRead: true,
     })
   );
-  return row.Item ?? null;
+  const item = row.Item ?? null;
+  // Soft-cleared rows (IAM often lacks DeleteItem) must not show as paid/accepted.
+  if (item?.status === "cleared") return null;
+  return item;
 }
 
 /**
@@ -1245,16 +1248,51 @@ export async function markWorkspaceOveragePaidFromWebhook(workspaceId, month, pa
 }
 
 /**
+ * Remove overage row for a month.
+ * Uses Put soft-clear when DeleteItem is denied (common Lambda IAM gap).
  * @param {string} workspaceId
  * @param {string} month
  */
 export async function deleteWorkspaceOverage(workspaceId, month) {
-  await client.send(
-    new DeleteCommand({
-      TableName: billingTable(),
-      Key: overageRecordKey(workspaceId, month),
-    })
-  );
-  return { workspaceId, month, deleted: true };
+  try {
+    await client.send(
+      new DeleteCommand({
+        TableName: billingTable(),
+        Key: overageRecordKey(workspaceId, month),
+      })
+    );
+    return { workspaceId, month, deleted: true, method: "delete" };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    const accessDenied =
+      err?.name === "AccessDeniedException" ||
+      /not authorized|AccessDenied|dynamodb:DeleteItem/i.test(msg);
+    if (!accessDenied) throw err;
+    const now = new Date().toISOString();
+    await client.send(
+      new PutCommand({
+        TableName: billingTable(),
+        Item: {
+          ...overageRecordKey(workspaceId, month),
+          entityType: "OVERAGE",
+          workspaceId,
+          month,
+          status: "cleared",
+          amountUsd: 0,
+          provider: null,
+          providerPaymentId: null,
+          operationId: null,
+          paidAt: null,
+          note: "cleared-test-overage",
+          usageSnapshot: null,
+          sandbox: true,
+          clearedAt: now,
+          updatedAt: now,
+          createdAt: now,
+        },
+      })
+    );
+    return { workspaceId, month, deleted: true, method: "soft-clear" };
+  }
 }
 

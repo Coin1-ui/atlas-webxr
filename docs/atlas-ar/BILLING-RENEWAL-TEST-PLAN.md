@@ -3,7 +3,11 @@
 **Workspace:** `1ee2cb65-6252-4679-ab53-84ea36b2518f`  
 **API:** `https://rusf3nnyu7.execute-api.ap-south-1.amazonaws.com`  
 **App:** `https://main.d7vfdpujdozkj.amplifyapp.com`  
-**Constraint:** In this Dodo **test** sandbox, `PATCH` clock-advance of `next_billing_date` on **active** subs has repeatedly produced **`expired` with no renewal charge**. Cancel-at-period-end clock advance and **immediate** `change-plan` still work.
+**Constraint:** In this Dodo **test** sandbox, both (a) `PATCH` clock-advance of
+`next_billing_date` and (b) **natural** wait on some **Day**-frequency products have
+produced **`expired` with no renewal charge** (example: `sub_0Njf5rgrGbzHmpClzzG0B`,
+waited ~24h, card 4242, no advance). Cancel-at-period-end clock advance and **immediate**
+`change-plan` still work. Prefer **Month** products for Track B until Dodo confirms daily renewals.
 
 Use **three tracks**. Track A proves Atlas reconciliation. Track B proves Dodo money movement when possible. Track C is the only reliable same-day upgrade charge today.
 

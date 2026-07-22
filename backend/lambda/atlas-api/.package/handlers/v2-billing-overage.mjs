@@ -15,6 +15,7 @@ import {
 } from "../lib/billing-store.mjs";
 import { createDodoOverageCharge } from "../lib/billing-provider-dodo.mjs";
 import { isSandboxUsageContext } from "../lib/overage-entitlements.mjs";
+import { isSandboxUsageSeedEnabled } from "../lib/sandbox-seed-flag.mjs";
 import { requirePlatformOwner } from "../lib/platform-authz.mjs";
 
 async function loadUsageSnapshot(workspaceId) {
@@ -110,12 +111,15 @@ export async function handleBillingOverage(event, workspaceId) {
         limits,
         monthly,
       );
-      const seedEnv = process.env.ATLAS_SANDBOX_USAGE_SEED === "true";
-      if (!force && !clearable && !seedEnv) {
+      const seedEnv = isSandboxUsageSeedEnabled();
+      // Never clear real in-period overage. seedEnv only enables Seed UI — not a clear bypass.
+      // Platform owner may force for stuck sandbox tests.
+      if (!force && !clearable) {
         return jsonResponse(403, {
           error:
-            "Only leftover test overage can be cleared (seed rows or paid overage left after usage was reset). Real in-period overage with active excess usage is kept.",
+            "Only leftover sandbox/test overage can be cleared (seed rows or paid overage left after usage was reset). Real in-period production overage is kept.",
           code: "OVERAGE_NOT_CLEARABLE",
+          sandboxSeedEnabled: seedEnv,
         });
       }
       await deleteWorkspaceOverage(workspaceId, month);
@@ -125,7 +129,7 @@ export async function handleBillingOverage(event, workspaceId) {
         cleared: true,
         month,
         forced: force,
-        seedEnvBypass: !force && !clearable && seedEnv,
+        sandboxOnly: true,
       });
     }
 
@@ -263,8 +267,11 @@ export async function handleBillingOverage(event, workspaceId) {
     });
   } catch (error) {
     const status = error?.statusCode || 500;
+    const message = error instanceof Error ? error.message : "Error";
     return jsonResponse(status, {
-      error: status >= 500 ? "Unable to process overage" : error instanceof Error ? error.message : "Error",
+      error: status >= 500 ? "Unable to process overage" : message,
+      detail: status >= 500 ? message : undefined,
+      code: error?.name || error?.code,
     });
   }
 }

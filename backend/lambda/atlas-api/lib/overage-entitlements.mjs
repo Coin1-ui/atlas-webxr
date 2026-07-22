@@ -111,12 +111,14 @@ export function isSandboxUsageContext(sandboxSeededAt, overageRecord, planLimits
   // Example: seed → pay $40 → clear sessions → still shows Paid $40 with 0 / 5000 sessions.
   const planSessions = Number(planLimits?.sessionsPerMonth || 0);
   const liveSessions = Number(liveUsage?.sessionCount ?? 0);
+  // Zero live sessions + settled row is always leftover (month-keyed OVERAGE); allow clear.
+  if (liveSessions === 0) return true;
   const snapSessions = Number(overageRecord?.usageSnapshot?.sessionCount ?? 0);
   const withinPlan =
     planSessions <= 0 ? liveSessions === 0 : liveSessions <= planSessions;
   const snapshotWasOverage = planSessions > 0 && snapSessions > planSessions;
   const seedPattern = planSessions > 0 && snapSessions === planSessions + 150;
-  if (withinPlan && (liveSessions === 0 || snapshotWasOverage || seedPattern || !overageRecord?.usageSnapshot)) {
+  if (withinPlan && (snapshotWasOverage || seedPattern || !overageRecord?.usageSnapshot)) {
     return true;
   }
 

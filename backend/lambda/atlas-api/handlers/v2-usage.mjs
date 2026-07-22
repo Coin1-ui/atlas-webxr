@@ -19,6 +19,7 @@ import {
   isSandboxUsageContext,
   OVERAGE_ENTITLEMENT_MATRIX,
 } from "../lib/overage-entitlements.mjs";
+import { isSandboxUsageSeedEnabled } from "../lib/sandbox-seed-flag.mjs";
 
 /**
  * @param {import("aws-lambda").APIGatewayProxyEventV2} event
@@ -98,7 +99,7 @@ export async function handleWorkspaceUsage(event, workspaceId) {
       overageSandbox: Boolean(overageRecord?.sandbox) || sandboxContext,
       overageHasPayment: Boolean(overageRecord?.providerPaymentId),
       modelsRetained: trialSuspended && usage.modelCount > 0,
-      sandboxSeedEnabled: process.env.ATLAS_SANDBOX_USAGE_SEED === "true",
+      sandboxSeedEnabled: isSandboxUsageSeedEnabled(),
       sandboxSeededAt,
       usageIsSandboxSeeded: Boolean(sandboxSeededAt),
       sandboxClearAvailable: sandboxContext,

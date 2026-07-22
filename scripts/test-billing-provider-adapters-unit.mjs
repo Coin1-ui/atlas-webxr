@@ -217,6 +217,11 @@ assert.equal(
   JSON.parse(capturedDodoRequest.init.body).metadata.atlas_billing_operation_id,
   "op_checkout_12345678"
 );
+assert.equal(
+  JSON.parse(capturedDodoRequest.init.body).subscription_data,
+  undefined,
+  "checkout must not set on_demand (blocks Dodo change-plan)"
+);
 
 await createDodoRefund("pay_1", 250, "partial refund", "op_refund_12345678");
 assert.equal(capturedDodoRequest.init.headers["Idempotency-Key"], "op_refund_12345678");

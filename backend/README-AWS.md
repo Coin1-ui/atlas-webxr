@@ -102,7 +102,8 @@ Lambda environment (atlas-api):
 
 Billing ledger IAM for the `atlas-api` Lambda role:
 
-- `dynamodb:GetItem`, `dynamodb:PutItem`, `dynamodb:UpdateItem`, `dynamodb:Query`, and `dynamodb:TransactWriteItems` on the `ATLAS_BILLING_TABLE` ARN.
+- `dynamodb:GetItem`, `dynamodb:PutItem`, `dynamodb:UpdateItem`, `dynamodb:DeleteItem`, `dynamodb:Query`, and `dynamodb:TransactWriteItems` on the `ATLAS_BILLING_TABLE` ARN.
+- `dynamodb:GetItem`, `dynamodb:PutItem`, `dynamodb:UpdateItem`, `dynamodb:DeleteItem` on the `ATLAS_USAGE_TABLE` ARN.
 - `dynamodb:UpdateItem` and `dynamodb:TransactWriteItems` on the `ATLAS_WORKSPACES_TABLE` ARN.
 - `sqs:SendMessage` on the queue referenced by `ATLAS_BILLING_DLQ_URL`.
 - Keep both table resources in the same account and region so the ledger append and workspace entitlement projection can use one DynamoDB transaction.

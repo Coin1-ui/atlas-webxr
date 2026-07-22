@@ -6,6 +6,7 @@ import {
   cancelDodoScheduledPlanChange,
   changeDodoPlan,
   createDodoPortalSession,
+  getDodoSubscription,
 } from "../lib/billing-provider-dodo.mjs";
 import {
   cancelZohoSubscription,
@@ -116,6 +117,14 @@ export async function handleBillingChangePlan(event, workspaceId) {
     const effectiveAt = planChangeEffectiveAt(subscription.tier, targetTier);
     const immediate = effectiveAt === "after_confirmed_payment";
     if (subscription.provider === "dodo") {
+      const dodoSub = await getDodoSubscription(subscription.providerSubscriptionId);
+      if (dodoSub?.on_demand === true) {
+        return jsonResponse(409, {
+          error:
+            "This subscription was created with on-demand billing, which cannot change plans in Dodo. Cancel and Subscribe again to the target plan (new checkouts are standard recurring and support Upgrade/Downgrade).",
+          code: "ON_DEMAND_PLAN_CHANGE_NOT_SUPPORTED",
+        });
+      }
       await changeDodoPlan(
         subscription.providerSubscriptionId,
         targetTier,
