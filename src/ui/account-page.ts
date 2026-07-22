@@ -5,7 +5,7 @@ import type { BillingScheduledPlanChange } from "../data/workspace-api";
 import { formatStorageBytes, formatSessionsLimit, isUnlimitedSessionsLimit } from "../shared/plan-limits";
 import { estimateOverageUsd, planDisplayName, upgradeOptions, type PlanTier } from "../shared/plan-display";
 import { effectiveBillingTier, trialProfilePlanLine, accountTrialBannerHtml, trialSuspendedBannerHtml, mountTrialCountdown, planActionVerbForTier, hasLiveBillingSubscription, isOverageBillable, isTrialSuspended, subscribedBillingTier, planChangeMatrix, isTrialActive, billingPlanDisplayStatus, billingPlanStatusLabel } from "../shared/trial";
-import { isOveragePaidLocally, clearOveragePaidLocally } from "../data/billing-api";
+import { isOveragePaidLocally } from "../data/billing-api";
 import {
   billingCountryOptions,
   formatBillingCountryLabel,
