@@ -223,6 +223,28 @@ assert.equal(
   "checkout must not set on_demand (blocks Dodo change-plan)"
 );
 
+capturedDodoRequest = null;
+globalThis.fetch = async (url, init) => {
+  capturedDodoRequest = { url: String(url), init };
+  return new Response(null, { status: 204 });
+};
+const { changeDodoPlan } = await import("../backend/lambda/atlas-api/lib/billing-provider-dodo.mjs");
+await changeDodoPlan("sub_1", "launch", "next_billing_date");
+assert.match(String(capturedDodoRequest.url), /\/subscriptions\/sub_1\/change-plan$/);
+assert.deepEqual(JSON.parse(capturedDodoRequest.init.body), {
+  product_id: "prod_launch",
+  quantity: 1,
+  proration_billing_mode: "full_immediately",
+  effective_at: "next_billing_date",
+  on_payment_failure: "prevent_change",
+});
+process.env.DODO_PRODUCT_LAUNCH_MONTHLY = "prod_launch";
+await changeDodoPlan("sub_1", "growth", "immediately");
+assert.equal(
+  JSON.parse(capturedDodoRequest.init.body).proration_billing_mode,
+  "difference_immediately"
+);
+
 await createDodoRefund("pay_1", 250, "partial refund", "op_refund_12345678");
 assert.equal(capturedDodoRequest.init.headers["Idempotency-Key"], "op_refund_12345678");
 assert.equal(JSON.parse(capturedDodoRequest.init.body).amount, 250);

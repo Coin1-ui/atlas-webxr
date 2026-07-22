@@ -4,9 +4,8 @@ import type { WorkspaceUsageResponse } from "../data/usage-api";
 import type { BillingScheduledPlanChange } from "../data/workspace-api";
 import { formatStorageBytes, formatSessionsLimit, isUnlimitedSessionsLimit } from "../shared/plan-limits";
 import { estimateOverageUsd, planDisplayName, upgradeOptions, type PlanTier } from "../shared/plan-display";
-import { effectiveBillingTier, trialProfilePlanLine, accountTrialBannerHtml, trialSuspendedBannerHtml, mountTrialCountdown, planActionVerbForTier, hasLiveBillingSubscription, isOverageBillable, isTrialSuspended, subscribedBillingTier, planChangeMatrix, isTrialActive, billingPlanDisplayStatus, billingPlanStatusLabel } from "../shared/trial";
-import { effectiveUsageLimits } from "../shared/overage-entitlements";
-import { escapeHtml } from "../shared/escape-html";
+import { effectiveBillingTier, trialProfilePlanLine, accountTrialBannerHtml, trialSuspendedBannerHtml, mountTrialCountdown, planActionVerbForTier, hasLiveBillingSubscription, subscribedBillingTier, planChangeMatrix, isTrialActive, billingPlanDisplayStatus, billingPlanStatusLabel } from "../shared/trial";
+import { isOveragePaidLocally } from "../data/billing-api";
 import {
   billingCountryOptions,
   formatBillingCountryLabel,
@@ -14,6 +13,14 @@ import {
 } from "../shared/dodo-billing-countries";
 import { MKT } from "./marketing-copy";
 import { MKT_ASSETS } from "./marketing-assets";
+
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
 
 function readBillingCountry(root: HTMLElement): string {
   return (
@@ -51,9 +58,7 @@ export function renderAccountPage(
     billingError?: string;
     billingSuccess?: string;
     overagePaid?: boolean;
-    overageAccepted?: boolean;
     usageUnrestricted?: boolean;
-    sandboxSeedEnabled?: boolean;
     scheduledPlanChange?: BillingScheduledPlanChange | null;
   },
   handlers: {
@@ -66,8 +71,6 @@ export function renderAccountPage(
     onCancelBilling?: () => void | Promise<void>;
     onCancelScheduledPlanChange?: () => void | Promise<void>;
     onPayOverage: (amountUsd: number) => void | Promise<void>;
-    onSeedSandboxOverage?: () => void | Promise<void>;
-    onClearSandboxUsage?: () => void | Promise<void>;
     onAdmin: () => void;
     onBranding?: () => void;
     onOwner?: () => void;
@@ -81,108 +84,46 @@ export function renderAccountPage(
 ): void {
   const { workspace, usage } = data;
   const unrestricted = Boolean(data.usageUnrestricted);
-  const usageCounts = usage?.usage;
-  const planLimits = usage?.limits;
-  const effectiveLimits =
-    usage?.effectiveLimits ??
-    (planLimits ? effectiveUsageLimits(planLimits, null) : null);
-  const usageMonth = usage?.usage?.month || usage?.liveUsage?.month || "";
   const trialBanner = unrestricted ? "" : accountTrialBannerHtml(workspace);
   const suspendedBanner = unrestricted ? "" : trialSuspendedBannerHtml(workspace);
   const upgrades = unrestricted ? [] : upgradeOptions(workspace);
-  const billingIsLive = hasLiveBillingSubscription(workspace);
-  const overageBillable =
-    !unrestricted &&
-    (usage?.overageBillable ?? isOverageBillable(workspace));
   const overageUsd =
-    usage && usageCounts && overageBillable
-      ? typeof usage.estimatedOverageUsd === "number"
-        ? usage.estimatedOverageUsd
-        : estimateOverageUsd(effectiveBillingTier(workspace), usageCounts, usage.limits)
+    usage && usage.usage && !unrestricted
+      ? estimateOverageUsd(effectiveBillingTier(workspace), usage.usage, usage.limits)
       : 0;
-  const hasOverage = overageBillable && overageUsd > 0;
-  const overagePaid = data.overagePaid ?? usage?.overagePaid ?? false;
-  const overageAccepted = data.overageAccepted ?? usage?.overageAccepted ?? false;
-  const overageAmountUsd =
-    typeof usage?.overageAmountUsd === "number" ? usage.overageAmountUsd : overageUsd > 0 ? overageUsd : null;
-  const sandboxModeActive = Boolean(data.sandboxSeedEnabled ?? usage?.sandboxSeedEnabled);
-  const canClearSandbox =
-    Boolean(handlers.onClearSandboxUsage) &&
-    (overagePaid ||
-      overageAccepted ||
-      Boolean(usage?.sandboxClearAvailable) ||
-      Boolean(usage?.usageIsSandboxSeeded) ||
-      Boolean(usage?.overageSandbox));
-  const showSandboxClear = canClearSandbox;
-  const clearOverageBtn = showSandboxClear
-    ? `<button type="button" class="mkt-btn mkt-btn-ghost auth-submit" data-action="clear-sandbox-usage" style="margin-top:0.75rem">Clear test overage</button>
-       <p class="auth-hint" style="margin-top:0.35rem">Removes leftover seed / invoicing-pending test rows. Real card payments are not deleted.</p>`
-    : "";
-  const showSandboxSeed = Boolean(handlers.onSeedSandboxOverage) && sandboxModeActive;
-  const planInactive = !unrestricted && isTrialSuspended(workspace);
-  const modelsRetained =
-    Boolean(usage?.modelsRetained) ||
-    (planInactive && Boolean(usageCounts?.modelCount));
+  const hasOverage = !unrestricted && overageUsd > 0;
+  const overagePaid = data.overagePaid ?? (usage ? isOveragePaidLocally(workspace.id, usage.usage.month) : false);
 
-  const usageOverageStat =
-    !unrestricted && (overagePaid || overageAccepted || (overageBillable && hasOverage))
-      ? `<div class="admin-stat">
-          <span class="admin-stat-label">Usage overage</span>
-          <span class="admin-stat-val">${
-            overagePaid
-              ? `Paid${overageAmountUsd != null ? ` · $${overageAmountUsd.toFixed(2)}` : ""}`
-              : overageAccepted
-                ? `Invoicing pending${overageAmountUsd != null ? ` · $${overageAmountUsd.toFixed(2)}` : ""}`
-                : `Estimated · $${overageUsd.toFixed(2)}`
-          }</span>
-        </div>`
-      : "";
-
-  const sessionLimitDisplay =
-    effectiveLimits && planLimits
-      ? isUnlimitedSessionsLimit(effectiveLimits.sessionsPerMonth)
-        ? `<span class="admin-stat-unlimited"> · unlimited</span>`
-        : effectiveLimits.overageExtended?.sessions
-          ? `<span> / ${formatSessionsLimit(effectiveLimits.sessionsPerMonth)} <span class="auth-hint">(+overage)</span></span>`
-          : `<span> / ${formatSessionsLimit(planLimits.sessionsPerMonth)}</span>`
-      : "";
-
-  const usageHtml = usage && usageCounts && planLimits && effectiveLimits
+  const usageHtml = usage
     ? `<div class="admin-usage-grid account-usage-grid${unrestricted ? " admin-usage-grid--operator" : ""}">
         <div class="admin-stat">
           <span class="admin-stat-label">Models</span>
-          <span class="admin-stat-val">${usageCounts.modelCount}${unrestricted ? `<span class="admin-stat-unlimited"> · tracked · no limit</span>` : planInactive ? `<span> · retained</span>` : `<span> / ${planLimits.models}</span>`}</span>
+          <span class="admin-stat-val">${usage.usage.modelCount}${unrestricted ? `<span class="admin-stat-unlimited"> · tracked · no limit</span>` : `<span> / ${usage.limits.models}</span>`}</span>
         </div>
         <div class="admin-stat">
           <span class="admin-stat-label">AR sessions</span>
-          <span class="admin-stat-val">${usageCounts.sessionCount}${unrestricted ? `<span class="admin-stat-unlimited"> · tracked · no limit</span>` : planInactive ? `<span> · tracked</span>` : sessionLimitDisplay}</span>
+          <span class="admin-stat-val">${usage.usage.sessionCount}${unrestricted ? `<span class="admin-stat-unlimited"> · tracked · no limit</span>` : isUnlimitedSessionsLimit(usage.limits.sessionsPerMonth) ? `<span class="admin-stat-unlimited"> · unlimited</span>` : `<span> / ${formatSessionsLimit(usage.limits.sessionsPerMonth)}</span>`}</span>
         </div>
         <div class="admin-stat">
           <span class="admin-stat-label">Storage</span>
-          <span class="admin-stat-val">${formatStorageBytes(usageCounts.storageBytes)}${unrestricted ? `<span class="admin-stat-unlimited"> · tracked · no limit</span>` : planInactive ? `<span> · retained</span>` : `<span> / ${formatStorageBytes(planLimits.storageBytes)}</span>`}</span>
+          <span class="admin-stat-val">${formatStorageBytes(usage.usage.storageBytes)}${unrestricted ? `<span class="admin-stat-unlimited"> · tracked · no limit</span>` : `<span> / ${formatStorageBytes(usage.limits.storageBytes)}</span>`}</span>
         </div>
-        ${usageOverageStat}
       </div>
       ${
         unrestricted
           ? `<p class="auth-hint admin-usage-operator-note">Platform operator account — usage tracked for visibility; no plan limits or overage.</p>`
-          : (overagePaid || overageAccepted) && effectiveLimits?.overageExtended?.sessions
-            ? `<p class="auth-hint">Session cap raised${usageMonth ? ` for ${escapeHtml(usageMonth)}` : ""} after overage payment. Models and storage stay on plan limits — upgrade to add catalog slots.</p>`
-            : (overagePaid || overageAccepted)
-              ? `<p class="auth-hint">Overage settled${usageMonth ? ` for ${escapeHtml(usageMonth)}` : ""}. Models and storage follow your plan tier; session overage extends your monthly cap when applicable.</p>`
-              : modelsRetained
-            ? `<p class="auth-hint">Plan inactive — models stay in your workspace. Public showroom and new uploads stay paused until you subscribe. Usage overage is not charged while the plan is canceled or expired.</p>`
-            : usage.warnings.length
-              ? usage.warnings
-                  .map(
-                    (w) =>
-                      `<div class="${w.level === "critical" ? "camera-warning" : "camera-success"}" role="status">${escapeHtml(w.message)}</div>`,
-                  )
-                  .join("")
-              : ""
+          : usage.warnings.length
+            ? usage.warnings
+                .map(
+                  (w) =>
+                    `<div class="${w.level === "critical" ? "camera-warning" : "camera-success"}" role="status">${escapeHtml(w.message)}</div>`,
+                )
+                .join("")
+            : ""
       }`
     : `<p class="auth-hint">Usage stats will appear when the usage API is connected.</p>`;
 
+  const billingIsLive = hasLiveBillingSubscription(workspace);
   const billingDisplayStatus = billingPlanDisplayStatus(workspace);
   const billingStatusText = billingPlanStatusLabel(workspace);
   const cancelScheduled = billingDisplayStatus === "cancel_scheduled";
@@ -350,13 +291,13 @@ export function renderAccountPage(
             </div>
             ${upgradeHtml}
             ${handlers.onManageBilling && workspace.billingSubscriptionId && billingIsLive ? `<button type="button" class="mkt-btn mkt-btn-primary account-secondary-btn" data-action="manage-billing">Manage payment method &amp; invoices</button>` : ""}
-            ${handlers.onCancelScheduledPlanChange && scheduledPlanChange ? `<button type="button" class="mkt-btn mkt-btn-ghost account-secondary-btn" data-action="cancel-scheduled-plan">Cancel scheduled plan change</button>` : ""}
+            ${handlers.onCancelScheduledPlanChange && scheduledPlanChange ? `<button type="button" class="mkt-btn mkt-btn-ghost account-secondary-btn" data-action="cancel-scheduled-plan">Cancel scheduled change to ${escapeHtml(scheduledPlanName)}</button>` : ""}
             ${handlers.onCancelBilling && workspace.billingSubscriptionId && billingIsLive && !cancelScheduled ? `<button type="button" class="mkt-btn mkt-btn-ghost account-secondary-btn" data-action="cancel-billing">Cancel at renewal</button>` : ""}
             <button type="button" class="mkt-btn mkt-btn-ghost account-secondary-btn" data-action="pricing">Compare all plans</button>
           </section>
 
           <section class="account-section">
-            <h2 class="admin-section-title">Usage ${usageMonth ? `(${escapeHtml(usageMonth)})` : ""}</h2>
+            <h2 class="admin-section-title">Usage ${usage ? `(${escapeHtml(usage.usage.month)})` : ""}</h2>
             ${usageHtml}
           </section>
 
@@ -365,32 +306,17 @@ export function renderAccountPage(
             ${
               unrestricted
                 ? `<p class="auth-hint">Not applicable — platform operator accounts have no usage caps.</p>`
-                : overagePaid
-                ? `<div class="account-overage-box">
-                    <p class="camera-success" role="status">Usage overage${usageMonth ? ` for ${escapeHtml(usageMonth)}` : ""} is paid${overageAmountUsd != null ? ` ($${overageAmountUsd.toFixed(2)})` : ""}.</p>
-                    <p class="auth-hint">Meter-based add-on for usage above included plan limits.</p>
-                    ${clearOverageBtn}
-                  </div>`
-                : overageAccepted
-                ? `<div class="account-overage-box">
-                    <p class="camera-success" role="status">Usage overage${usageMonth ? ` for ${escapeHtml(usageMonth)}` : ""} accepted — invoicing is pending${overageAmountUsd != null ? ` ($${overageAmountUsd.toFixed(2)})` : ""}.</p>
-                    ${clearOverageBtn}
-                  </div>`
-                : !overageBillable
-                ? `<p class="auth-hint">Usage overage is a meter add-on for active paid plans. It is not charged while your plan is canceled or expired. Models stay saved — subscribe to restore the showroom.</p>`
                 : hasOverage
                 ? `<div class="account-overage-box">
                     <p class="account-overage-amount">Estimated overage: <strong>$${overageUsd.toFixed(2)}</strong></p>
                     <p class="auth-hint">Based on usage above your included plan limits. Pay to restore full service and avoid interruption.</p>
-                    <button type="button" class="mkt-btn mkt-btn-primary auth-submit" data-action="pay-overage" data-amount="${overageUsd}">Accept &amp; pay overage</button>
-                    ${clearOverageBtn}
+                    ${
+                      overagePaid
+                        ? `<p class="camera-success" role="status">Overage for ${escapeHtml(usage!.usage.month)} accepted and marked paid.</p>`
+                        : `<button type="button" class="mkt-btn mkt-btn-primary auth-submit" data-action="pay-overage" data-amount="${overageUsd}">Accept &amp; pay overage</button>`
+                    }
                   </div>`
-                : `<p class="auth-hint">No overage charges this period — you are within included limits.</p>${
-                    showSandboxSeed
-                      ? `<p class="auth-hint" style="margin-top:0.75rem">Sandbox: simulate overage without real AR sessions.</p>
-                         <button type="button" class="mkt-btn mkt-btn-ghost auth-submit" data-action="seed-sandbox-overage">Seed overage (sandbox)</button>`
-                      : ""
-                  }${clearOverageBtn}`
+                : `<p class="auth-hint">No overage charges this period — you are within included limits.</p>`
             }
           </section>
 
@@ -442,12 +368,6 @@ export function renderAccountPage(
   root.querySelector("[data-action=pay-overage]")?.addEventListener("click", () => {
     const amount = Number((root.querySelector("[data-action=pay-overage]") as HTMLElement).getAttribute("data-amount"));
     void handlers.onPayOverage(amount);
-  });
-  root.querySelector("[data-action=seed-sandbox-overage]")?.addEventListener("click", () => {
-    void handlers.onSeedSandboxOverage?.();
-  });
-  root.querySelector("[data-action=clear-sandbox-usage]")?.addEventListener("click", () => {
-    void handlers.onClearSandboxUsage?.();
   });
 
   root.querySelector("[data-action=admin]")?.addEventListener("click", handlers.onAdmin);

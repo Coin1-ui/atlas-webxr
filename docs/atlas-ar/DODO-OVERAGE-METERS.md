@@ -1,7 +1,8 @@
 # Dodo meters + add-ons for Atlas overage (test mode)
 
 **Status:** Catalog seeded 2026-07-22 via test API (Option A — no `on_demand`, plan changes stay available).  
-**Does not replace** live Starter/Launch/Growth product IDs used by Lambda env (`DODO_PRODUCT_*_MONTHLY`) until Atlas is wired to ingest events + map hybrid products.
+**Event ingest (code):** wired 2026-07-22/23 — `dodo-usage-ingest.mjs` from session analytics + model upload (best-effort; off if `ATLAS_DODO_USAGE_INGEST=false`).  
+**Hybrid checkout:** still **off** by default — live `DODO_PRODUCT_*_MONTHLY` unchanged until QA + explicit `ATLAS_DODO_USAGE_HYBRID=true` or `DODO_PRODUCT_*_USAGE` env.
 
 ## Can Dodo do this?
 
@@ -47,26 +48,20 @@ Attached to existing Launch product `pdt_0NjSYfJ2iwd7x9Qyfydwv` as optional add-
 4. Use **Session Pack add-on** for optional prepaid top-ups in portal/checkout.
 5. Only switch Lambda `DODO_PRODUCT_*` to hybrid IDs after: event ingest from Atlas session analytics + webhook reconciliation + plan-change QA.
 
-## Event ingest (next engineering step)
+## Event ingest (implemented in Lambda source)
 
 ```http
 POST https://test.dodopayments.com/events/ingest
 Authorization: Bearer <DODO_PAYMENTS_API_KEY>
 ```
 
-```json
-{
-  "events": [{
-    "event_id": "unique-id",
-    "customer_id": "cus_…",
-    "event_name": "atlas.ar_session",
-    "timestamp": "2026-07-22T00:00:00.000Z",
-    "metadata": { "workspace_id": "…" }
-  }]
-}
-```
+Wired in:
+- `lib/dodo-usage-ingest.mjs` → `ingestDodoArSession` / `ingestDodoModelCount` / `ingestDodoStorageBytes`
+- `lib/usage.mjs` (session dedupe success) → AR session events
+- `handlers/v2-models.mjs` (upload complete) → model + storage gauges
 
-Wire from Atlas when an AR session is recorded (same place usage counters increment).
+**Deploy gate:** rebuild/upload Lambda zip so production includes `dodo-usage-ingest.mjs` (not only Amplify).  
+**Next product gate:** flip hybrid product env after ingest smoke on a paid test sub.
 
 ## Script
 

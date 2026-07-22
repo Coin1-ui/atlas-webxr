@@ -137,7 +137,11 @@ export async function handleBillingChangePlan(event, workspaceId) {
       ok: true,
       pending: true,
       tier: targetTier,
+      currentTier: subscription.tier,
       effectiveAt,
+      // Atlas entitlements stay on currentTier until Dodo applies the change
+      // (period end / cancel-at-period-end) and webhooks update product_id.
+      activatesOnAtlas: "when_current_period_ends",
     });
   } catch (error) {
     return errorResponse(error, "Unable to change billing plan");

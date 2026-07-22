@@ -24,4 +24,19 @@ assert.deepEqual(
 assert.equal(scheduledPlanChangeFromDodoSubscription({ scheduled_change: null }), null);
 assert.equal(scheduledPlanChangeFromDodoSubscription({}), null);
 
+assert.deepEqual(
+  scheduledPlanChangeFromDodoSubscription({
+    scheduled_change: {
+      product_id: "pdt_0Njk5QMJ8uCwSvseuHeo0",
+      effective_at: "2026-08-01T00:00:00Z",
+    },
+  }),
+  {
+    tier: "launch",
+    productId: "pdt_0Njk5QMJ8uCwSvseuHeo0",
+    effectiveAt: "2026-08-01T00:00:00Z",
+  },
+  "known hybrid usage product maps to launch"
+);
+
 console.log("test:scheduled-plan-change-dodo — OK");
