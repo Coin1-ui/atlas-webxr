@@ -36,4 +36,14 @@ assert.equal(
   8
 );
 
+// Suspended / zero caps must not invent payable overage from retained models.
+assert.equal(
+  estimateOverageUsd(
+    "starter",
+    { modelCount: 40, sessionCount: 9000, storageBytes: 5 * 1024 * 1024 * 1024 },
+    { models: 0, sessionsPerMonth: 0, storageBytes: 0 }
+  ),
+  0
+);
+
 console.log("test:overage-estimate-unit — OK");

@@ -1,6 +1,7 @@
 import { limitsForWorkspace } from "./plan-limits.mjs";
 import { readManifest } from "./models-store.mjs";
 import { safeModelId } from "./models-paths.mjs";
+import { isTrialSuspended } from "./trial.mjs";
 
 /** Max single GLB / USDZ / icon upload — same for every billing tier. */
 export const MAX_ASSET_BYTES = 50 * 1024 * 1024;
@@ -17,6 +18,14 @@ export function maxAssetBytesForWorkspace(_workspace) {
  * @param {object} body presign body
  */
 export async function assertModelUploadAllowed(workspace, body) {
+  if (isTrialSuspended(workspace)) {
+    const err = new Error(
+      "Showroom paused — subscribe to restore uploads. Existing models stay saved in your workspace.",
+    );
+    err.statusCode = 403;
+    err.code = "PLAN_SUSPENDED";
+    throw err;
+  }
   const limits = limitsForWorkspace(workspace);
   const manifest = await readManifest(workspace.id);
   const models = manifest.models ?? [];

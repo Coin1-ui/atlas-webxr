@@ -9,6 +9,16 @@
  * @param {{ models: number; sessionsPerMonth: number; storageBytes: number }} limits
  */
 export function estimateOverageUsd(tier, usage, limits) {
+  // Suspended / inactive plans use zero caps — never treat retained models as payable overage.
+  if (
+    !limits ||
+    (Number(limits.models) <= 0 &&
+      Number(limits.sessionsPerMonth) <= 0 &&
+      Number(limits.storageBytes) <= 0)
+  ) {
+    return 0;
+  }
+
   let total = 0;
   const sessionOver =
     limits.sessionsPerMonth <= 0

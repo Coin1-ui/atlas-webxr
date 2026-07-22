@@ -20,7 +20,10 @@ export type WorkspaceUsageResponse = {
   estimatedOverageUsd?: number;
   overagePaid?: boolean;
   overageAccepted?: boolean;
+  overageAmountUsd?: number | null;
   overageStatus?: string;
+  overageBillable?: boolean;
+  modelsRetained?: boolean;
   sandboxSeedEnabled?: boolean;
 };
 

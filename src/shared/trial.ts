@@ -182,6 +182,11 @@ export function hasLiveBillingSubscription(ws: TrialWorkspace): boolean {
   return subscribedBillingTier(ws) !== null;
 }
 
+/** Meter overage is a paid-plan add-on only (active / cancel-scheduled / past-due grace). */
+export function isOverageBillable(ws: TrialWorkspace): boolean {
+  return hasLiveBillingSubscription(ws) && !isTrialSuspended(ws);
+}
+
 /** User-facing Plan & billing status — drives labels and gated actions. */
 export type BillingPlanDisplayStatus =
   | "active"
@@ -362,11 +367,17 @@ export function accountTrialBannerHtml(ws: TrialWorkspace): string {
 }
 
 export function trialSuspendedBannerHtml(ws: TrialWorkspace): string {
-  if (!isTrialSuspended(ws) || !ws.trialPlan) return "";
-  const required = planDisplayName(ws.plan, trialFallbackTier(ws.trialPlan));
+  if (!isTrialSuspended(ws)) return "";
+  if (ws.trialPlan) {
+    const required = planDisplayName(ws.plan, trialFallbackTier(ws.trialPlan));
+    return `<div class="account-trial-banner account-trial-banner--paused" role="alert">
+    <p class="account-trial-eyebrow">Service paused</p>
+    <p class="account-trial-note">Your ${escapeHtml(planDisplayName(ws.plan, ws.trialPlan))} trial ended. ${planActionVerb(ws)} to ${escapeHtml(required)} to restore your showroom and admin access. Models stay saved in your workspace.</p>
+  </div>`;
+  }
   return `<div class="account-trial-banner account-trial-banner--paused" role="alert">
     <p class="account-trial-eyebrow">Service paused</p>
-    <p class="account-trial-note">Your ${escapeHtml(planDisplayName(ws.plan, ws.trialPlan))} trial ended. ${planActionVerb(ws)} to ${escapeHtml(required)} to restore your showroom and admin access.</p>
+    <p class="account-trial-note">Your plan is inactive. Models stay saved in your workspace; the public showroom and new uploads stay paused until you subscribe.</p>
   </div>`;
 }
 

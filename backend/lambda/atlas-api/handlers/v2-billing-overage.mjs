@@ -5,7 +5,7 @@ import { getWorkspaceById } from "../lib/dynamodb.mjs";
 import { readManifest, sumWorkspaceStorageBytes } from "../lib/models-store.mjs";
 import { getMonthlyUsage } from "../lib/usage.mjs";
 import { limitsForWorkspace } from "../lib/plan-limits.mjs";
-import { effectiveBillingTier } from "../lib/trial.mjs";
+import { effectiveBillingTier, isOverageBillable } from "../lib/trial.mjs";
 import { estimateOverageUsd, normalizeOverageMonth } from "../lib/overage-estimate.mjs";
 import {
   getBillingSubscription,
@@ -60,7 +60,8 @@ export async function handleBillingOverage(event, workspaceId) {
     const usage = await loadUsageSnapshot(workspaceId);
     const tier = effectiveBillingTier(workspace);
     const limits = limitsForWorkspace(workspace);
-    const estimatedAmountUsd = estimateOverageUsd(tier, usage, limits);
+    const overageBillable = isOverageBillable(workspace);
+    const estimatedAmountUsd = overageBillable ? estimateOverageUsd(tier, usage, limits) : 0;
 
     if (method === "GET") {
       const month =
@@ -68,7 +69,18 @@ export async function handleBillingOverage(event, workspaceId) {
           ? normalizeOverageMonth(event.queryStringParameters.month)
           : usage.month;
       const record = await getWorkspaceOverage(workspaceId, month);
-      return jsonResponse(200, overageResponse(record, estimatedAmountUsd));
+      return jsonResponse(200, {
+        ...overageResponse(record, estimatedAmountUsd),
+        overageBillable,
+      });
+    }
+
+    if (!overageBillable) {
+      return jsonResponse(403, {
+        error:
+          "Usage overage applies only while a paid plan is active. Subscribe to restore service — existing models stay saved.",
+        code: "OVERAGE_NOT_BILLABLE",
+      });
     }
 
     const body = parseJsonBody(event);
