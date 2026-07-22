@@ -94,6 +94,7 @@ export function renderAccountPage(
   const effectiveLimits =
     usage?.effectiveLimits ??
     (planLimits ? effectiveUsageLimits(planLimits, null) : null);
+  const usageMonth = usage?.usage?.month || usage?.liveUsage?.month || "";
   const trialBanner = unrestricted ? "" : accountTrialBannerHtml(workspace);
   const suspendedBanner = unrestricted ? "" : trialSuspendedBannerHtml(workspace);
   const upgrades = unrestricted ? [] : upgradeOptions(workspace);
@@ -113,7 +114,13 @@ export function renderAccountPage(
   const overageAmountUsd =
     typeof usage?.overageAmountUsd === "number" ? usage.overageAmountUsd : overageUsd > 0 ? overageUsd : null;
   const sandboxModeActive = Boolean(data.sandboxSeedEnabled ?? usage?.sandboxSeedEnabled);
-  const showSandboxClear = Boolean(handlers.onClearSandboxUsage);
+  const showSandboxClear = Boolean(
+    handlers.onClearSandboxUsage &&
+      (usage?.sandboxClearAvailable ||
+        usage?.usageIsSandboxSeeded ||
+        usage?.overageSandbox ||
+        ((usage?.overagePaid || usage?.overageAccepted) && usage?.overageHasPayment === false)),
+  );
   const showSandboxSeed = Boolean(handlers.onSeedSandboxOverage) && sandboxModeActive;
   const planInactive = !unrestricted && isTrialSuspended(workspace);
   const modelsRetained =
@@ -163,9 +170,9 @@ export function renderAccountPage(
         unrestricted
           ? `<p class="auth-hint admin-usage-operator-note">Platform operator account — usage tracked for visibility; no plan limits or overage.</p>`
           : (overagePaid || overageAccepted) && effectiveLimits?.overageExtended?.sessions
-            ? `<p class="auth-hint">Session cap raised for ${escapeHtml(usage.usage.month)} after overage payment. Models and storage stay on plan limits — upgrade to add catalog slots.</p>`
+            ? `<p class="auth-hint">Session cap raised${usageMonth ? ` for ${escapeHtml(usageMonth)}` : ""} after overage payment. Models and storage stay on plan limits — upgrade to add catalog slots.</p>`
             : (overagePaid || overageAccepted)
-              ? `<p class="auth-hint">Overage settled for ${escapeHtml(usage.usage.month)}. Models and storage follow your plan tier; session overage extends your monthly cap when applicable.</p>`
+              ? `<p class="auth-hint">Overage settled${usageMonth ? ` for ${escapeHtml(usageMonth)}` : ""}. Models and storage follow your plan tier; session overage extends your monthly cap when applicable.</p>`
               : modelsRetained
             ? `<p class="auth-hint">Plan inactive — models stay in your workspace. Public showroom and new uploads stay paused until you subscribe. Usage overage is not charged while the plan is canceled or expired.</p>`
             : usage.warnings.length
@@ -352,7 +359,7 @@ export function renderAccountPage(
           </section>
 
           <section class="account-section">
-            <h2 class="admin-section-title">Usage ${usage ? `(${escapeHtml(usage.usage.month)})` : ""}</h2>
+            <h2 class="admin-section-title">Usage ${usageMonth ? `(${escapeHtml(usageMonth)})` : ""}</h2>
             ${usageHtml}
           </section>
 
@@ -363,12 +370,12 @@ export function renderAccountPage(
                 ? `<p class="auth-hint">Not applicable — platform operator accounts have no usage caps.</p>`
                 : overagePaid
                 ? `<div class="account-overage-box">
-                    <p class="camera-success" role="status">Usage overage${usage?.usage.month ? ` for ${escapeHtml(usage.usage.month)}` : ""} is paid${overageAmountUsd != null ? ` ($${overageAmountUsd.toFixed(2)})` : ""}.</p>
+                    <p class="camera-success" role="status">Usage overage${usageMonth ? ` for ${escapeHtml(usageMonth)}` : ""} is paid${overageAmountUsd != null ? ` ($${overageAmountUsd.toFixed(2)})` : ""}.</p>
                     <p class="auth-hint">Meter-based add-on for usage above included plan limits.</p>
                   </div>`
                 : overageAccepted
                 ? `<div class="account-overage-box">
-                    <p class="camera-success" role="status">Usage overage${usage?.usage.month ? ` for ${escapeHtml(usage.usage.month)}` : ""} accepted — invoicing is pending${overageAmountUsd != null ? ` ($${overageAmountUsd.toFixed(2)})` : ""}.</p>
+                    <p class="camera-success" role="status">Usage overage${usageMonth ? ` for ${escapeHtml(usageMonth)}` : ""} accepted — invoicing is pending${overageAmountUsd != null ? ` ($${overageAmountUsd.toFixed(2)})` : ""}.</p>
                   </div>`
                 : !overageBillable
                 ? `<p class="auth-hint">Usage overage is a meter add-on for active paid plans. It is not charged while your plan is canceled or expired. Models stay saved — subscribe to restore the showroom.</p>`

@@ -1355,10 +1355,14 @@ async function showAccountScreen(opts?: {
         }
           : undefined,
         onClearSandboxUsage:
-          usage?.sandboxClearAvailable || (isPlatformOwner && (usage?.overagePaid || usage?.overageAccepted || usage?.usageIsSandboxSeeded))
+          usage?.sandboxClearAvailable ||
+          usage?.usageIsSandboxSeeded ||
+          usage?.overageSandbox ||
+          ((usage?.overagePaid || usage?.overageAccepted) && usage?.overageHasPayment === false) ||
+          (isPlatformOwner && (usage?.overagePaid || usage?.overageAccepted))
             ? async () => {
           try {
-            const month = usage?.usage.month ?? "";
+            const month = usage?.usage?.month ?? usage?.liveUsage?.month ?? "";
             await seedSandboxUsage(activeWorkspace!.id, {
               resetAll: true,
               ...(isPlatformOwner ? { force: true } : {}),

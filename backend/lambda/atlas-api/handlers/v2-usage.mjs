@@ -64,9 +64,15 @@ export async function handleWorkspaceUsage(event, workspaceId) {
     const overageAmountUsd =
       typeof overageRecord?.amountUsd === "number" ? overageRecord.amountUsd : null;
     const sandboxSeededAt = monthly.sandboxSeededAt ?? null;
-    const sandboxContext = isSandboxUsageContext(sandboxSeededAt, overageRecord);
+    const sandboxContext = isSandboxUsageContext(
+      sandboxSeededAt,
+      overageRecord,
+      planLimits,
+      overageRecord?.usageSnapshot || usage,
+    );
     const effectiveLimits = effectiveUsageLimits(planLimits, overageRecord);
     const displayUsage = displayUsageCounts(usage, overageRecord);
+    if (!displayUsage.month) displayUsage.month = usage.month;
 
     return jsonResponse(200, {
       plan: workspace.plan,
@@ -89,7 +95,8 @@ export async function handleWorkspaceUsage(event, workspaceId) {
       overageAccepted,
       overageAmountUsd,
       overageStatus: overageRecord?.status ?? (estimatedOverageUsd > 0 ? "unpaid" : "none"),
-      overageSandbox: Boolean(overageRecord?.sandbox),
+      overageSandbox: Boolean(overageRecord?.sandbox) || sandboxContext,
+      overageHasPayment: Boolean(overageRecord?.providerPaymentId),
       modelsRetained: trialSuspended && usage.modelCount > 0,
       sandboxSeedEnabled: process.env.ATLAS_SANDBOX_USAGE_SEED === "true",
       sandboxSeededAt,

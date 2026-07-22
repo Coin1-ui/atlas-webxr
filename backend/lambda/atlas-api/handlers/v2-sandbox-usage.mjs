@@ -25,19 +25,7 @@ async function assertSandboxAccess(event, workspaceId) {
     asOwner = true;
   } catch {
     await requireWorkspaceAdmin(event, workspaceId, { allowSuspended: true });
-    if (!sandboxSeedEnabled()) {
-      const monthly = await getMonthlyUsage(workspaceId);
-      const overage = await getWorkspaceOverage(workspaceId, monthly.month);
-      if (!monthly.sandboxSeededAt && !overage) {
-        return {
-          asOwner: false,
-          denied: jsonResponse(403, {
-            error:
-              "Sandbox usage seed is disabled. Set Lambda env ATLAS_SANDBOX_USAGE_SEED=true, or sign in as platform owner.",
-          }),
-        };
-      }
-    }
+    // Workspace admins may always attempt clear; seed still gated below.
   }
   return { asOwner, denied: null };
 }
@@ -71,8 +59,15 @@ export async function handleSandboxSeedUsage(event, workspaceId) {
     if (body.resetOverage === true) {
       const monthly = await getMonthlyUsage(workspaceId);
       const overage = await getWorkspaceOverage(workspaceId, monthly.month);
+      const limits = limitsForWorkspace(workspace);
       const force = body.force === true && asOwner;
-      if (!force && !isSandboxUsageContext(monthly.sandboxSeededAt, overage)) {
+      const sandboxCtx = isSandboxUsageContext(
+        monthly.sandboxSeededAt,
+        overage,
+        limits,
+        overage?.usageSnapshot || monthly,
+      );
+      if (!force && !sandboxCtx) {
         return jsonResponse(403, {
           error: "Only sandbox test overage can be cleared. Production overage records are kept.",
           code: "OVERAGE_NOT_SANDBOX",
@@ -91,8 +86,15 @@ export async function handleSandboxSeedUsage(event, workspaceId) {
     if (body.reset === true || body.resetAll === true) {
       const monthly = await getMonthlyUsage(workspaceId);
       const overage = await getWorkspaceOverage(workspaceId, monthly.month);
+      const limits = limitsForWorkspace(workspace);
       const force = body.force === true && asOwner;
-      if (!force && !isSandboxUsageContext(monthly.sandboxSeededAt, overage)) {
+      const sandboxCtx = isSandboxUsageContext(
+        monthly.sandboxSeededAt,
+        overage,
+        limits,
+        overage?.usageSnapshot || monthly,
+      );
+      if (!force && !sandboxCtx) {
         return jsonResponse(403, {
           error: "Only sandbox test usage can be cleared.",
           code: "USAGE_NOT_SANDBOX",

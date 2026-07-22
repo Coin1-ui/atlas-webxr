@@ -37,5 +37,32 @@ assert.equal(display.month, "2026-07");
 assert.equal(isSandboxUsageContext("2026-07-22T00:00:00Z", null), true);
 assert.equal(isSandboxUsageContext(null, { sandbox: true }), true);
 assert.equal(isSandboxUsageContext(null, { sandbox: false, status: "paid" }), false);
+assert.equal(
+  isSandboxUsageContext(
+    null,
+    { status: "accepted", providerPaymentId: null, note: "No chargeable subscription" },
+    { sessionsPerMonth: 15000 },
+    { sessionCount: 15150 }
+  ),
+  true
+);
+assert.equal(
+  isSandboxUsageContext(
+    null,
+    { status: "accepted", providerPaymentId: null },
+    { sessionsPerMonth: 15000 },
+    { sessionCount: 15150 }
+  ),
+  true
+);
+assert.equal(
+  isSandboxUsageContext(
+    null,
+    { status: "paid", providerPaymentId: "pay_real", note: "" },
+    { sessionsPerMonth: 15000 },
+    { sessionCount: 15150 }
+  ),
+  false
+);
 
 console.log("test:overage-entitlements — OK");

@@ -30,11 +30,18 @@ export type WorkspaceUsageResponse = {
   overageStatus?: string;
   overageBillable?: boolean;
   overageSandbox?: boolean;
+  overageHasPayment?: boolean;
   modelsRetained?: boolean;
   sandboxSeedEnabled?: boolean;
   sandboxSeededAt?: string | null;
   usageIsSandboxSeeded?: boolean;
   sandboxClearAvailable?: boolean;
+  liveUsage?: {
+    month: string;
+    modelCount: number;
+    sessionCount: number;
+    storageBytes: number;
+  };
 };
 
 function apiUrl(path: string): string {

@@ -90,10 +90,27 @@ export function displayUsageCounts(liveUsage, overageRecord) {
 
 /**
  * @param {string | null | undefined} sandboxSeededAt
- * @param {{ sandbox?: boolean; status?: string } | null} overageRecord
+ * @param {{ sandbox?: boolean; status?: string; providerPaymentId?: string | null; note?: string | null; amountUsd?: number | null } | null} overageRecord
+ * @param {{ sessionsPerMonth?: number } | null} [planLimits]
+ * @param {{ sessionCount?: number } | null} [usage]
  */
-export function isSandboxUsageContext(sandboxSeededAt, overageRecord) {
+export function isSandboxUsageContext(sandboxSeededAt, overageRecord, planLimits = null, usage = null) {
   if (sandboxSeededAt) return true;
   if (overageRecord?.sandbox === true) return true;
+  const note = String(overageRecord?.note || "").toLowerCase();
+  if (note.includes("sandbox") || note.includes("api-sandbox-seed")) return true;
+
+  // Leftover test accept/pay with no real card charge (common after seed → Accept).
+  const settled =
+    overageRecord?.status === "paid" || overageRecord?.status === "accepted";
+  const noProviderPayment = settled && !overageRecord?.providerPaymentId;
+  if (noProviderPayment) {
+    const limit = Number(planLimits?.sessionsPerMonth || 0);
+    const sessions = Number(usage?.sessionCount || 0);
+    // Seed preset is always planLimit + 150.
+    if (limit > 0 && sessions === limit + 150) return true;
+    // Accepted with explicit "no chargeable subscription" after seed testing.
+    if (note.includes("no chargeable") || note.includes("no active subscription")) return true;
+  }
   return false;
 }
