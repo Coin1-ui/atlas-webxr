@@ -8,7 +8,7 @@ import { estimateOverageUsd } from "../lib/overage-estimate.mjs";
 import {
   clearMonthlyUsage,
   getMonthlyUsage,
-  setMonthlySessionCount,
+  setSandboxOverageUsage,
 } from "../lib/usage.mjs";
 import { deleteWorkspaceOverage, getWorkspaceOverage } from "../lib/billing-store.mjs";
 import { isSandboxUsageContext } from "../lib/overage-entitlements.mjs";
@@ -124,10 +124,24 @@ export async function handleSandboxSeedUsage(event, workspaceId) {
     const limits = limitsForWorkspace(workspace);
     const tier = effectiveBillingTier(workspace);
     let sessions = null;
+    let models = null;
+    let storageBytes = null;
     if (body.preset === "overage") {
+      // Inflate all three meters so Account overage estimate is non-trivial.
       sessions = limits.sessionsPerMonth + 150;
+      models = limits.models + 3;
+      // +11 GB above included storage → at least one storage pack on Launch/Growth.
+      storageBytes = limits.storageBytes + 11 * 1024 * 1024 * 1024;
     } else if (typeof body.sessions === "number" && Number.isFinite(body.sessions)) {
       sessions = body.sessions;
+      models =
+        typeof body.models === "number" && Number.isFinite(body.models)
+          ? body.models
+          : limits.models + 3;
+      storageBytes =
+        typeof body.storageBytes === "number" && Number.isFinite(body.storageBytes)
+          ? body.storageBytes
+          : limits.storageBytes + 11 * 1024 * 1024 * 1024;
     } else {
       return jsonResponse(400, {
         error:
@@ -135,11 +149,15 @@ export async function handleSandboxSeedUsage(event, workspaceId) {
       });
     }
 
-    const seeded = await setMonthlySessionCount(workspaceId, sessions);
+    const seeded = await setSandboxOverageUsage(workspaceId, {
+      sessionCount: sessions,
+      modelCount: models,
+      storageBytes,
+    });
     const usage = {
-      modelCount: 0,
+      modelCount: seeded.modelCount,
       sessionCount: seeded.sessionCount,
-      storageBytes: 0,
+      storageBytes: seeded.storageBytes,
     };
     const estimatedOverageUsd = estimateOverageUsd(tier, usage, limits);
     const overage = await getWorkspaceOverage(workspaceId, seeded.month);
@@ -154,7 +172,7 @@ export async function handleSandboxSeedUsage(event, workspaceId) {
       estimatedOverageUsd,
       overagePaid: overage?.status === "paid",
       overageStatus: overage?.status ?? (estimatedOverageUsd > 0 ? "unpaid" : "none"),
-      next: "Refresh Account — Usage overage should show estimated USD > 0",
+      next: "Refresh Account — Usage shows seeded sessions, models, and storage above plan limits",
     });
   } catch (error) {
     const status = error?.statusCode || 500;

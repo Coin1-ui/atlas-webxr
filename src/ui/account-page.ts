@@ -394,14 +394,14 @@ export function renderAccountPage(
                     ${clearOverageBtn}
                     ${
                       showSandboxSeed
-                        ? `<p class="auth-hint" style="margin-top:0.75rem">Sandbox: simulate overage without real AR sessions.</p>
+                        ? `<p class="auth-hint" style="margin-top:0.75rem">Sandbox: inflate sessions, models, and storage above plan limits (UI only — not billed by Dodo).</p>
                            <button type="button" class="mkt-btn mkt-btn-ghost auth-submit" data-action="seed-sandbox-overage">Seed overage (sandbox)</button>`
                         : ""
                     }
                   </div>`
                 : `<p class="auth-hint">No overage this period — you are within included limits. Extra usage is billed automatically with your subscription payment when meters exceed included amounts.</p>${
                     showSandboxSeed
-                      ? `<p class="auth-hint" style="margin-top:0.75rem">Sandbox: simulate overage without real AR sessions.</p>
+                      ? `<p class="auth-hint" style="margin-top:0.75rem">Sandbox: inflate sessions, models, and storage above plan limits (UI only — not billed by Dodo).</p>
                          <button type="button" class="mkt-btn mkt-btn-ghost auth-submit" data-action="seed-sandbox-overage">Seed overage (sandbox)</button>`
                       : ""
                   }${clearOverageBtn}`

@@ -28,12 +28,18 @@ export async function handleWorkspaceUsage(event, workspaceId) {
       readManifest(workspaceId),
       sumWorkspaceStorageBytes(workspaceId),
     ]);
-    const modelCount = Array.isArray(manifest.models) ? manifest.models.length : monthly.modelCount;
+    const sandboxSeeded = Boolean(monthly.sandboxSeededAt);
+    // While sandbox seed is active, prefer Dynamo counters (includes fake models/storage).
+    const modelCount = sandboxSeeded
+      ? monthly.modelCount
+      : Array.isArray(manifest.models)
+        ? manifest.models.length
+        : monthly.modelCount;
     const usage = {
       month: monthly.month,
       modelCount,
       sessionCount: monthly.sessionCount,
-      storageBytes,
+      storageBytes: sandboxSeeded ? monthly.storageBytes : storageBytes,
     };
     const limits = limitsForWorkspace(workspace);
     const warnings = buildUsageWarnings(workspace, usage);

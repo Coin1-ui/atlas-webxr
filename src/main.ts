@@ -1389,7 +1389,7 @@ async function showAccountScreen(opts?: {
                   await seedSandboxOverage(activeWorkspace!.id);
                   void showAccountScreen({
                     billingSuccess:
-                      "Sandbox overage seeded. Refresh shows sessions above the plan limit and an Atlas overage estimate.",
+                      "Sandbox overage seeded (sessions + models + storage above plan). Not sent to Dodo meters.",
                   });
                 } catch (e) {
                   void showAccountScreen({
