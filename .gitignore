@@ -7,3 +7,6 @@ test-results/
 .env
 .env.*
 !.env.example
+DOdo_api.txt
+**/DOdo_api.txt
+DODO-HYBRID-SETUP-RESULT.json

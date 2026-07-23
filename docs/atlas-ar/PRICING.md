@@ -29,13 +29,15 @@
 
 ## Overage (hybrid usage)
 
+**Source of truth:** `backend/lambda/atlas-api/lib/overage-estimate.mjs` (mirrored in `src/shared/plan-display.ts`). Included session caps follow `plan-limits.ts` (100 sessions / model / mo → 500 / 3,000 / 10,000).
+
 | Meter | Starter | Launch | Growth |
 |-------|---------|--------|--------|
-| Extra sessions | +$20 / 100 | +$15 / 1,000 | +$10 / 1,000 |
+| Extra sessions | +$5 / 100 | +$8 / 1,000 | +$5 / 1,000 |
 | Extra models | +$3 each | +$12 / 10 | +$8 / 10 |
 | Extra storage | +$8 / 5 GB | +$6 / 10 GB | +$4 / 10 GB |
 
-**MVP:** Soft warnings in admin; manual invoicing. Stripe metering → Phase 3.
+Dodo hybrid products bill these via meters (sessions + models + storage_bytes) on Usage-Based SKUs.
 
 ## Conversion offers
 

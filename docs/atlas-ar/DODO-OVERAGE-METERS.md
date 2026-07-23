@@ -1,89 +1,67 @@
 # Dodo meters + add-ons for Atlas overage (test mode)
 
-**Status:** Catalog seeded 2026-07-22 via test API (Option A — no `on_demand`, plan changes stay available).  
-**Event ingest (code):** wired 2026-07-22/23 — `dodo-usage-ingest.mjs` from session analytics + model upload (best-effort; off if `ATLAS_DODO_USAGE_INGEST=false`).  
-**Hybrid checkout:** still **off** by default — live `DODO_PRODUCT_*_MONTHLY` unchanged until QA + explicit `ATLAS_DODO_USAGE_HYBRID=true` or `DODO_PRODUCT_*_USAGE` env.  
-**List prices:** Atlas plan amounts are **tax-inclusive** (`tax_inclusive: true` on Dodo products; marketing/docs match).
+**Last setup:** 2026-07-23 — existing hybrids patched to **1 Day payment / 1 Month period** + **3 meters** (sessions, models, storage_bytes) + `tax_inclusive: true`.  
+**Result JSON (local):** `DODO-HYBRID-SETUP-RESULT.json` (gitignored).  
+**API key:** local `D:\AI\atlas-webxr\DOdo_api.txt` only — never commit. Chat-pasted candidate key returned **401**; setup used the prior working test key.
 
-## Best Dodo combination (plan + usage overage)
+## Best Dodo combination (locked)
 
-Per [Dodo Products](https://docs.dodopayments.com/features/products) and [Hybrid billing — Subscription + Usage](https://docs.dodopayments.com/features/hybrid-billing):
+| Setting | Value |
+|---------|--------|
+| **Pricing Type** | **Usage-Based** (`usage_based_price`) |
+| **Products** | Starter / Launch / Growth hybrids (edit in place) |
+| **Payment frequency** | **1 Day** |
+| **Subscription period** | **1 Month** |
+| **Tax** | `saas` · `tax_inclusive: true` |
+| **Meters (all 3 per product)** | sessions · models · storage_bytes |
+| **On-demand** | **Off** |
+| **Overage rates** | `overage-estimate.mjs` / `plan-display.ts` (not stale PRICING.md history) |
 
-| Setting | Choose | Why |
-|---------|--------|-----|
-| **Pricing model / Pricing Type** | **Usage-Based** | API `price.type: usage_based_price` — fixed monthly fee **plus** meter overage on one invoice |
-| **Product shape** | One product per tier (Starter / Launch / Growth) with meters attached | Dashboard: Create Product → attach usage meter (Hybrid Model 1 / Tiered base + overage) |
-| **Tax category** | `saas` | Matches Atlas SaaS |
-| **Tax inclusive** | **`true`** | Displayed plan price = what customer pays; Dodo breaks out tax on checkout/invoice |
-| **Meters (primary)** | Sessions — Count on `atlas.ar_session` | Matches included session allowances + overage rates |
-| **Do not use for plan SKUs** | Pure **Subscription** (`recurring_price` only) | No automatic usage overage |
-| **Do not use for new checkouts** | **On-demand** subscription | Blocks Dodo `change-plan` (Option A) |
-| **Optional add-on** | Session Pack (prepaid) | Top-ups; keep off the hybrid meter path to avoid conflicting usage rules |
+Later you may also use **Month/Year** products; this catalog is **Day/Month** for renewal testing.
 
-**Not recommended as the plan SKU:** One-Time products, pure usage-only (no `fixed_price`), or Subscription + On-Demand charges for overage.
+## Live hybrid product IDs (test)
 
-Atlas already seeded hybrids with this shape (`usage_based_price` + session meter + free thresholds). Switch Lambda `DODO_PRODUCT_*` only after ingest QA.
+| Tier | Product ID | Fixed | Session free / PPU | Model free / PPU | Storage free (bytes) |
+|------|------------|-------|--------------------|------------------|----------------------|
+| Starter | `pdt_0Njk5Xz9AdIoBNmgRoIEK` | $5 | 500 / 5¢ | 5 / $3 | 655,360,000 |
+| Launch | `pdt_0Njk5QMJ8uCwSvseuHeo0` | $59 | 3,000 / 0.8¢ | 30 / $1.20 | 3,932,160,000 |
+| Growth | `pdt_0Njk5Y261cDq9TWLto4dR` | $179 | 10,000 / 0.5¢ | 100 / $0.80 | 13,107,200,000 |
 
-## Can Dodo do this?
+**Meters:** `mtr_0Njk5Q0tl…` sessions · `mtr_0Njk5Q5c…` models · `mtr_0Njk5QA3…` storage  
+**Add-on:** `adn_0Njk5E8xaOBpo1PAT1pOv` Session Pack 1k ($8) on classic Launch
 
-| Mechanism | Supported? | Fit for Atlas overage |
-|-----------|------------|------------------------|
-| **Meters** + `usage_based_price` (fixed fee + usage) | Yes | **Best** for automatic session overage at renewal — keeps standard recurring (plan change OK) |
-| **Add-ons** | Yes | Good for **prepaid packs** (buy 1k sessions), not automatic overage |
-| **`on_demand` + `/charge`** | Yes | Card overage now — but **blocks** `change-plan` (rejected in Option A) |
+## Lambda env (test checkouts) — set in AWS Console
 
-Dodo docs: meters and add-ons should **not** both drive complex usage on the same product in conflicting ways; we use meters on **hybrid products**, add-on on the existing Launch catalog product as a pack.
-
-## Created in test business `bus_0NiRCeAygFrKyx6k11gSw`
-
-### Meters
-
-| Name | Meter ID | Event | Aggregation |
-|------|----------|-------|-------------|
-| Atlas AR sessions | `mtr_0Njk5Q0tl4kMjH8lLff75` | `atlas.ar_session` | count |
-| Atlas models | `mtr_0Njk5Q5csiO6F5ThJXfAs` | `atlas.model_count` | max(`model_count`) |
-| Atlas storage GB | `mtr_0Njk5QA3t5MsRzt32hVsG` | `atlas.storage_bytes` | max(`storage_bytes`) |
-
-### Add-on
-
-| Name | ID | Price |
-|------|-----|-------|
-| Atlas Session Pack 1k | `adn_0Njk5E8xaOBpo1PAT1pOv` | $8.00 (`800` cents) |
-
-Attached to existing Launch product `pdt_0NjSYfJ2iwd7x9Qyfydwv` as optional add-on list entry.
-
-### Hybrid usage products (parallel to current plans — **not** wired to Lambda yet)
-
-| Name | Product ID | Fixed | Free sessions | `price_per_unit` |
-|------|------------|-------|---------------|------------------|
-| Starter (usage hybrid) | `pdt_0Njk5Xz9AdIoBNmgRoIEK` | $5 | 1,000 | **5** cents/session (= Atlas $5/100) |
-| Launch usage hybrid | `pdt_0Njk5QMJ8uCwSvseuHeo0` | $59 | 5,000 | **0.8** cents/session (= Atlas $8/1k) |
-| Growth (usage hybrid) | `pdt_0Njk5Y261cDq9TWLto4dR` | $179 | 15,000 | **0.5** cents/session (= Atlas $5/1k) |
-
-## Recommended architecture (best path under Option A)
-
-1. Keep **checkout without `on_demand`** so Upgrade/Downgrade works.
-2. Prefer **Usage-Based (`usage_based_price`) products** for plan + automatic session overage at period end (Dodo meters + event ingest).
-3. Set **`tax_inclusive: true`** so list prices match tax-inclusive marketing copy.
-4. Keep Atlas **Accept & pay** for models/storage settle (or add those meters later with careful unit design).
-5. Use **Session Pack add-on** for optional prepaid top-ups in portal/checkout.
-6. Only switch Lambda `DODO_PRODUCT_*` to hybrid IDs after: event ingest from Atlas session analytics + webhook reconciliation + plan-change QA.
-
-## Event ingest (implemented in Lambda source)
-
-```http
-POST https://test.dodopayments.com/events/ingest
-Authorization: Bearer <DODO_PAYMENTS_API_KEY>
+```
+DODO_PRODUCT_STARTER_USAGE=pdt_0Njk5Xz9AdIoBNmgRoIEK
+DODO_PRODUCT_LAUNCH_USAGE=pdt_0Njk5QMJ8uCwSvseuHeo0
+DODO_PRODUCT_GROWTH_USAGE=pdt_0Njk5Y261cDq9TWLto4dR
+ATLAS_DODO_USAGE_HYBRID=true
+ATLAS_DODO_USAGE_INGEST=true
 ```
 
-Wired in:
-- `lib/dodo-usage-ingest.mjs` → `ingestDodoArSession` / `ingestDodoModelCount` / `ingestDodoStorageBytes`
-- `lib/usage.mjs` (session dedupe success) → AR session events
-- `handlers/v2-models.mjs` (upload complete) → model + storage gauges
+Keep classic `DODO_PRODUCT_*_MONTHLY` until hybrids are validated; with `ATLAS_DODO_USAGE_HYBRID=true`, checkout prefers USAGE IDs (see `billing-provider-dodo.mjs`).
 
-**Deploy gate:** rebuild/upload Lambda zip so production includes `dodo-usage-ingest.mjs` (not only Amplify).  
-**Next product gate:** flip hybrid product env after ingest smoke on a paid test sub.
+Also ensure Lambda zip includes `dodo-usage-ingest.mjs` (session + model/storage ingest).
 
-## Script
+## Re-run
 
-`scripts/setup-dodo-overage-meters.mjs` — idempotent list/create helpers for re-runs.
+```powershell
+cd D:\AI\agency-agents\atlas-webxr
+$env:DODO_PAYMENTS_API_KEY = "<from DOdo_api.txt>"
+node scripts/setup-dodo-overage-meters.mjs
+```
+
+## Overage rate source
+
+| Meter | Starter | Launch | Growth |
+|-------|---------|--------|--------|
+| Sessions | +$5 / 100 | +$8 / 1,000 | +$5 / 1,000 |
+| Models | +$3 each | +$12 / 10 | +$8 / 10 |
+| Storage | +$8 / 5 GB | +$6 / 10 GB | +$4 / 10 GB |
+
+## Architecture notes
+
+1. No `on_demand` — plan changes stay available.  
+2. Storage meter remains `max(storage_bytes)`; free threshold in bytes; PPU rounded to ≤12 decimal places.  
+3. Month/Year SKUs can be added later as parallel products without replacing Day/Month test SKUs.
