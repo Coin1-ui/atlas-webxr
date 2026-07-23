@@ -14,63 +14,19 @@ function authHeaders(): HeadersInit {
   return headers;
 }
 
-const OVERAGE_PAID_KEY = "atlas-overage-paid";
-
-export function overagePaidKey(workspaceId: string, month: string): string {
-  return `${OVERAGE_PAID_KEY}:${workspaceId}:${month}`;
+export function isOveragePaidLocally(_workspaceId: string, _month: string): boolean {
+  return false;
 }
 
-export function isOveragePaidLocally(workspaceId: string, month: string): boolean {
-  return localStorage.getItem(overagePaidKey(workspaceId, month)) === "1";
-}
-
-export function markOveragePaidLocally(workspaceId: string, month: string): void {
-  localStorage.setItem(overagePaidKey(workspaceId, month), "1");
-}
-
-export function clearOveragePaidLocally(workspaceId: string, month: string): void {
-  localStorage.removeItem(overagePaidKey(workspaceId, month));
-}
-
-/** Clear leftover seed/test overage via billing API (works when sandbox seed env is off). */
-export async function clearTestOverage(
-  workspaceId: string,
-  opts?: { month?: string; force?: boolean }
-): Promise<{ ok: true; cleared: true; month: string }> {
-  const base = getApiBase();
-  if (!base) throw new Error("API base is not configured");
-  const res = await fetch(apiUrl(`/v2/workspaces/${encodeURIComponent(workspaceId)}/billing/overage`), {
-    method: "POST",
-    headers: authHeaders(),
-    body: JSON.stringify({
-      clearTestOverage: true,
-      month: opts?.month,
-      force: opts?.force === true,
-    }),
-  });
-  if (!res.ok) {
-    const text = await res.text();
-    try {
-      const json = JSON.parse(text) as { error?: string };
-      if (json.error) throw new Error(json.error);
-    } catch (e) {
-      if (e instanceof Error && e.message !== text && !e.message.startsWith("{")) throw e;
-    }
-    throw new Error(text || `HTTP ${res.status}`);
-  }
-  return (await res.json()) as { ok: true; cleared: true; month: string };
-}
-
-/** Accept & pay usage overage — API when deployed, local ack in dev. */
+/** Record overage acceptance via API (ops fallback). Hybrid Dodo meters bill at cycle — not via /charge. */
 export async function acceptOverageCharge(
   workspaceId: string,
   month: string,
   amountUsd: number
-): Promise<{ ok: true; method: "api" | "local"; paymentPending?: boolean }> {
+): Promise<{ ok: true; method: "api" }> {
   const base = getApiBase();
   if (!base) {
-    markOveragePaidLocally(workspaceId, month);
-    return { ok: true, method: "local" };
+    throw new Error("Provider-backed overage billing is unavailable in local development");
   }
 
   const res = await fetch(apiUrl(`/v2/workspaces/${encodeURIComponent(workspaceId)}/billing/overage`), {
@@ -84,91 +40,5 @@ export async function acceptOverageCharge(
     throw new Error(text || `HTTP ${res.status}`);
   }
 
-  const payload = (await res.json()) as {
-    overagePaid?: boolean;
-    paymentPending?: boolean;
-    method?: string;
-  };
-  if (payload.overagePaid) {
-    markOveragePaidLocally(workspaceId, month);
-  }
-  return {
-    ok: true,
-    method: "api",
-    paymentPending: payload.paymentPending === true,
-  };
-}
-
-/** Sandbox-only: seed session overage via Cognito (no local AWS keys). */
-export async function seedSandboxUsage(
-  workspaceId: string,
-  body: { preset?: "overage"; sessions?: number; reset?: boolean; resetAll?: boolean; resetOverage?: boolean; force?: boolean }
-): Promise<{
-  ok: true;
-  estimatedOverageUsd?: number;
-  usage?: { sessionCount: number; month: string };
-  overageCleared?: boolean;
-}> {
-  const base = getApiBase();
-  if (!base) throw new Error("API base is not configured");
-  const res = await fetch(apiUrl(`/v2/workspaces/${encodeURIComponent(workspaceId)}/sandbox/usage`), {
-    method: "POST",
-    headers: authHeaders(),
-    body: JSON.stringify(body),
-  });
-  if (!res.ok) {
-    const text = await res.text();
-    try {
-      const json = JSON.parse(text) as { error?: string };
-      if (json.error) throw new Error(json.error);
-    } catch (e) {
-      if (e instanceof Error && !e.message.startsWith("{") && e.message !== text) throw e;
-    }
-    throw new Error(text || `HTTP ${res.status}`);
-  }
-  return (await res.json()) as {
-    ok: true;
-    estimatedOverageUsd?: number;
-    usage?: { sessionCount: number; month: string };
-    overageCleared?: boolean;
-  };
-}
-
-/** Request plan upgrade — records purchase when billing API is deployed. */
-export async function requestPlanUpgrade(
-  workspaceId: string,
-  targetTier: string,
-  couponCode?: string,
-): Promise<{ method: "api" | "local" }> {
-  const base = getApiBase();
-  const body: { targetTier: string; couponCode?: string } = { targetTier };
-  if (couponCode?.trim()) body.couponCode = couponCode.trim().toUpperCase();
-  if (!base) {
-    markPurchasedTierLocally(workspaceId, targetTier);
-    return { method: "local" };
-  }
-  const res = await fetch(apiUrl(`/v2/workspaces/${encodeURIComponent(workspaceId)}/billing/upgrade`), {
-    method: "POST",
-    headers: authHeaders(),
-    body: JSON.stringify(body),
-  });
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(text || `HTTP ${res.status}`);
-  }
-  return { method: "api" };
-}
-
-const PURCHASED_TIER_KEY = "atlas-purchased-tier";
-
-export function purchasedTierKey(workspaceId: string): string {
-  return `${PURCHASED_TIER_KEY}:${workspaceId}`;
-}
-
-export function markPurchasedTierLocally(workspaceId: string, tier: string): void {
-  localStorage.setItem(purchasedTierKey(workspaceId), tier);
-}
-
-export function getPurchasedTierLocally(workspaceId: string): string | null {
-  return localStorage.getItem(purchasedTierKey(workspaceId));
+  return { ok: true, method: "api" };
 }

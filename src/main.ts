@@ -1339,7 +1339,7 @@ async function showAccountScreen(opts?: {
           try {
             await acceptOverageCharge(activeWorkspace!.id, usage.usage.month, amountUsd);
             void showAccountScreen({
-              billingSuccess: `Overage of $${amountUsd.toFixed(2)} accepted for ${usage.usage.month}.`,
+              billingSuccess: `Overage estimate of $${amountUsd.toFixed(2)} noted for ${usage.usage.month}. On hybrid plans, meters bill with your next subscription payment.`,
             });
           } catch (e) {
             void showAccountScreen({ billingError: e instanceof Error ? e.message : String(e) });

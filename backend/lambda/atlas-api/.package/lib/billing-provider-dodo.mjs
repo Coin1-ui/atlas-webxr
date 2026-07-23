@@ -129,8 +129,9 @@ export async function createDodoCheckout(operation, input) {
         atlas_billing_operation_id: operation.operationId,
       },
       // Do NOT set subscription_data.on_demand — Dodo rejects change-plan on
-      // on-demand subs (ON_DEMAND_PLAN_CHANGE_NOT_SUPPORTED). Overage card charge
-      // requires on_demand; without it Accept & pay stores status "accepted".
+      // on-demand subs (ON_DEMAND_PLAN_CHANGE_NOT_SUPPORTED). Hybrid overage
+      // bills via usage meters at the payment cycle; POST …/charge is unsupported
+      // on usage-based products (Accept & pay falls back to status "accepted").
       ...(operation.couponCode ? { discount_codes: [operation.couponCode] } : {}),
     },
   });
@@ -260,7 +261,9 @@ export async function ingestDodoUsageEvents(events) {
 export { KNOWN_USAGE_HYBRID_PRODUCTS };
 
 /**
- * Charge usage overage against an on-demand-capable Dodo subscription.
+ * Attempt an ad-hoc overage card charge (legacy / non–usage-based only).
+ * Usage-based hybrid subscriptions reject this with UNSUPPORTED_ACTION —
+ * meter overage bills automatically each payment cycle instead.
  * @param {string} subscriptionId
  * @param {{ amountMinor: number; month: string; workspaceId: string; operationId: string }} input
  */

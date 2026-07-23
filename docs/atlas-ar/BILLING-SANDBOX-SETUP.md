@@ -254,3 +254,14 @@ Catalog setup: `node scripts/setup-dodo-overage-meters.mjs` (see [DODO-OVERAGE-M
 Set these on **Lambda `atlas-api`** (Console → Configuration → Environment variables). Redeploy/upload zip so ingest is present. Then new Account checkouts use hybrid SKUs.
 
 **Do not** enable `on_demand` on checkout. Existing Month/Month subs are unchanged until cancel → Subscribe again.
+
+### Overage QA (hybrid meters)
+
+| Check | Pass |
+|-------|------|
+| Events reach Dodo | `POST /events/ingest` for `atlas.ar_session` / `atlas.model_count` / `atlas.storage_bytes` (Lambda `ATLAS_DODO_USAGE_INGEST=true`) |
+| Invoice path | Overage appears on the **subscription payment cycle** with fixed fee — not via Account Accept & pay |
+| `/charge` | Expect `UNSUPPORTED_ACTION` on usage-based subs; Account must not claim instant card pay |
+| Estimate vs invoice | Account pack estimate is a guide; Dodo bills linear PPU after free threshold |
+
+See [DODO-OVERAGE-METERS.md](./DODO-OVERAGE-METERS.md).

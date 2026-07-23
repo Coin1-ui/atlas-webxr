@@ -130,10 +130,10 @@ export function renderAccountPage(
           <span class="admin-stat-label">Usage overage</span>
           <span class="admin-stat-val">${
             overagePaid
-              ? `Paid${overageAmountUsd != null ? ` ┬╖ $${overageAmountUsd.toFixed(2)}` : ""}`
+              ? `Recorded${overageAmountUsd != null ? ` · $${overageAmountUsd.toFixed(2)} est.` : ""}`
               : overageAccepted
-                ? `Invoicing pending${overageAmountUsd != null ? ` ┬╖ $${overageAmountUsd.toFixed(2)}` : ""}`
-                : `Estimated ┬╖ $${overageUsd.toFixed(2)}`
+                ? `Noted — meters bill at cycle${overageAmountUsd != null ? ` · $${overageAmountUsd.toFixed(2)} est.` : ""}`
+                : `Estimated · $${overageUsd.toFixed(2)}`
           }</span>
         </div>`
       : "";
@@ -167,9 +167,9 @@ export function renderAccountPage(
         unrestricted
           ? `<p class="auth-hint admin-usage-operator-note">Platform operator account — usage tracked for visibility; no plan limits or overage.</p>`
           : (overagePaid || overageAccepted) && effectiveLimits?.overageExtended?.sessions
-            ? `<p class="auth-hint">Session cap raised${usageMonth ? ` for ${escapeHtml(usageMonth)}` : ""} after overage payment. Models and storage stay on plan limits — upgrade to add catalog slots.</p>`
+            ? `<p class="auth-hint">Session cap raised${usageMonth ? ` for ${escapeHtml(usageMonth)}` : ""} after overage was recorded. Models and storage stay on plan limits — upgrade to add catalog slots.</p>`
             : (overagePaid || overageAccepted)
-              ? `<p class="auth-hint">Overage settled${usageMonth ? ` for ${escapeHtml(usageMonth)}` : ""}. Models and storage follow your plan tier; session overage extends your monthly cap when applicable.</p>`
+              ? `<p class="auth-hint">Overage noted${usageMonth ? ` for ${escapeHtml(usageMonth)}` : ""}. On hybrid plans, meters bill with your subscription payment. Models and storage follow your plan tier.</p>`
               : modelsRetained
             ? `<p class="auth-hint">Plan inactive — models stay in your workspace. Public showroom and new uploads stay paused until you subscribe. Usage overage is not charged while the plan is canceled or expired.</p>`
             : usage.warnings.length
@@ -368,25 +368,24 @@ export function renderAccountPage(
                 ? `<p class="auth-hint">Not applicable — platform operator accounts have no usage caps.</p>`
                 : overagePaid
                 ? `<div class="account-overage-box">
-                    <p class="camera-success" role="status">Usage overage${usageMonth ? ` for ${escapeHtml(usageMonth)}` : ""} is paid${overageAmountUsd != null ? ` ($${overageAmountUsd.toFixed(2)})` : ""}.</p>
-                    <p class="auth-hint">Meter-based add-on for usage above included plan limits.</p>
+                    <p class="camera-success" role="status">Usage overage${usageMonth ? ` for ${escapeHtml(usageMonth)}` : ""} recorded as paid${overageAmountUsd != null ? ` ($${overageAmountUsd.toFixed(2)} Atlas estimate)` : ""}.</p>
+                    <p class="auth-hint">On Dodo hybrids, meter overage is charged with your subscription payment cycle. This amount is an Atlas pack estimate and may differ from the invoice.</p>
                     ${clearOverageBtn}
                   </div>`
                 : overageAccepted
                 ? `<div class="account-overage-box">
-                    <p class="camera-success" role="status">Usage overage${usageMonth ? ` for ${escapeHtml(usageMonth)}` : ""} accepted — invoicing is pending${overageAmountUsd != null ? ` ($${overageAmountUsd.toFixed(2)})` : ""}.</p>
+                    <p class="camera-success" role="status">Usage overage${usageMonth ? ` for ${escapeHtml(usageMonth)}` : ""} noted${overageAmountUsd != null ? ` ($${overageAmountUsd.toFixed(2)} Atlas estimate)` : ""}. Automatic card charge is unavailable for usage-based subscriptions — meters bill with your next payment cycle.</p>
                     ${clearOverageBtn}
                   </div>`
                 : !overageBillable
-                ? `<p class="auth-hint">Usage overage is a meter add-on for active paid plans. It is not charged while your plan is canceled or expired. Models stay saved — subscribe to restore the showroom.</p>`
+                ? `<p class="auth-hint">Usage overage meters apply on active paid plans. They are not charged while your plan is canceled or expired. Models stay saved — subscribe to restore the showroom.</p>`
                 : hasOverage
                 ? `<div class="account-overage-box">
-                    <p class="account-overage-amount">Estimated overage: <strong>$${overageUsd.toFixed(2)}</strong></p>
-                    <p class="auth-hint">Based on usage above your included plan limits. Pay to restore full service and avoid interruption.</p>
-                    <button type="button" class="mkt-btn mkt-btn-primary auth-submit" data-action="pay-overage" data-amount="${overageUsd}">Accept &amp; pay overage</button>
+                    <p class="account-overage-amount">Atlas overage estimate: <strong>$${overageUsd.toFixed(2)}</strong></p>
+                    <p class="auth-hint">Pack-rounded guide based on usage above included plan limits. On Dodo hybrid plans, overage is charged automatically with your next subscription payment when meters exceed free thresholds — the invoice uses per-unit meter rates and may differ slightly from this estimate.</p>
                     ${clearOverageBtn}
                   </div>`
-                : `<p class="auth-hint">No overage charges this period — you are within included limits.</p>${
+                : `<p class="auth-hint">No overage this period — you are within included limits. Extra usage is billed automatically with your subscription payment when meters exceed included amounts.</p>${
                     showSandboxSeed
                       ? `<p class="auth-hint" style="margin-top:0.75rem">Sandbox: simulate overage without real AR sessions.</p>
                          <button type="button" class="mkt-btn mkt-btn-ghost auth-submit" data-action="seed-sandbox-overage">Seed overage (sandbox)</button>`

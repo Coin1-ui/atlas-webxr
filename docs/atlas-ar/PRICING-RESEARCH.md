@@ -1,6 +1,8 @@
 # Atlas AR — Market & sales pricing research (June 2026)
 
 > **Internal use only.** Competitor names in this document are for sales research — do **not** appear on customer-facing UI, ads, or legal pages.
+>
+> **Rates & overage SoT (2026-07-23):** Customer pack rates and meter billing are defined in [PRICING.md](./PRICING.md) and [DODO-OVERAGE-METERS.md](./DODO-OVERAGE-METERS.md). Historical `$20/$15/$10` session packs and “invoice manually until Stripe” in this research doc are **superseded**.
 
 **Orchestration:** Trend Researcher · FP&A Analyst · Deal Strategist · Product Manager  
 **Goal:** Attractive, competitive pricing that drives **quick self-serve onboarding** without racing to the bottom on per-view fees.

@@ -3,20 +3,16 @@ import { requireWorkspaceAdmin } from "../lib/authz.mjs";
 import { jsonResponse, optionsResponse, parseJsonBody } from "../lib/http.mjs";
 import { getWorkspaceById } from "../lib/dynamodb.mjs";
 import { readManifest, sumWorkspaceStorageBytes } from "../lib/models-store.mjs";
-import { clearMonthlyUsage, getMonthlyUsage } from "../lib/usage.mjs";
+import { getMonthlyUsage } from "../lib/usage.mjs";
 import { limitsForWorkspace } from "../lib/plan-limits.mjs";
-import { effectiveBillingTier, isOverageBillable } from "../lib/trial.mjs";
+import { effectiveBillingTier } from "../lib/trial.mjs";
 import { estimateOverageUsd, normalizeOverageMonth } from "../lib/overage-estimate.mjs";
 import {
   getBillingSubscription,
   getWorkspaceOverage,
   recordWorkspaceOverageCharge,
-  deleteWorkspaceOverage,
 } from "../lib/billing-store.mjs";
 import { createDodoOverageCharge } from "../lib/billing-provider-dodo.mjs";
-import { isSandboxUsageContext } from "../lib/overage-entitlements.mjs";
-import { isSandboxUsageSeedEnabled } from "../lib/sandbox-seed-flag.mjs";
-import { requirePlatformOwner } from "../lib/platform-authz.mjs";
 
 async function loadUsageSnapshot(workspaceId) {
   const [monthly, manifest, storageBytes] = await Promise.all([
@@ -30,7 +26,6 @@ async function loadUsageSnapshot(workspaceId) {
     modelCount,
     sessionCount: monthly.sessionCount,
     storageBytes,
-    sandboxSeededAt: monthly.sandboxSeededAt ?? null,
   };
 }
 
@@ -65,8 +60,7 @@ export async function handleBillingOverage(event, workspaceId) {
     const usage = await loadUsageSnapshot(workspaceId);
     const tier = effectiveBillingTier(workspace);
     const limits = limitsForWorkspace(workspace);
-    const overageBillable = isOverageBillable(workspace);
-    const estimatedAmountUsd = overageBillable ? estimateOverageUsd(tier, usage, limits) : 0;
+    const estimatedAmountUsd = estimateOverageUsd(tier, usage, limits);
 
     if (method === "GET") {
       const month =
@@ -74,77 +68,14 @@ export async function handleBillingOverage(event, workspaceId) {
           ? normalizeOverageMonth(event.queryStringParameters.month)
           : usage.month;
       const record = await getWorkspaceOverage(workspaceId, month);
-      const monthly = await getMonthlyUsage(workspaceId);
-      const clearable = isSandboxUsageContext(
-        monthly.sandboxSeededAt,
-        record,
-        limits,
-        monthly,
-      );
-      return jsonResponse(200, {
-        ...overageResponse(record, estimatedAmountUsd),
-        overageBillable,
-        clearable,
-        overageHasPayment: Boolean(record?.providerPaymentId),
-      });
+      return jsonResponse(200, overageResponse(record, estimatedAmountUsd));
     }
 
-    const body = parseJsonBody(event) || {};
-
-    // Clear leftover seed/test overage (works even when ATLAS_SANDBOX_USAGE_SEED=false).
-    if (body.clearTestOverage === true) {
-      const month = normalizeOverageMonth(body.month ?? usage.month);
-      const record = await getWorkspaceOverage(workspaceId, month);
-      const monthly = await getMonthlyUsage(workspaceId);
-      let asOwner = false;
-      try {
-        await requirePlatformOwner(event);
-        asOwner = true;
-      } catch {
-        /* workspace admin below */
-      }
-      const force = body.force === true && asOwner;
-      // Always evaluate clearable against LIVE monthly counters (orphaned paid rows).
-      const clearable = isSandboxUsageContext(
-        monthly.sandboxSeededAt,
-        record,
-        limits,
-        monthly,
-      );
-      const seedEnv = isSandboxUsageSeedEnabled();
-      // Never clear real in-period overage. seedEnv only enables Seed UI — not a clear bypass.
-      // Platform owner may force for stuck sandbox tests.
-      if (!force && !clearable) {
-        return jsonResponse(403, {
-          error:
-            "Only leftover sandbox/test overage can be cleared (seed rows or paid overage left after usage was reset). Real in-period production overage is kept.",
-          code: "OVERAGE_NOT_CLEARABLE",
-          sandboxSeedEnabled: seedEnv,
-        });
-      }
-      await deleteWorkspaceOverage(workspaceId, month);
-      await clearMonthlyUsage(workspaceId, month);
-      return jsonResponse(200, {
-        ok: true,
-        cleared: true,
-        month,
-        forced: force,
-        sandboxOnly: true,
-      });
-    }
-
-    if (!overageBillable) {
-      return jsonResponse(403, {
-        error:
-          "Usage overage applies only while a paid plan is active. Subscribe to restore service — existing models stay saved.",
-        code: "OVERAGE_NOT_BILLABLE",
-      });
-    }
-
-    if (body.accept !== true) {
+    const body = parseJsonBody(event);
+    if (body?.accept !== true) {
       return jsonResponse(400, { error: "accept must be true" });
     }
-    const month = normalizeOverageMonth(body.month ?? usage.month);
+    const month = normalizeOverageMonth(body?.month ?? usage.month);
     if (month !== usage.month) {
       return jsonResponse(400, { error: "Overage can only be accepted for the current usage month" });
     }
@@ -156,7 +87,7 @@ export async function handleBillingOverage(event, workspaceId) {
     }
 
     const clientAmountUsd =
-      typeof body.amountUsd === "number" && Number.isFinite(body.amountUsd)
+      typeof body?.amountUsd === "number" && Number.isFinite(body.amountUsd)
         ? Math.round(body.amountUsd * 100) / 100
         : null;
     if (clientAmountUsd !== null && Math.abs(clientAmountUsd - estimatedAmountUsd) > 0.02) {
@@ -165,13 +96,6 @@ export async function handleBillingOverage(event, workspaceId) {
         amountUsd: estimatedAmountUsd,
       });
     }
-
-    const usageSnapshot = {
-      modelCount: usage.modelCount,
-      sessionCount: usage.sessionCount,
-      storageBytes: usage.storageBytes,
-    };
-    const overageSandbox = Boolean(usage.sandboxSeededAt);
 
     const existing = await getWorkspaceOverage(workspaceId, month);
     if (existing?.status === "paid") {
@@ -215,8 +139,6 @@ export async function handleBillingOverage(event, workspaceId) {
           providerPaymentId: charge.paymentId,
           operationId,
           paidAt: new Date().toISOString(),
-          usageSnapshot,
-          sandbox: overageSandbox,
         });
         return jsonResponse(200, {
           ok: true,
@@ -233,15 +155,13 @@ export async function handleBillingOverage(event, workspaceId) {
           provider: subscription.provider,
           operationId,
           note: message.slice(0, 500),
-          usageSnapshot,
-          sandbox: overageSandbox,
         });
         return jsonResponse(200, {
           ok: true,
           method: "accepted",
           paymentPending: true,
           message:
-            "Overage accepted. Automatic card charge is unavailable for this subscription — our team will follow up on invoicing.",
+            "Overage noted. Automatic ad-hoc card charge is unavailable on usage-based (hybrid) subscriptions — Dodo meters bill overage with your next subscription payment. Our team can follow up if invoicing help is needed.",
           ...overageResponse(record, estimatedAmountUsd),
         });
       }
@@ -255,23 +175,18 @@ export async function handleBillingOverage(event, workspaceId) {
       provider: subscription?.provider ?? null,
       operationId,
       note: subscription ? "No chargeable subscription" : "No active subscription",
-      usageSnapshot,
-      sandbox: overageSandbox,
     });
     return jsonResponse(200, {
       ok: true,
       method: "accepted",
       paymentPending: true,
-      message: "Overage accepted. We will follow up on invoicing for this period.",
+      message: "Overage noted. On hybrid plans, meters bill with your subscription payment cycle. We will follow up if separate invoicing is needed.",
       ...overageResponse(record, estimatedAmountUsd),
     });
   } catch (error) {
     const status = error?.statusCode || 500;
-    const message = error instanceof Error ? error.message : "Error";
     return jsonResponse(status, {
-      error: status >= 500 ? "Unable to process overage" : message,
-      detail: status >= 500 ? message : undefined,
-      code: error?.name || error?.code,
+      error: status >= 500 ? "Unable to process overage" : error instanceof Error ? error.message : "Error",
     });
   }
 }

@@ -13,7 +13,7 @@
 | **Pilot-ready (Starter → Growth core AR)** | ✅ Signup, upload, branded link, Android WebXR floor AR, iOS Quick Look, branding, usage tracking, admin onboarding |
 | **Sell with manual ops** | Founding 10 / design-partner pricing (owner sets plan + coupon), Growth “analytics export” (enable JSON session log toggle) |
 | **Self-serve trial** | ✅ 14-day Growth trial on workspace create ([ENG-36](./BATCH-28-CONFIRMED.md)) |
-| **Do not promise as self-serve yet** | Stripe checkout, hard plan enforcement, Scale tier (SSO, custom domain, multi-workspace), SLA support |
+| **Do not promise as self-serve yet** | Scale tier (SSO, custom domain, multi-workspace), SLA support, annual SKUs |
 
 **MiroFish alignment:** ~30% “too complex” and ~25% “too expensive” objections — only close design partners when you can **time first placement on the call** (≤15 min) and set **Starter $5** or **Growth @ $59 founding** via owner dashboard.
 
@@ -34,7 +34,7 @@ Legend: **Ready** = customer can use today without you intervening · **Partial*
 | Browser AR + 3D inspect (Chrome & Safari) | **Ready** | WebXR + Quick Look + object mode |
 | Branded `/w/your-brand` | **Ready** | Slug routing + theme |
 | Email support (72h) | **Partial** | support@atlas-ar.com — process, not in-app SLA timer |
-| Overage (+$20/100 sessions, etc.) | **Partial** | Estimated in `/account`; pay button is **local ack** until Stripe ([billing-api.ts](../../src/data/billing-api.ts)) |
+| Overage (+$5/100 sessions pack guide, etc.) | **Ready** | Dodo hybrid meters auto-bill each payment cycle; Account estimate is a pack guide (not `/charge`) — [DODO-OVERAGE-METERS.md](./DODO-OVERAGE-METERS.md) · [PRICING.md](./PRICING.md) |
 
 ### Launch ($59/mo)
 
@@ -113,12 +113,11 @@ From [SALES-PLAYBOOK.md](./SALES-PLAYBOOK.md) · [MIROFISH-QA-SCENARIOS.md](./mi
 
 - “Analytics export” → enable JSON log toggle for their workspace  
 - “Basic analytics” → show admin usage panel  
-- Overage billing → manual invoice until Stripe  
+- Overage billing → **Dodo meters** with subscription payment cycle (Account estimate is a guide)  
 - Scale / SSO / custom domain → **contact sales, roadmap**
 
 **Do not offer in self-serve outreach:**
 
-- Automated billing & trial expiry  
 - Multi-workspace Scale  
 - Per-seat admin licensing (not implemented)
 
@@ -132,8 +131,8 @@ From [SALES-PLAYBOOK.md](./SALES-PLAYBOOK.md) · [MIROFISH-QA-SCENARIOS.md](./mi
 | P0 | Tie `sessionLogDownload` to Growth tier by default | ENG | **ENG-37** · [backlog.md](./backlog.md) |
 | P1 | Hard-block upload at model limit (or clear UX when over) | ENG | **ENG-38** · **BILL-2** |
 | P1 | Align storage numbers: PRICING.md vs `plan-limits.ts` | PM | **PM-3** |
-| P1 | Stripe checkout for Starter/Launch/Growth | BILL | **BILL-1** (promoted P1 in backlog) |
-| P1 | Overage billing via Stripe | BILL | **BILL-3** |
+| P1 | Dodo + Zoho self-serve checkout | BILL | **BILL-1** |
+| P1 | Overage via Dodo meters (done) | BILL | **BILL-3** ✅ · [DODO-OVERAGE-METERS.md](./DODO-OVERAGE-METERS.md) |
 | P2 | Admin seat limits or remove from PRICING.md | PM | **PM-4** |
 | P2 | Annual prepay SKUs | BILL | **BILL-4** |
 

@@ -116,7 +116,7 @@ Following up — here's what a design partner would use on day one:
 
 1. Upload a GLB from admin (PC)  
 2. Share `/w/[brand]` on a phone  
-3. Place on the **real floor** in Chrome (Android) or Safari AR (iPhone)
+3. Place on the **real floor** in Chrome (Android) or Quick Look (iPhone)
 
 Live demo (no account): [demo URL]/demo
 
@@ -212,7 +212,7 @@ Paste into doc; both parties sign or confirm by reply.
 
 - **$59/mo** for Growth-tier limits during pilot  
 - On success + conversion within 90 days of pilot end: **15% off annual** prepay OR Founding rate locked 12 months  
-- Overage: soft warnings only during MVP; billed manually if exceeded (disclose per readiness audit)
+- Overage: soft warnings in-app; usage beyond included meters is billed automatically with the subscription payment cycle (disclose pack rates on `/pricing`)
 
 **Partner commitments**
 

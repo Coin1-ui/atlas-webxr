@@ -139,7 +139,7 @@
 | **ENG-38** | **Hard-block upload** at model limit (or explicit upgrade gate UX) | P1 | Full-stack | **done** (Batch 33) · API 403 + admin UI gate |
 | **PM-3** | **Align storage copy:** PRICING.md vs `plan-limits.ts` | P1 | PM | **done** · code + pricing page aligned to derived storage (models × 50 MB × 2.5): Starter 625 MB · Launch 3.7 GB · Growth 12.2 GB · Scale ~1.2 TB |
 | **PM-4** | **Admin seat copy vs product:** implement seat limits or remove 2/10 seat claims from PRICING + pricing page | P2 | PM | todo |
-| **BILL-3** | **Overage billing via Stripe** (replace localStorage ack in `/account`) | P1 | Backend | **on_hold** · blocked by Batch 29 |
+| **BILL-3** | **Overage via Dodo meters** (hybrid Usage-Based; auto-bill at payment cycle) | P1 | Backend | **done** (meters + ingest) · Account shows estimate/guide only — `/charge` unsupported on hybrids · see [DODO-OVERAGE-METERS.md](./DODO-OVERAGE-METERS.md) |
 | **BILL-4** | **Annual prepay SKUs** (20% off Launch/Growth) | P2 | Backend | **on_hold** · blocked by Batch 29 |
 | **MKT-7** | **Analytics story alignment** — “basic” vs “export” vs owner JSON toggle; per-model analytics deferred | P2 | Marketing | todo |
 | **SAL-4** | **Design partner ops runbook** — owner workflow for $59 Growth, coupons, session log, slot tracking | P2 | Sales/Ops | todo |
@@ -172,7 +172,7 @@ SAL-3 **content** is done (deck + training + four-path close). These **product g
 | Founding 10 — Growth @ $59 × 12 mo | Slide 10 path 4 | Same manual ops | **SAL-4** · **BILL-1** |
 | Growth “analytics export for sales ops” | Slide 8 · Growth tier | JSON log exists; **owner toggle**, not plan-gated | **ENG-37** |
 | Launch “basic session analytics” | Slide 8 · Launch tier | Usage dashboard only (models/sessions/storage) | **MKT-7** (copy) · future ENG |
-| “Pay overage” in account | Pricing FAQ | Local ack until Stripe API | **BILL-3** |
+| “Pay overage” in account | Pricing FAQ | **Meters auto-bill** at cycle; Account estimate is a guide (no hybrid card `/charge`) | **BILL-3** ✅ |
 | Starter 5 models / session limits | Slide 8 | Warnings only; upload not blocked | **ENG-38** · **BILL-2** |
 | Scale tier (SSO, custom domain, multi-workspace) | Slide 8 | Not built | **ENG-20** · **ENG-21** · Phase 3 |
 | First placement ≤15 min | SAL-3 intro · MiroFish #1 objection | Works **if guided** on call | **QA-5** verify on prod |
@@ -208,7 +208,7 @@ Full matrix: [PRICING-FEATURE-READINESS.md](./PRICING-FEATURE-READINESS.md)
 | Batch | Theme | Scope | Unblocks |
 |-------|-------|-------|----------|
 | **28** | **LEG-1 + trial automation** | Privacy/Terms + **ENG-36** auto Growth trial | **confirmed** ✅ [BATCH-28-CONFIRMED.md](./BATCH-28-CONFIRMED.md) |
-| **29** | **Billing MVP** ▶ | **BILL-1** Dodo international + Zoho India checkout · **BILL-3** overage · **ENG-37** plan-gated JSON log | **in progress** — Dodo sandbox checkout+webhook ✅; account UX fixes coded 2026-07-20; Amplify+Lambda deploy pending |
+| **29** | **Billing MVP** ▶ | **BILL-1** Dodo international + Zoho India checkout · **BILL-3** overage meters · **ENG-37** plan-gated JSON log | **in progress** — Dodo hybrid meters + ingest coded; Account UX synced to auto-bill (2026-07-23) |
 | **30** | ~~Limits & copy truth~~ → **33** | See Batch 33 below | Merged into Batch 33 |
 | **31** | **MKT-3 production** | Record A1/B1 · **MKT-3b** landing embed | Marketing hero · SAL-3 “watch demo” follow-up |
 | **32** | **SAL-4 ops** | Design partner tracker · owner checklist UI · CRM export optional | Scale SAL-2 outbound without founder bottlenecks |
@@ -224,7 +224,7 @@ Full matrix: [PRICING-FEATURE-READINESS.md](./PRICING-FEATURE-READINESS.md)
 
 | ID | Task | Priority | Owner | Status |
 |----|------|----------|-------|--------|
-| BILL-1 | Dodo international + Zoho India checkout (Starter/Launch/Growth) | **P1** ↑ | Backend | **in_progress** · Dodo sandbox active+webhook ✅ · cancel/upgrade/country UX fixed locally · deploy Lambda zip + Amplify pending · Zoho India sandbox next |
+| BILL-1 | Dodo international + Zoho India checkout (Starter/Launch/Growth) | **P1** ↑ | Backend | **in_progress** · Dodo sandbox automated gate **PASSED** (22/22, 2026-07-20) · Zoho India sandbox next · optional period-end clock E2E |
 | BILL-2 | Hard enforce plan limits (upload + session + storage) | **P1** ↑ | Backend | todo · pairs with **ENG-38** (Batch 33) |
 | SEC-2 | External pen test | P2 | Security | todo |
 | ENG-20 | Custom domain per workspace (Scale) | P2 | DevOps | todo · do not promise in SAL-3 |

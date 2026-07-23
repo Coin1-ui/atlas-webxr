@@ -10,15 +10,15 @@
 | 3 | Pricing model | **Hybrid:** base subscription per workspace + usage overage (models, monthly AR sessions, storage). |
 | 4 | Auth | **Amazon Cognito** (User Pools + optional Identity Pools for future API keys). |
 | 5 | Hosting | **AWS-native stack** (see [HOSTING.md](./HOSTING.md)) — single AWS account, Amplify + API Gateway + Lambda + S3 + Cognito. |
-| 6 | MVP billing | **Hybrid automation:** Dodo Merchant of Record for international customers; existing Zoho Billing Premium + Books Standard with Zoho Payments for India. Manual invoicing remains available for design partners. |
+| 6 | MVP billing | **Hybrid automation:** Dodo Merchant of Record for international customers; existing Zoho Billing Premium + Books Standard with Zoho Payments for India. Manual invoicing remains available for design partners. **Usage overage:** Dodo Usage-Based meters auto-bill each payment cycle (`on_demand` off). Account Accept & pay is not the hybrid card-charge path. |
 | 7 | iOS v1 | **Quick Look only** (USDZ). No WebXR Viewer positioning in SaaS marketing. Android = WebXR immersive AR. |
 | 8 | Multi-tenancy | Workspace = tenant. S3 prefix `tenants/{workspaceId}/`. Subdomain `{slug}.atlasar.com` (domain TBD at DNS setup). |
-| 9 | Billing lifecycle | 7-day failed-payment grace; cancellations and downgrades at renewal; upgrades only after confirmed payment; refunds reviewed manually; one coupon per checkout; monthly plans first. |
+| 9 | Billing lifecycle | 7-day failed-payment grace; cancellations and downgrades at renewal; upgrades/downgrades schedule at next billing date; **Cancel at renewal auto-clears any pending plan change**; refunds reviewed manually; one coupon per checkout; monthly plans first. |
 
 ## Out of scope for MVP
 
 - Native iOS/Android apps
-- Usage-overage automation and annual billing at initial provider launch
+- Annual billing SKUs at initial provider launch (monthly / Day-Month test hybrids first)
 - SOC 2 certification (gap analysis only)
 - Depth occlusion / ARKit native wrapper
 - Customer-built API (read-only analytics export only if time permits)

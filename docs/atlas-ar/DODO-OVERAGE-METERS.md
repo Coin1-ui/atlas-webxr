@@ -15,9 +15,24 @@
 | **Tax** | `saas` · `tax_inclusive: true` |
 | **Meters (all 3 per product)** | sessions · models · storage_bytes |
 | **On-demand** | **Off** |
-| **Overage rates** | `overage-estimate.mjs` / `plan-display.ts` (not stale PRICING.md history) |
+| **Overage rates** | Pack guide: `overage-estimate.mjs` / `plan-display.ts`; invoice: Dodo meter PPU (table below) |
 
 Later you may also use **Month/Year** products; this catalog is **Day/Month** for renewal testing.
+
+## How charging works
+
+```
+Atlas usage → POST /events/ingest → Dodo meters → auto-bill on payment cycle (+ fixed fee)
+```
+
+| Path | Behavior |
+|------|----------|
+| **Meter overage (hybrid)** | Charged automatically with the subscription payment when usage exceeds free thresholds |
+| **`POST …/subscriptions/{id}/charge`** | **Unsupported** on usage-based products (`UNSUPPORTED_ACTION`) — do not treat Account Accept & pay as a card charge |
+| **Atlas Account estimate** | Pack-rounded guide only; may differ slightly from linear meter invoice |
+| **`on_demand`** | **Off** — required for plan change; not used for meter overage |
+
+**Ingest event names (must match meters):** `atlas.ar_session` (count) · `atlas.model_count` (max) · `atlas.storage_bytes` (max).
 
 ## Live hybrid product IDs (test)
 
@@ -62,6 +77,7 @@ node scripts/setup-dodo-overage-meters.mjs
 
 ## Architecture notes
 
-1. No `on_demand` — plan changes stay available.  
+1. No `on_demand` — plan changes stay available; meter overage still bills without it.  
 2. Storage meter remains `max(storage_bytes)`; free threshold in bytes; PPU rounded to ≤12 decimal places.  
-3. Month/Year SKUs can be added later as parallel products without replacing Day/Month test SKUs.
+3. Month/Year SKUs can be added later as parallel products without replacing Day/Month test SKUs.  
+4. Sandbox QA: confirm ingest + renewal invoice — do **not** treat Accept & pay → `accepted` as proof of card charge.
