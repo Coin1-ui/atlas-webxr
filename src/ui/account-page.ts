@@ -377,7 +377,7 @@ export function renderAccountPage(
                 : overagePaid
                 ? `<div class="account-overage-box">
                     <p class="camera-success" role="status">Usage overage${usageMonth ? ` for ${escapeHtml(usageMonth)}` : ""} recorded as paid${overageAmountUsd != null ? ` ($${overageAmountUsd.toFixed(2)} Atlas estimate)` : ""}.</p>
-                    <p class="auth-hint">On Dodo hybrids, meter overage is charged with your subscription payment cycle. This amount is an Atlas pack estimate and may differ from the invoice.</p>
+                    <p class="auth-hint">On Atlas hybrid plan (Plan + Usage overage), meter overage is charged with your subscription payment cycle. This amount is an Atlas pack estimate and may differ from the invoice.</p>
                     ${clearOverageBtn}
                   </div>`
                 : overageAccepted
@@ -390,7 +390,7 @@ export function renderAccountPage(
                 : hasOverage
                 ? `<div class="account-overage-box">
                     <p class="account-overage-amount">Atlas overage estimate: <strong>$${overageUsd.toFixed(2)}</strong></p>
-                    <p class="auth-hint">Pack-rounded guide based on usage above included plan limits. On Dodo hybrid plans, overage is charged automatically with your next subscription payment when meters exceed free thresholds — the invoice uses per-unit meter rates and may differ slightly from this estimate.</p>
+                    <p class="auth-hint">Pack-rounded guide based on usage above included plan limits. On Atlas hybrid plan (Plan + Usage overage), overage is charged automatically with your next subscription payment when meters exceed free thresholds — the invoice uses per-unit meter rates and may differ slightly from this estimate.</p>
                     ${clearOverageBtn}
                     ${
                       showSandboxSeed
