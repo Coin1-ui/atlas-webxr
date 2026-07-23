@@ -5,7 +5,7 @@ import { IncomingMessage, ServerResponse } from "node:http";
 import { randomUUID } from "node:crypto";
 import { isValidSlug, slugFromName, toPublicConfig } from "../src/shared/tenant";
 import { normalizeWorkspaceFeatures } from "../src/shared/workspace-features";
-import { effectiveBillingTier, trialEndsAtIso, isTrialActive, isTrialSuspended, hasPurchasedTrialFallback } from "../src/shared/trial";
+import { effectiveBillingTier, trialEndsAtIso, isTrialActive, isTrialSuspended, isServicePaused, hasPurchasedTrialFallback } from "../src/shared/trial";
 import { sessionLogDownloadDefaultForTier } from "../src/shared/workspace-feature-defaults";
 import { limitsForWorkspace } from "../src/shared/plan-limits";
 import {
@@ -394,7 +394,7 @@ function devUsageForWorkspace(root: string, workspaceId: string, rec: WorkspaceR
   const usage = { month, modelCount, sessionCount: row.sessionCount, storageBytes };
   const tierLabel = billingTier.charAt(0).toUpperCase() + billingTier.slice(1);
   const warnings: { metric: string; level: "warn" | "critical"; percent: number; message: string }[] = [];
-  if (!isTrialSuspended(rec) && limits.models > 0) {
+  if (!isServicePaused(rec) && limits.models > 0) {
   for (const check of [
     { metric: "models", used: modelCount, limit: limits.models, label: "models" },
     { metric: "sessions", used: row.sessionCount, limit: limits.sessionsPerMonth, label: "AR sessions this month" },
@@ -413,6 +413,7 @@ function devUsageForWorkspace(root: string, workspaceId: string, rec: WorkspaceR
     billingTier,
     trialActive: isTrialActive(rec),
     trialSuspended: isTrialSuspended(rec),
+    servicePaused: isServicePaused(rec),
     purchasedBillingTier: rec.purchasedBillingTier ?? null,
     trialPlan: rec.trialPlan ?? null,
     trialEndsAt: rec.trialEndsAt ?? null,
@@ -455,7 +456,7 @@ export function atlasSaasApiPlugin(): Plugin {
             sendJson(res, 404, { error: "Workspace not found" });
             return;
           }
-          if (isTrialSuspended(rec)) {
+          if (isServicePaused(rec)) {
             sendJson(res, 403, { error: "Showroom paused — subscription required", suspended: true });
             return;
           }
@@ -646,7 +647,7 @@ export function atlasSaasApiPlugin(): Plugin {
             sendJson(res, 404, { error: "Workspace not found" });
             return;
           }
-          if (isTrialSuspended(rec)) {
+          if (isServicePaused(rec)) {
             sendJson(res, 403, { error: "Showroom paused — subscription required", suspended: true });
             return;
           }

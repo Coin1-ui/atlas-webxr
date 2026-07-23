@@ -11,14 +11,14 @@ import {
 import { requireWorkspaceAdmin, resolveWorkspaceBySlug } from "../lib/authz.mjs";
 import { incrementModelCount } from "../lib/usage.mjs";
 import { ingestDodoModelCount, ingestDodoStorageBytes } from "../lib/dodo-usage-ingest.mjs";
-import { isTrialSuspended } from "../lib/trial.mjs";
+import { isServicePaused } from "../lib/trial.mjs";
 import { assertModelUploadAllowed, maxAssetBytesForWorkspace } from "../lib/upload-limits.mjs";
 
 function publicWorkspaceBlocked(workspace) {
   if (workspace.restricted) {
     return jsonResponse(403, { error: "Showroom unavailable", restricted: true });
   }
-  if (isTrialSuspended(workspace)) {
+  if (isServicePaused(workspace)) {
     return jsonResponse(403, { error: "Showroom paused — subscription required", suspended: true });
   }
   return null;

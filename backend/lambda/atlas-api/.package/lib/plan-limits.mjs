@@ -1,7 +1,7 @@
 /** @typedef {"starter" | "launch" | "growth" | "scale"} BillingTierId */
 /** @typedef {"starter" | "pro" | "enterprise"} WorkspacePlan */
 
-import { effectiveBillingTier, isTrialSuspended, SUSPENDED_LIMITS } from "./trial.mjs";
+import { effectiveBillingTier, isServicePaused, SUSPENDED_LIMITS } from "./trial.mjs";
 
 /** Max GLB/USDZ per file (all tiers). Storage = models × this × 2.5. Sessions = explicit workspace caps (Scale unlimited). */
 const MAX_ASSET_BYTES = 50 * 1024 * 1024;
@@ -54,7 +54,7 @@ export function limitsForBillingTier(tier) {
  * @param {{ plan: WorkspacePlan; billingTier?: BillingTierId; trialEndsAt?: string | null; trialPlan?: BillingTierId | null }} ws
  */
 export function limitsForWorkspace(ws) {
-  if (isTrialSuspended(ws)) return SUSPENDED_LIMITS;
+  if (isServicePaused(ws)) return SUSPENDED_LIMITS;
   return limitsForBillingTier(effectiveBillingTier(ws));
 }
 

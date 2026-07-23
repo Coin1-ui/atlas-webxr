@@ -7,10 +7,21 @@ import {
   providerForBillingCountry,
 } from "../backend/lambda/atlas-api/lib/billing-policy.mjs";
 
+const prevZoho = process.env.ATLAS_ZOHO_CHECKOUT_ENABLED;
+delete process.env.ATLAS_ZOHO_CHECKOUT_ENABLED;
+
+assert.equal(providerForBillingCountry("IN"), "dodo");
+assert.equal(providerForBillingCountry("in"), "dodo");
+assert.equal(providerForBillingCountry("US"), "dodo");
+assert.equal(providerForBillingCountry("GB"), "dodo");
+
+process.env.ATLAS_ZOHO_CHECKOUT_ENABLED = "true";
 assert.equal(providerForBillingCountry("IN"), "zoho");
 assert.equal(providerForBillingCountry("in"), "zoho");
 assert.equal(providerForBillingCountry("US"), "dodo");
-assert.equal(providerForBillingCountry("GB"), "dodo");
+
+if (prevZoho === undefined) delete process.env.ATLAS_ZOHO_CHECKOUT_ENABLED;
+else process.env.ATLAS_ZOHO_CHECKOUT_ENABLED = prevZoho;
 
 assert.equal(billingCurrencyForProvider("dodo"), "USD");
 assert.equal(billingCurrencyForProvider("zoho"), "INR");

@@ -4,7 +4,7 @@ import type { WorkspaceUsageResponse } from "../data/usage-api";
 import type { BillingScheduledPlanChange } from "../data/workspace-api";
 import { formatStorageBytes, formatSessionsLimit, isUnlimitedSessionsLimit } from "../shared/plan-limits";
 import { estimateOverageUsd, planDisplayName, upgradeOptions, type PlanTier } from "../shared/plan-display";
-import { effectiveBillingTier, trialProfilePlanLine, accountTrialBannerHtml, trialSuspendedBannerHtml, mountTrialCountdown, planActionVerbForTier, hasLiveBillingSubscription, isOverageBillable, isTrialSuspended, subscribedBillingTier, planChangeMatrix, isTrialActive, billingPlanDisplayStatus, billingPlanStatusLabel } from "../shared/trial";
+import { effectiveBillingTier, trialProfilePlanLine, accountTrialBannerHtml, trialSuspendedBannerHtml, mountTrialCountdown, planActionVerbForTier, hasLiveBillingSubscription, isOverageBillable, isServicePaused, subscribedBillingTier, planChangeMatrix, isTrialActive, billingPlanDisplayStatus, billingPlanStatusLabel } from "../shared/trial";
 import { effectiveUsageLimits } from "../shared/overage-entitlements";
 import { escapeHtml } from "../shared/escape-html";
 import {
@@ -119,7 +119,7 @@ export function renderAccountPage(
        <p class="auth-hint" style="margin-top:0.35rem">Removes leftover seed / invoicing-pending test rows. Real card payments are not deleted.</p>`
     : "";
   const showSandboxSeed = Boolean(handlers.onSeedSandboxOverage) && sandboxModeActive;
-  const planInactive = !unrestricted && isTrialSuspended(workspace);
+  const planInactive = !unrestricted && isServicePaused(workspace);
   const modelsRetained =
     Boolean(usage?.modelsRetained) ||
     (planInactive && Boolean(usageCounts?.modelCount));

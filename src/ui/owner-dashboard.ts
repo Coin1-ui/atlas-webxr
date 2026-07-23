@@ -8,7 +8,7 @@ import {
   tierOptionLabel,
   type PlanTierId,
 } from "../shared/plan-display";
-import { isTrialActive, isTrialSuspended, trialDaysRemaining, trialFallbackTier } from "../shared/trial";
+import { isTrialActive, isServicePaused, trialDaysRemaining, trialFallbackTier } from "../shared/trial";
 import { planDisplayName } from "../shared/plan-display";
 import { couponIsActive, couponOfferSummary, couponUsesLine } from "../shared/coupon";
 import {
@@ -166,8 +166,8 @@ export function renderOwnerDashboard(
                      <code class="owner-slug">/w/${escapeHtml(w.slug)}</code>
                      <span class="owner-id">${escapeHtml(w.id)}</span>
                      ${
-                       isTrialSuspended(w)
-                         ? `<span class="owner-badge owner-badge-danger">Trial paused</span>`
+                       isServicePaused(w)
+                         ? `<span class="owner-badge owner-badge-danger">Service paused</span>`
                          : isTrialActive(w)
                            ? `<span class="owner-meta">Trial: ${trialDaysRemaining(w)}d left · needs ${escapeHtml(planDisplayName(w.plan, trialFallbackTier(w.trialPlan ?? "growth")))} paid</span>`
                            : ""
@@ -311,7 +311,7 @@ export function renderOwnerDashboard(
             ${
               operatorWorkspace
                 ? `<p class="auth-hint owner-demo-slug-hint">Operator workspace slug: <code>${escapeHtml(operatorWorkspace.slug)}</code> — set <code>VITE_DEMO_WORKSPACE_SLUG=${escapeHtml(operatorWorkspace.slug)}</code> in Amplify.</p>
-                  <p class="auth-hint">iPhone uses a USDZ from each upload. If textures look wrong in Safari AR, re-upload with embedded textures or check USDZ was generated (see upload status).</p>
+                  <p class="auth-hint">iOS uses USDZ from each upload. If textures look wrong in Quick Look, re-upload with embedded textures or check USDZ was generated (see upload status).</p>
                   <div class="admin-card admin-card-highlight owner-demo-json-card">
                     <p class="admin-label">Live demo AR controls</p>
                     <p class="auth-hint">The <strong>JSON</strong> button in live demo AR follows your operator workspace toggle (same row in Customer accounts).</p>
@@ -590,19 +590,29 @@ export function renderRestrictedAccount(root: HTMLElement, reason: string, onSig
   root.querySelector("[data-action=signout]")?.addEventListener("click", onSignOut);
 }
 
-/** Trial expired without a paid plan — admin/showroom paused; account stays open to resubscribe. */
+/** Trial/subscription pause — admin/showroom paused; account stays open to resubscribe. */
 export function renderTrialSuspendedAccount(
   root: HTMLElement,
   requiredPlan: string,
-  handlers: { onAccount: () => void; onSignOut: () => void; actionVerb?: "Subscribe" | "Upgrade" },
+  handlers: {
+    onAccount: () => void;
+    onSignOut: () => void;
+    actionVerb?: "Subscribe" | "Upgrade";
+    title?: string;
+    body?: string;
+  },
 ): void {
   const verb = handlers.actionVerb ?? "Subscribe";
+  const title = handlers.title ?? "Trial ended";
+  const body =
+    handlers.body ??
+    `Your trial has ended. ${verb} to ${requiredPlan} to restore your showroom, model uploads, and admin dashboard.`;
   root.innerHTML = `
     <div class="home ar-landing-page">
       <div class="ar-landing-card ar-landing-card--warn">
         <p class="mkt-eyebrow">Service paused</p>
-        <h1>Trial ended</h1>
-        <p class="home-sub">Your trial has ended. ${escapeHtml(verb)} to <strong>${escapeHtml(requiredPlan)}</strong> to restore your showroom, model uploads, and admin dashboard.</p>
+        <h1>${escapeHtml(title)}</h1>
+        <p class="home-sub">${escapeHtml(body)}</p>
         <button type="button" class="btn btn-primary btn-block" data-action="account">${escapeHtml(verb)} on Account</button>
         <button type="button" class="btn btn-ghost btn-block" data-action="signout">Sign out</button>
       </div>

@@ -137,9 +137,7 @@ export async function handleBillingCheckout(event, workspaceId) {
       return jsonResponse(400, { error: "A valid Idempotency-Key header is required" });
     }
     const provider = providerForBillingCountry(input.billingCountry);
-    if (provider === "zoho" && process.env.ATLAS_ZOHO_CHECKOUT_ENABLED !== "true") {
-      return jsonResponse(503, { error: "Zoho checkout is not enabled" });
-    }
+    // Zoho is only selected when ATLAS_ZOHO_CHECKOUT_ENABLED=true (see billing-policy).
     const requestHash = createHash("sha256")
       .update(JSON.stringify({ provider, ...input }))
       .digest("hex");

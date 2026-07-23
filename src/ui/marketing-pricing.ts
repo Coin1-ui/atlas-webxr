@@ -30,7 +30,7 @@ const TIERS = [
     id: "starter",
     name: "Starter",
     price: "$5",
-    annual: "Incl. tax · monthly billing · cancel at renewal",
+    annual: "Incl. tax · monthly billing",
     period: "/mo",
     description: "Try floor AR with a tiny catalog — perfect for first tests",
     features: [
@@ -50,7 +50,7 @@ const TIERS = [
     id: "launch",
     name: "Launch",
     price: "$59",
-    annual: "Incl. tax · monthly billing · cancel at renewal",
+    annual: "Incl. tax · monthly billing",
     period: "/mo",
     description: "Single showroom or pilot team — live this week",
     features: [
@@ -69,7 +69,7 @@ const TIERS = [
     id: "growth",
     name: "Growth",
     price: "$179",
-    annual: "Incl. tax · monthly billing · cancel at renewal",
+    annual: "Incl. tax · monthly billing",
     period: "/mo",
     description: "Regional retail & active field sales",
     features: [

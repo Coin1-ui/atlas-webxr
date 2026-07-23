@@ -176,9 +176,12 @@ import type { PlanTier } from "./shared/plan-display";
 import { planChangeScheduledMessage, planDisplayName } from "./shared/plan-display";
 import {
   hasLiveBillingSubscription,
-  isTrialSuspended,
+  isServicePaused,
   planActionVerb,
   planActionVerbForTier,
+  servicePauseBody,
+  servicePauseReason,
+  servicePauseTitle,
   subscribedBillingTier,
   trialFallbackTier,
 } from "./shared/trial";
@@ -1059,10 +1062,17 @@ async function showAdminModelsScreen(): Promise<void> {
 }
 
 function showTrialSuspendedGate(workspace: Workspace): boolean {
-  if (!isTrialSuspended(workspace)) return false;
-  const required = planDisplayName(workspace.plan, trialFallbackTier(workspace.trialPlan ?? "growth"));
+  const reason = servicePauseReason(workspace);
+  if (reason === "none") return false;
+  const required = planDisplayName(
+    workspace.plan,
+    workspace.trialPlan ? trialFallbackTier(workspace.trialPlan) : "starter",
+  );
+  const verb = planActionVerb(workspace);
   renderTrialSuspendedAccount(app, required, {
-    actionVerb: planActionVerb(workspace),
+    actionVerb: verb,
+    title: servicePauseTitle(reason),
+    body: servicePauseBody(reason, required, verb),
     onAccount: () => navigateTo("/account"),
     onSignOut: () => {
       logout();
@@ -1094,10 +1104,7 @@ function blockWorkspaceAccess(workspace: Workspace): boolean {
 
 function renderPublicShowroomBlocked(kind: "restricted" | "suspended", message: string): void {
   const title = kind === "suspended" ? "Showroom paused" : "Showroom unavailable";
-  const sub =
-    kind === "suspended"
-      ? "This workspace's trial has ended. The owner can subscribe from Account to restore the catalog."
-      : message;
+  const sub = kind === "suspended" ? message : message;
   app.innerHTML = `
     <div class="home ar-landing-page">
       <div class="ar-landing-card ar-landing-card--warn">
@@ -1690,11 +1697,12 @@ async function showTenantHome(slug: string): Promise<void> {
   } catch (e) {
     if (e instanceof PublicShowroomBlockedError) {
       if (e.kind === "suspended" && getCurrentUser()) {
+        const title = e.pauseTitle ?? "Service paused";
         app.innerHTML = `
           <div class="home ar-landing-page">
             <div class="ar-landing-card ar-landing-card--warn">
               <p class="mkt-eyebrow">Showroom paused</p>
-              <h1>Trial ended</h1>
+              <h1>${escapeHtml(title)}</h1>
               <p class="home-sub">${escapeHtml(e.message)}</p>
               <button type="button" class="btn btn-primary btn-block" data-action="account">Go to Account</button>
               <button type="button" class="btn btn-ghost btn-block" data-action="back">Back</button>

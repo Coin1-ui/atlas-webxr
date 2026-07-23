@@ -17,11 +17,19 @@ function authHeaders(): HeadersInit {
 
 export class PublicShowroomBlockedError extends Error {
   readonly kind: "restricted" | "suspended";
+  readonly pauseReason?: string;
+  readonly pauseTitle?: string;
 
-  constructor(message: string, kind: "restricted" | "suspended") {
+  constructor(
+    message: string,
+    kind: "restricted" | "suspended",
+    opts?: { pauseReason?: string; pauseTitle?: string },
+  ) {
     super(message);
     this.name = "PublicShowroomBlockedError";
     this.kind = kind;
+    this.pauseReason = opts?.pauseReason;
+    this.pauseTitle = opts?.pauseTitle;
   }
 }
 
@@ -36,14 +44,23 @@ export async function fetchPublicWorkspaceConfig(
   );
   if (res.status === 404) return null;
   if (res.status === 403) {
-    let data: { error?: string; restricted?: boolean; suspended?: boolean } = {};
+    let data: {
+      error?: string;
+      restricted?: boolean;
+      suspended?: boolean;
+      pauseReason?: string;
+      pauseTitle?: string;
+    } = {};
     try {
       data = (await res.json()) as typeof data;
     } catch {
       /* ignore */
     }
     const kind = data.suspended ? "suspended" : "restricted";
-    throw new PublicShowroomBlockedError(data.error ?? "Showroom unavailable", kind);
+    throw new PublicShowroomBlockedError(data.error ?? "Showroom unavailable", kind, {
+      pauseReason: data.pauseReason,
+      pauseTitle: data.pauseTitle,
+    });
   }
   if (!res.ok) {
     throw new Error(`Workspace config failed (HTTP ${res.status})`);

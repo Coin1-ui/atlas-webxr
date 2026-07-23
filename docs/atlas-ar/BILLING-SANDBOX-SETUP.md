@@ -70,6 +70,8 @@ ATLAS_DODO_WEBHOOK_ENABLED
 ATLAS_ZOHO_CHECKOUT_ENABLED
 ```
 
+**India routing:** While `ATLAS_ZOHO_CHECKOUT_ENABLED` is unset/`false`, billing country `IN` uses **Dodo (USD)** — same as other countries. Set the flag to `true` only when Zoho INR checkout is approved.
+
 ### 6. AWS prerequisites
 
 - Create `atlas-billing` using `node backend/scripts/create-dynamodb-tables.mjs`.

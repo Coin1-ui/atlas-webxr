@@ -1,5 +1,5 @@
 import type { WorkspacePlan } from "./tenant";
-import { effectiveBillingTier, hasPurchasedTrialFallback, isTrialActive, isTrialSuspended, subscribedBillingTier, trialFallbackTier, type TrialWorkspace } from "./trial";
+import { effectiveBillingTier, hasPurchasedTrialFallback, isTrialActive, isServicePaused, subscribedBillingTier, trialFallbackTier, type TrialWorkspace } from "./trial";
 
 export type PlanTierId = "starter" | "launch" | "growth" | "scale";
 
@@ -63,8 +63,8 @@ export function upgradeOptions(ws: TrialWorkspace): PlanTier[] {
     // Trial Current card is handled in account-page when no paid entitlement.
     return CUSTOMER_BILLING_TIERS.filter((tier) => tier.id !== paidTier);
   }
-  if (isTrialSuspended(ws) && ws.trialPlan) {
-    // Suspended: offer every self-serve tier so the customer can resubscribe at any level.
+  if (isServicePaused(ws)) {
+    // Paused: offer every self-serve tier so the customer can resubscribe at any level.
     return CUSTOMER_BILLING_TIERS;
   }
   if (isTrialActive(ws) && ws.trialPlan && !hasPurchasedTrialFallback(ws)) {

@@ -168,25 +168,80 @@ export function hasPurchasedTrialFallback(ws) {
   return fallbackIdx >= 0 && purchasedIdx >= fallbackIdx;
 }
 
+/** @typedef {"none" | "trial_ended" | "subscription_canceled" | "subscription_expired" | "entitlement_lapsed"} ServicePauseReason */
+
 /**
- * @param {{ trialEndsAt?: string | null; trialPlan?: BillingTierId | null; purchasedBillingTier?: BillingTierId | null; billingEntitlementTier?: BillingTierId | null }} ws
+ * Pause reason matrix — cancel-scheduled with live entitlement is not paused.
+ * @param {{ trialEndsAt?: string | null; trialPlan?: BillingTierId | null; purchasedBillingTier?: BillingTierId | null; billingEntitlementTier?: BillingTierId | null; billingProvider?: string | null; billingStatus?: string | null; billingSubscriptionId?: string | null; billingCurrentPeriodEnd?: string | null; billingGraceUntil?: string | null; manualBillingTier?: BillingTierId | null }} ws
+ * @returns {ServicePauseReason}
+ */
+export function servicePauseReason(ws) {
+  if (isTrialActive(ws)) return "none";
+  if (paidBillingTier(ws)) return "none";
+
+  const hadProvider = Boolean(ws.billingProvider);
+  const hadSub = Boolean(ws.billingSubscriptionId);
+
+  if (hadProvider || hadSub) {
+    if (ws.billingStatus === "expired") return "subscription_expired";
+    if (ws.billingStatus === "canceled") return "subscription_canceled";
+    return "entitlement_lapsed";
+  }
+
+  if (isTrialExpired(ws) && Boolean(ws.trialPlan) && !hasPurchasedTrialFallback(ws)) {
+    return "trial_ended";
+  }
+
+  return "none";
+}
+
+/** @param {{ trialEndsAt?: string | null; trialPlan?: BillingTierId | null; purchasedBillingTier?: BillingTierId | null; billingEntitlementTier?: BillingTierId | null; billingProvider?: string | null; billingStatus?: string | null; billingSubscriptionId?: string | null; billingCurrentPeriodEnd?: string | null; billingGraceUntil?: string | null; manualBillingTier?: BillingTierId | null }} ws */
+export function isServicePaused(ws) {
+  return servicePauseReason(ws) !== "none";
+}
+
+/**
+ * True only when pause reason is an expired unpaid trial (not canceled paid).
+ * @param {{ trialEndsAt?: string | null; trialPlan?: BillingTierId | null; purchasedBillingTier?: BillingTierId | null; billingEntitlementTier?: BillingTierId | null; billingProvider?: string | null; billingStatus?: string | null; billingSubscriptionId?: string | null; billingCurrentPeriodEnd?: string | null; billingGraceUntil?: string | null; manualBillingTier?: BillingTierId | null }} ws
  */
 export function isTrialSuspended(ws) {
-  if (!isTrialActive(ws) && ws.billingProvider && !paidBillingTier(ws)) return true;
-  return isTrialExpired(ws) && Boolean(ws.trialPlan) && !hasPurchasedTrialFallback(ws);
-}
-
-/** Paid entitlement still active — required for meter overage charges. */
-export function hasLiveBillingSubscription(ws) {
-  return paidBillingTier(ws) !== null;
+  return servicePauseReason(ws) === "trial_ended";
 }
 
 /**
- * Meter overage is a paid-plan add-on only (active / cancel-scheduled / past-due grace).
- * @param {Parameters<typeof isTrialSuspended>[0]} ws
+ * @param {ServicePauseReason} reason
  */
-export function isOverageBillable(ws) {
-  return hasLiveBillingSubscription(ws) && !isTrialSuspended(ws);
+export function servicePauseShowroomSub(reason) {
+  switch (reason) {
+    case "trial_ended":
+      return "This workspace's trial has ended. The owner can subscribe from Account to restore the catalog.";
+    case "subscription_canceled":
+      return "This workspace's subscription ended after cancellation. The owner can subscribe from Account to restore the catalog.";
+    case "subscription_expired":
+      return "This workspace's paid period ended. The owner can subscribe from Account to restore the catalog.";
+    case "entitlement_lapsed":
+      return "This workspace's paid access has ended. The owner can subscribe from Account to restore the catalog.";
+    default:
+      return "This workspace is paused. The owner can subscribe from Account to restore the catalog.";
+  }
+}
+
+/**
+ * @param {ServicePauseReason} reason
+ */
+export function servicePauseTitle(reason) {
+  switch (reason) {
+    case "trial_ended":
+      return "Trial ended";
+    case "subscription_canceled":
+      return "Subscription ended";
+    case "subscription_expired":
+      return "Subscription expired";
+    case "entitlement_lapsed":
+      return "Service paused";
+    default:
+      return "Service paused";
+  }
 }
 
 /**
@@ -202,7 +257,10 @@ export function trialEndsAtIso(days = TRIAL_DURATION_DAYS) {
  */
 export function effectiveBillingTier(ws) {
   if (isTrialActive(ws) && ws.trialPlan) return ws.trialPlan;
-  if (isTrialSuspended(ws) && ws.trialPlan) return trialFallbackTier(ws.trialPlan);
+  if (isServicePaused(ws)) {
+    if (ws.trialPlan) return trialFallbackTier(ws.trialPlan);
+    return "starter";
+  }
   const paidTier = paidBillingTier(ws);
   if (paidTier) return paidTier;
   if (ws.billingTier) return ws.billingTier;

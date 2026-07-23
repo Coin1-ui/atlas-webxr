@@ -182,11 +182,6 @@ export function hasLiveBillingSubscription(ws: TrialWorkspace): boolean {
   return subscribedBillingTier(ws) !== null;
 }
 
-/** Meter overage is a paid-plan add-on only (active / cancel-scheduled / past-due grace). */
-export function isOverageBillable(ws: TrialWorkspace): boolean {
-  return hasLiveBillingSubscription(ws) && !isTrialSuspended(ws);
-}
-
 /** User-facing Plan & billing status — drives labels and gated actions. */
 export type BillingPlanDisplayStatus =
   | "active"
@@ -244,10 +239,95 @@ export function hasPurchasedTrialFallback(ws: TrialWorkspace): boolean {
   return fallbackIdx >= 0 && purchasedIdx >= fallbackIdx;
 }
 
-/** Trial ended without purchasing the required fallback tier. */
+/** Why the workspace showroom/admin is paused (or none). */
+export type ServicePauseReason =
+  | "none"
+  | "trial_ended"
+  | "subscription_canceled"
+  | "subscription_expired"
+  | "entitlement_lapsed";
+
+/**
+ * Pause reason matrix — do not treat every unpaid provider workspace as "trial ended".
+ * Cancel-scheduled with live entitlement → none (access continues).
+ */
+export function servicePauseReason(ws: TrialWorkspace): ServicePauseReason {
+  if (isTrialActive(ws)) return "none";
+  if (subscribedBillingTier(ws)) return "none";
+
+  const hadProvider = Boolean(ws.billingProvider);
+  const hadSub = Boolean(ws.billingSubscriptionId);
+
+  if (hadProvider || hadSub) {
+    if (ws.billingStatus === "expired") return "subscription_expired";
+    if (ws.billingStatus === "canceled") return "subscription_canceled";
+    return "entitlement_lapsed";
+  }
+
+  if (isTrialExpired(ws) && Boolean(ws.trialPlan) && !hasPurchasedTrialFallback(ws)) {
+    return "trial_ended";
+  }
+
+  return "none";
+}
+
+export function isServicePaused(ws: TrialWorkspace): boolean {
+  return servicePauseReason(ws) !== "none";
+}
+
+/** True only when pause reason is an expired unpaid trial (not canceled paid). */
 export function isTrialSuspended(ws: TrialWorkspace): boolean {
-  if (!isTrialActive(ws) && ws.billingProvider && !subscribedBillingTier(ws)) return true;
-  return isTrialExpired(ws) && Boolean(ws.trialPlan) && !hasPurchasedTrialFallback(ws);
+  return servicePauseReason(ws) === "trial_ended";
+}
+
+export function servicePauseTitle(reason: ServicePauseReason): string {
+  switch (reason) {
+    case "trial_ended":
+      return "Trial ended";
+    case "subscription_canceled":
+      return "Subscription ended";
+    case "subscription_expired":
+      return "Subscription expired";
+    case "entitlement_lapsed":
+      return "Service paused";
+    default:
+      return "Service paused";
+  }
+}
+
+export function servicePauseBody(
+  reason: ServicePauseReason,
+  requiredPlan: string,
+  actionVerb: "Subscribe" | "Upgrade" = "Subscribe",
+): string {
+  const restore = `${actionVerb} to ${requiredPlan} to restore your showroom, model uploads, and admin dashboard.`;
+  switch (reason) {
+    case "trial_ended":
+      return `Your trial has ended. ${restore}`;
+    case "subscription_canceled":
+      return `Your paid plan ended after cancellation. ${restore}`;
+    case "subscription_expired":
+      return `Your paid period ended. ${restore}`;
+    case "entitlement_lapsed":
+      return `Access to this workspace has ended. ${restore}`;
+    default:
+      return restore;
+  }
+}
+
+export function servicePauseShowroomSub(reason: ServicePauseReason): string {
+  switch (reason) {
+    case "trial_ended":
+      return "This workspace's trial has ended. The owner can subscribe from Account to restore the catalog.";
+    case "subscription_canceled":
+      return "This workspace's subscription ended after cancellation. The owner can subscribe from Account to restore the catalog.";
+    case "subscription_expired":
+      return "This workspace's paid period ended. The owner can subscribe from Account to restore the catalog.";
+    case "entitlement_lapsed":
+      return "This workspace's paid access has ended. The owner can subscribe from Account to restore the catalog.";
+    default:
+      return "This workspace is paused. The owner can subscribe from Account to restore the catalog.";
+  }
 }
 
 export function trialDaysRemaining(ws: { trialEndsAt?: string | null }): number {
@@ -281,7 +361,10 @@ export function formatTrialCountdown(parts: TrialCountdownParts): string {
 
 export function effectiveBillingTier(ws: TrialWorkspace): PlanTierId {
   if (isTrialActive(ws) && ws.trialPlan) return ws.trialPlan;
-  if (isTrialSuspended(ws) && ws.trialPlan) return trialFallbackTier(ws.trialPlan);
+  if (isServicePaused(ws)) {
+    if (ws.trialPlan) return trialFallbackTier(ws.trialPlan);
+    return "starter";
+  }
   const paidTier = subscribedBillingTier(ws);
   if (paidTier) return paidTier;
   return billingTierFromWorkspace(ws);
@@ -322,8 +405,9 @@ export function trialProfilePlanLine(ws: TrialWorkspace): string {
 
 /** Customer-facing plan line for account/admin (includes active trial). */
 export function workspacePlanLabel(ws: TrialWorkspace): string {
-  if (isTrialSuspended(ws) && ws.trialPlan) {
-    const required = planDisplayName(ws.plan, trialFallbackTier(ws.trialPlan));
+  const reason = servicePauseReason(ws);
+  if (reason !== "none") {
+    const required = planDisplayName(ws.plan, ws.trialPlan ? trialFallbackTier(ws.trialPlan) : "starter");
     return `Service paused — ${planActionVerb(ws).toLowerCase()} to ${required}`;
   }
   if (isTrialActive(ws)) {
@@ -367,21 +451,23 @@ export function accountTrialBannerHtml(ws: TrialWorkspace): string {
 }
 
 export function trialSuspendedBannerHtml(ws: TrialWorkspace): string {
-  if (!isTrialSuspended(ws)) return "";
-  if (ws.trialPlan) {
-    const required = planDisplayName(ws.plan, trialFallbackTier(ws.trialPlan));
-    return `<div class="account-trial-banner account-trial-banner--paused" role="alert">
-    <p class="account-trial-eyebrow">Service paused</p>
-    <p class="account-trial-note">Your ${escapeHtml(planDisplayName(ws.plan, ws.trialPlan))} trial ended. ${planActionVerb(ws)} to ${escapeHtml(required)} to restore your showroom and admin access. Models stay saved in your workspace.</p>
-  </div>`;
-  }
+  const reason = servicePauseReason(ws);
+  if (reason === "none") return "";
+  const required = planDisplayName(ws.plan, ws.trialPlan ? trialFallbackTier(ws.trialPlan) : "starter");
+  const verb = planActionVerb(ws);
   return `<div class="account-trial-banner account-trial-banner--paused" role="alert">
     <p class="account-trial-eyebrow">Service paused</p>
-    <p class="account-trial-note">Your plan is inactive. Models stay saved in your workspace; the public showroom and new uploads stay paused until you subscribe.</p>
+    <p class="account-trial-note">${escapeHtml(servicePauseBody(reason, required, verb))}</p>
   </div>`;
 }
 
-import { escapeHtml } from "./escape-html";
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
 
 /** Wire live countdown ticks on any [data-trial-countdown] nodes under root. */
 export function mountTrialCountdown(root: HTMLElement, ws: TrialWorkspace): void {

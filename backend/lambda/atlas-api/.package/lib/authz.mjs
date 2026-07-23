@@ -1,6 +1,6 @@
 import { requireAuthUser } from "./auth.mjs";
 import { getMembership, getWorkspaceById, getWorkspaceBySlug } from "./dynamodb.mjs";
-import { isTrialSuspended } from "./trial.mjs";
+import { isServicePaused } from "./trial.mjs";
 
 /**
  * @param {import("aws-lambda").APIGatewayProxyEventV2} event
@@ -27,7 +27,7 @@ export async function requireWorkspaceAccess(event, workspaceId, roles = ["owner
     err.statusCode = 403;
     throw err;
   }
-  if (isTrialSuspended(workspace) && !opts.allowSuspended) {
+  if (isServicePaused(workspace) && !opts.allowSuspended) {
     const err = new Error("Workspace suspended — subscribe to restore service");
     err.statusCode = 403;
     throw err;

@@ -1,7 +1,7 @@
 import { jsonResponse, optionsResponse, parseJsonBody } from "../lib/http.mjs";
 import { resolveWorkspaceBySlug } from "../lib/authz.mjs";
 import { recordQualifiedSession } from "../lib/usage.mjs";
-import { isTrialSuspended } from "../lib/trial.mjs";
+import { isServicePaused } from "../lib/trial.mjs";
 
 const ALLOWED_TYPES = new Set(["session_start", "placement", "session_end"]);
 const MAX_EVENTS = 32;
@@ -22,7 +22,7 @@ export async function handleAnalyticsEvents(event, slug) {
   if (workspace.restricted) {
     return jsonResponse(403, { error: "Analytics disabled for restricted workspace" });
   }
-  if (isTrialSuspended(workspace)) {
+  if (isServicePaused(workspace)) {
     return jsonResponse(403, { error: "Analytics disabled — showroom paused", suspended: true });
   }
   const body = parseJsonBody(event);

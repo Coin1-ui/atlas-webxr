@@ -4,10 +4,12 @@ import assert from "node:assert/strict";
 import {
   effectiveBillingTier,
   hasPurchasedTrialFallback,
+  isServicePaused,
   isTrialActive,
   isTrialSuspended,
   planActionVerb,
   planActionVerbForTier,
+  servicePauseReason,
   trialEndsAtIso,
   trialFallbackTier,
 } from "../backend/lambda/atlas-api/lib/trial.mjs";
@@ -30,7 +32,9 @@ assert.equal(limitsForWorkspace(growthTrialWs).models, 100);
 const growthExpiredNoPurchase = { ...growthTrialWs, trialEndsAt: past };
 assert.equal(isTrialActive(growthExpiredNoPurchase), false);
 assert.equal(hasPurchasedTrialFallback(growthExpiredNoPurchase), false);
+assert.equal(servicePauseReason(growthExpiredNoPurchase), "trial_ended");
 assert.equal(isTrialSuspended(growthExpiredNoPurchase), true);
+assert.equal(isServicePaused(growthExpiredNoPurchase), true);
 assert.equal(limitsForWorkspace(growthExpiredNoPurchase).models, 0);
 
 const growthExpiredWithStarter = {
@@ -69,7 +73,9 @@ const missedExpiryWebhookFailsClosed = {
   billingCurrentPeriodEnd: past,
 };
 assert.equal(hasPurchasedTrialFallback(missedExpiryWebhookFailsClosed), false);
-assert.equal(isTrialSuspended(missedExpiryWebhookFailsClosed), true);
+assert.equal(servicePauseReason(missedExpiryWebhookFailsClosed), "entitlement_lapsed");
+assert.equal(isTrialSuspended(missedExpiryWebhookFailsClosed), false);
+assert.equal(isServicePaused(missedExpiryWebhookFailsClosed), true);
 
 const expiredProviderCannotFallBackToLegacyPurchase = {
   plan: "pro",
@@ -80,8 +86,31 @@ const expiredProviderCannotFallBackToLegacyPurchase = {
   trialPlan: null,
   trialEndsAt: null,
 };
-assert.equal(isTrialSuspended(expiredProviderCannotFallBackToLegacyPurchase), true);
+assert.equal(servicePauseReason(expiredProviderCannotFallBackToLegacyPurchase), "entitlement_lapsed");
+assert.equal(isTrialSuspended(expiredProviderCannotFallBackToLegacyPurchase), false);
+assert.equal(isServicePaused(expiredProviderCannotFallBackToLegacyPurchase), true);
 assert.equal(limitsForWorkspace(expiredProviderCannotFallBackToLegacyPurchase).models, 0);
+
+const canceledPaidEnded = {
+  plan: "starter",
+  billingProvider: "dodo",
+  billingSubscriptionId: "sub_x",
+  billingStatus: "canceled",
+  billingEntitlementTier: null,
+  billingCurrentPeriodEnd: past,
+  trialPlan: "growth",
+  trialEndsAt: past,
+};
+assert.equal(servicePauseReason(canceledPaidEnded), "subscription_canceled");
+assert.equal(isTrialSuspended(canceledPaidEnded), false);
+assert.equal(isServicePaused(canceledPaidEnded), true);
+
+const expiredPaidEnded = {
+  ...canceledPaidEnded,
+  billingStatus: "expired",
+};
+assert.equal(servicePauseReason(expiredPaidEnded), "subscription_expired");
+assert.equal(isTrialSuspended(expiredPaidEnded), false);
 
 const launchTrialWs = {
   plan: "starter",
@@ -125,17 +154,15 @@ assert.equal(planActionVerb(growthExpiredWithStarter), "Upgrade"); // paying sta
 assert.equal(planActionVerb(launchExpiredWithLaunch), "Upgrade"); // paying launch
 assert.equal(planActionVerb(ownerSet), "Subscribe"); // no purchasedBillingTier recorded
 
-// Per-tier matrix — Subscribe for tiers ≤ trial, Upgrade for tiers above.
-// Launch trial → Starter/Launch = Subscribe · Growth/Scale = Upgrade
+// Per-tier matrix — during active trial with no paid plan, all self-serve CTAs are Subscribe.
 assert.equal(planActionVerbForTier(launchTrialWs, "starter"), "Subscribe");
 assert.equal(planActionVerbForTier(launchTrialWs, "launch"), "Subscribe");
-assert.equal(planActionVerbForTier(launchTrialWs, "growth"), "Upgrade");
-assert.equal(planActionVerbForTier(launchTrialWs, "scale"), "Upgrade");
-// Growth trial → Starter/Launch/Growth = Subscribe · Scale = Upgrade
+assert.equal(planActionVerbForTier(launchTrialWs, "growth"), "Subscribe");
+assert.equal(planActionVerbForTier(launchTrialWs, "scale"), "Subscribe");
 assert.equal(planActionVerbForTier(growthTrialWs, "starter"), "Subscribe");
 assert.equal(planActionVerbForTier(growthTrialWs, "launch"), "Subscribe");
 assert.equal(planActionVerbForTier(growthTrialWs, "growth"), "Subscribe");
-assert.equal(planActionVerbForTier(growthTrialWs, "scale"), "Upgrade");
+assert.equal(planActionVerbForTier(growthTrialWs, "scale"), "Subscribe");
 // Paying customer (Starter) moving up → Upgrade for higher tiers.
 assert.equal(planActionVerbForTier(growthExpiredWithStarter, "growth"), "Upgrade");
 

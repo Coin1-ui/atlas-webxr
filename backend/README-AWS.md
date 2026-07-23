@@ -69,7 +69,7 @@ Lambda environment (atlas-api):
 | `ATLAS_USAGE_TABLE` | `atlas-usage` | Monthly usage and session deduplication |
 | `ATLAS_BILLING_TABLE` | `atlas-billing` | Immutable provider events and subscription projection |
 | `ATLAS_BILLING_ENABLED` | `false` until sandbox approval | Enables hosted checkout creation |
-| `ATLAS_ZOHO_CHECKOUT_ENABLED` | `false` until Zoho reconciliation approval | Independently enables India checkout |
+| `ATLAS_ZOHO_CHECKOUT_ENABLED` | `false` until Zoho reconciliation approval | When `true`, India (`IN`) checkouts use Zoho INR. When unset/`false`, **India uses Dodo USD** like other countries |
 | `ATLAS_DODO_WEBHOOK_ENABLED` | `false` until sandbox approval | Enables signed Dodo webhook reconciliation |
 | `ATLAS_ZOHO_WEBHOOK_ENABLED` | `false` until Zoho sandbox approval | Enables signed Zoho Payments reconciliation |
 | `ATLAS_ZOHO_BOOKS_SYNC_ENABLED` | `false` until accounting approval | Enables scheduled Zoho Books invoice/payment mirror |
@@ -102,8 +102,7 @@ Lambda environment (atlas-api):
 
 Billing ledger IAM for the `atlas-api` Lambda role:
 
-- `dynamodb:GetItem`, `dynamodb:PutItem`, `dynamodb:UpdateItem`, `dynamodb:DeleteItem`, `dynamodb:Query`, and `dynamodb:TransactWriteItems` on the `ATLAS_BILLING_TABLE` ARN.
-- `dynamodb:GetItem`, `dynamodb:PutItem`, `dynamodb:UpdateItem`, `dynamodb:DeleteItem` on the `ATLAS_USAGE_TABLE` ARN.
+- `dynamodb:GetItem`, `dynamodb:PutItem`, `dynamodb:UpdateItem`, `dynamodb:Query`, and `dynamodb:TransactWriteItems` on the `ATLAS_BILLING_TABLE` ARN.
 - `dynamodb:UpdateItem` and `dynamodb:TransactWriteItems` on the `ATLAS_WORKSPACES_TABLE` ARN.
 - `sqs:SendMessage` on the queue referenced by `ATLAS_BILLING_DLQ_URL`.
 - Keep both table resources in the same account and region so the ledger append and workspace entitlement projection can use one DynamoDB transaction.

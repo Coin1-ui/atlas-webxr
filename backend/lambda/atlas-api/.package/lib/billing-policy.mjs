@@ -1,7 +1,13 @@
 const TIER_ORDER = ["starter", "launch", "growth"];
 
+/**
+ * Route billing country → provider.
+ * India (IN) uses Zoho only when ATLAS_ZOHO_CHECKOUT_ENABLED=true; otherwise Dodo (USD).
+ */
 export function providerForBillingCountry(country) {
-  return String(country || "").toUpperCase() === "IN" ? "zoho" : "dodo";
+  const code = String(country || "").toUpperCase();
+  if (code === "IN" && process.env.ATLAS_ZOHO_CHECKOUT_ENABLED === "true") return "zoho";
+  return "dodo";
 }
 
 export function billingCurrencyForProvider(provider) {

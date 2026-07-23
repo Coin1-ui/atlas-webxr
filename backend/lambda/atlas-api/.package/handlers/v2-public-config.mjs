@@ -1,6 +1,6 @@
 import { jsonResponse, optionsResponse, parseJsonBody } from "../lib/http.mjs";
 import { getWorkspaceBySlug, toPublicConfig } from "../lib/dynamodb.mjs";
-import { isTrialSuspended } from "../lib/trial.mjs";
+import { isServicePaused, servicePauseReason, servicePauseShowroomSub, servicePauseTitle } from "../lib/trial.mjs";
 
 /**
  * @param {import("aws-lambda").APIGatewayProxyEventV2} event
@@ -13,8 +13,14 @@ export async function handlePublicConfig(event, slug) {
   if (!workspace) {
     return jsonResponse(404, { error: "Workspace not found" });
   }
-  if (isTrialSuspended(workspace)) {
-    return jsonResponse(403, { error: "Showroom paused — subscription required", suspended: true });
+  if (isServicePaused(workspace)) {
+    const pauseReason = servicePauseReason(workspace);
+    return jsonResponse(403, {
+      error: servicePauseShowroomSub(pauseReason),
+      suspended: true,
+      pauseReason,
+      pauseTitle: servicePauseTitle(pauseReason),
+    });
   }
   if (workspace.restricted) {
     return jsonResponse(403, { error: "Showroom unavailable", restricted: true });
