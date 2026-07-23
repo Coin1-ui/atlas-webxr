@@ -1,12 +1,17 @@
 import { requireWorkspaceAdmin } from "../lib/authz.mjs";
 import { jsonResponse, parseJsonBody } from "../lib/http.mjs";
-import { getBillingSubscription, markBillingCancelScheduled } from "../lib/billing-store.mjs";
+import {
+  getBillingSubscription,
+  markBillingCancelCleared,
+  markBillingCancelScheduled,
+} from "../lib/billing-store.mjs";
 import {
   cancelDodoSubscription,
   cancelDodoScheduledPlanChange,
   changeDodoPlan,
   createDodoPortalSession,
   getDodoSubscription,
+  uncancelDodoSubscription,
 } from "../lib/billing-provider-dodo.mjs";
 import {
   cancelZohoSubscription,
@@ -73,6 +78,23 @@ export async function handleBillingCancel(event, workspaceId) {
       }
       await cancelDodoScheduledPlanChange(subscription.providerSubscriptionId);
       return jsonResponse(200, { ok: true, scheduledPlanChange: null });
+    }
+    if (body?.undoCancel === true) {
+      if (["canceled", "expired"].includes(subscription.status)) {
+        return jsonResponse(409, {
+          error: "This subscription has ended. Start a new checkout instead.",
+        });
+      }
+      if (subscription.provider === "dodo") {
+        await uncancelDodoSubscription(subscription.providerSubscriptionId);
+      } else {
+        return jsonResponse(501, {
+          error:
+            "Undo cancel is only supported for Dodo on Account. Use Manage payment method & invoices for Zoho.",
+        });
+      }
+      await markBillingCancelCleared(workspaceId);
+      return jsonResponse(200, { ok: true, cancelAtPeriodEnd: false });
     }
     if (["canceled", "expired"].includes(subscription.status)) {
       return jsonResponse(200, { ok: true, pending: false, status: subscription.status });

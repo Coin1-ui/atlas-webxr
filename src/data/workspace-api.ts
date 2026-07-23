@@ -1,5 +1,6 @@
 import { getApiBase } from "../config/api";
 import { authBearerToken, loadSession } from "../auth/session";
+import { apiErrorMessage } from "../shared/api-error-message";
 import type { PublicWorkspaceConfig, Workspace } from "../shared/tenant";
 
 function saasApiUrl(path: string): string {
@@ -73,7 +74,7 @@ export async function fetchMyWorkspaces(): Promise<Workspace[]> {
   if (res.status === 401) return [];
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(text || `HTTP ${res.status}`);
+    throw new Error(apiErrorMessage(text, res.status));
   }
   const data = (await res.json()) as { workspaces: Workspace[] };
   return data.workspaces ?? [];

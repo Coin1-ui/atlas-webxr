@@ -142,7 +142,7 @@ export function renderAccountPage(
   const sessionLimitDisplay =
     effectiveLimits && planLimits
       ? isUnlimitedSessionsLimit(effectiveLimits.sessionsPerMonth)
-        ? `<span class="admin-stat-unlimited"> ┬╖ unlimited</span>`
+        ? `<span class="admin-stat-unlimited"> \u00B7 unlimited</span>`
         : effectiveLimits.overageExtended?.sessions
           ? `<span> / ${formatSessionsLimit(effectiveLimits.sessionsPerMonth)} <span class="auth-hint">(+overage)</span></span>`
           : `<span> / ${formatSessionsLimit(planLimits.sessionsPerMonth)}</span>`
@@ -152,15 +152,15 @@ export function renderAccountPage(
     ? `<div class="admin-usage-grid account-usage-grid${unrestricted ? " admin-usage-grid--operator" : ""}">
         <div class="admin-stat">
           <span class="admin-stat-label">Models</span>
-          <span class="admin-stat-val">${usageCounts.modelCount}${unrestricted ? `<span class="admin-stat-unlimited"> ┬╖ tracked ┬╖ no limit</span>` : planInactive ? `<span> ┬╖ retained</span>` : `<span> / ${planLimits.models}</span>`}</span>
+          <span class="admin-stat-val">${usageCounts.modelCount}${unrestricted ? `<span class="admin-stat-unlimited"> \u00B7 tracked \u00B7 no limit</span>` : planInactive ? `<span> \u00B7 retained</span>` : `<span> / ${planLimits.models}</span>`}</span>
         </div>
         <div class="admin-stat">
           <span class="admin-stat-label">AR sessions</span>
-          <span class="admin-stat-val">${usageCounts.sessionCount}${unrestricted ? `<span class="admin-stat-unlimited"> ┬╖ tracked ┬╖ no limit</span>` : planInactive ? `<span> ┬╖ tracked</span>` : sessionLimitDisplay}</span>
+          <span class="admin-stat-val">${usageCounts.sessionCount}${unrestricted ? `<span class="admin-stat-unlimited"> \u00B7 tracked \u00B7 no limit</span>` : planInactive ? `<span> \u00B7 tracked</span>` : sessionLimitDisplay}</span>
         </div>
         <div class="admin-stat">
           <span class="admin-stat-label">Storage</span>
-          <span class="admin-stat-val">${formatStorageBytes(usageCounts.storageBytes)}${unrestricted ? `<span class="admin-stat-unlimited"> ┬╖ tracked ┬╖ no limit</span>` : planInactive ? `<span> ┬╖ retained</span>` : `<span> / ${formatStorageBytes(planLimits.storageBytes)}</span>`}</span>
+          <span class="admin-stat-val">${formatStorageBytes(usageCounts.storageBytes)}${unrestricted ? `<span class="admin-stat-unlimited"> \u00B7 tracked \u00B7 no limit</span>` : planInactive ? `<span> \u00B7 retained</span>` : `<span> / ${formatStorageBytes(planLimits.storageBytes)}</span>`}</span>
         </div>
         ${usageOverageStat}
       </div>

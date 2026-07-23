@@ -175,6 +175,14 @@ export async function cancelDodoSubscription(subscriptionId) {
   });
 }
 
+/** Clears cancel-at-next-billing-date so the subscription renews normally. */
+export async function uncancelDodoSubscription(subscriptionId) {
+  await dodoRequest(`/subscriptions/${encodeURIComponent(subscriptionId)}`, {
+    method: "PATCH",
+    body: { cancel_at_next_billing_date: false },
+  });
+}
+
 /**
  * Clears a pending next-billing-date plan change (Dodo DELETE …/change-plan/scheduled).
  * @param {string} subscriptionId

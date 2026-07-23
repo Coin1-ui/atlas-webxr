@@ -19,7 +19,6 @@ export type MobileAdminHubHandlers = {
   onShowroom: () => void;
   onBranding: () => void;
   onAccount: () => void;
-  onGetStarted?: () => void;
   onOwner?: () => void;
   onSignOut: () => void;
   onBack: () => void;
@@ -63,15 +62,6 @@ export function renderMobileAdminHub(root: HTMLElement, handlers: MobileAdminHub
               <span class="mobile-admin-hub-tile-meta">Plan &amp; billing</span>
             </button>
             ${
-              handlers.onGetStarted
-                ? `<button type="button" class="mobile-admin-hub-tile" data-action="get-started" role="listitem">
-              <span class="mobile-admin-hub-tile-icon" aria-hidden="true">✦</span>
-              <span class="mobile-admin-hub-tile-title">Get started</span>
-              <span class="mobile-admin-hub-tile-meta">Setup checklist</span>
-            </button>`
-                : ""
-            }
-            ${
               handlers.showOwnerLink && handlers.onOwner
                 ? `<button type="button" class="mobile-admin-hub-tile" data-action="owner" role="listitem">
               <span class="mobile-admin-hub-tile-icon" aria-hidden="true">⚙</span>
@@ -83,12 +73,12 @@ export function renderMobileAdminHub(root: HTMLElement, handlers: MobileAdminHub
           </div>
 
           <div class="mobile-admin-hub-desktop-note" role="note">
-            <p class="admin-label">Desktop admin</p>
+            <p class="admin-label">${escapeHtml(MKT.adminDesktopOnlyTitle)}</p>
             <p class="auth-hint">${escapeHtml(MKT.adminDesktopOnlyBody)}</p>
           </div>
 
           <div class="admin-footer-actions">
-            <button type="button" class="mkt-btn mkt-btn-ghost" data-action="back">← Back to home</button>
+            <button type="button" class="mkt-btn mkt-btn-ghost" data-action="back">\u2190 Back to home</button>
             <button type="button" class="mkt-btn mkt-btn-ghost" data-action="signout">Sign out</button>
           </div>
         </div>
@@ -100,7 +90,6 @@ export function renderMobileAdminHub(root: HTMLElement, handlers: MobileAdminHub
   root.querySelector("[data-action=showroom]")?.addEventListener("click", handlers.onShowroom);
   root.querySelector("[data-action=branding]")?.addEventListener("click", handlers.onBranding);
   root.querySelector("[data-action=account]")?.addEventListener("click", handlers.onAccount);
-  root.querySelector("[data-action=get-started]")?.addEventListener("click", () => handlers.onGetStarted?.());
   root.querySelector("[data-action=owner]")?.addEventListener("click", () => handlers.onOwner?.());
   root.querySelector("[data-action=back]")?.addEventListener("click", handlers.onBack);
   root.querySelector("[data-action=signout]")?.addEventListener("click", handlers.onSignOut);

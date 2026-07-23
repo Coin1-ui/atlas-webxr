@@ -38,9 +38,9 @@ export const MKT = {
   authVerifySpamHint: "Check your spam or junk folder if the code does not arrive within a few minutes.",
   adminDesktopOnlyTitle: "Admin dashboard — desktop only",
   adminDesktopOnlyBody:
-    "Model uploads and the full admin dashboard need a desktop browser with a mouse. On mobile you can edit branding, manage billing, and browse your showroom.",
+    "Finish Get started (upload models) and use the full admin dashboard on a desktop browser with a mouse. On mobile you can edit branding, manage billing, and browse your showroom.",
   adminMobileHubLead:
-    "Quick actions for your workspace on mobile. Upload GLB models and manage the full catalog from a desktop browser.",
+    "Quick actions for your workspace on mobile. Complete setup and upload GLB models from a desktop browser — full admin is PC-only.",
   objectionFloatTitle: "Models won't float on tables",
   objectionFloatBody: "Floor-tuned placement locks to real ground planes — the #1 reason retail teams switch from generic AR viewers.",
   objectionAppTitle: "No app store approval",

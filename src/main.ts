@@ -203,6 +203,12 @@ import {
   normalizeWorkspaceFeatures,
   type WorkspaceFeatures,
 } from "./shared/workspace-features";
+import { apiErrorMessage } from "./shared/api-error-message";
+
+function bootstrapErrorText(e: unknown): string {
+  const raw = e instanceof Error ? e.message : String(e);
+  return apiErrorMessage(raw, 500);
+}
 
 const app = document.getElementById("app")!;
 const arOverlay = document.getElementById("ar-overlay")!;
@@ -761,8 +767,6 @@ async function showMobileAdminHub(): Promise<void> {
   }
   const isPlatformOwner = isPlatformOwnerEmail(user.email);
   const modelCountKnown = modelCount ?? (await countUserModels(workspace.id).catch(() => undefined));
-  const showGetStarted =
-    !isPlatformOwner && !isOnboardingComplete(workspace.id, modelCountKnown ?? 0);
   renderMobileAdminHub(app, {
     workspace,
     email: user.email,
@@ -773,7 +777,6 @@ async function showMobileAdminHub(): Promise<void> {
     },
     onBranding: () => navigateTo("/admin/branding", true),
     onAccount: () => navigateTo("/account", true),
-    onGetStarted: showGetStarted ? () => navigateTo("/admin/get-started") : undefined,
     onOwner: isPlatformOwner ? () => navigateTo("/owner") : undefined,
     onSignOut: () => {
       logout();
@@ -999,7 +1002,7 @@ function showOnboardScreen(error?: string): void {
         activeWorkspace = await onboardWorkspace(name, slug, intendedTrialPlan ?? undefined);
         clearIntendedTrialPlan();
         activeTenantSlug = activeWorkspace.slug;
-        navigateTo("/admin/get-started", true);
+        navigateTo(isMobileExperience() ? "/admin" : "/admin/get-started", true);
       } catch (e) {
         showOnboardScreen(e instanceof Error ? e.message : String(e));
       }
@@ -1055,7 +1058,7 @@ async function showAdminModelsScreen(): Promise<void> {
     });
     routePainted();
   } catch (e) {
-    app.innerHTML = `<div class="home"><p class="camera-warning">${escapeHtml(e instanceof Error ? e.message : String(e))}</p><button class="btn btn-ghost btn-block" data-action="back">Back</button></div>`;
+    app.innerHTML = `<div class="home"><p class="camera-warning">${escapeHtml(bootstrapErrorText(e))}</p><button class="btn btn-ghost btn-block" data-action="back">Back</button></div>`;
     app.querySelector("[data-action=back]")?.addEventListener("click", () => navigateTo("/admin"));
     routePainted();
   }
@@ -1401,7 +1404,7 @@ async function showAccountScreen(opts?: {
     );
     routePainted();
   } catch (e) {
-    app.innerHTML = `<div class="home"><p class="camera-warning">${escapeHtml(e instanceof Error ? e.message : String(e))}</p><button class="btn btn-ghost btn-block" data-action="back">Back</button></div>`;
+    app.innerHTML = `<div class="home"><p class="camera-warning">${escapeHtml(bootstrapErrorText(e))}</p><button class="btn btn-ghost btn-block" data-action="back">Back</button></div>`;
     app.querySelector("[data-action=back]")?.addEventListener("click", () => goHome());
     routePainted();
   }
@@ -1418,8 +1421,12 @@ async function countUserModels(workspaceId: string): Promise<number> {
 
 async function navigateAdminEntry(workspace: Workspace): Promise<void> {
   const modelCount = await countUserModels(workspace.id);
-  const path = isOnboardingComplete(workspace.id, modelCount) ? "/admin" : "/admin/get-started";
-  navigateTo(path, true);
+  if (isOnboardingComplete(workspace.id, modelCount)) {
+    navigateTo("/admin", true);
+    return;
+  }
+  // Mobile: hub + PC setup note. Desktop: Get started wizard.
+  navigateTo(isMobileExperience() ? "/admin" : "/admin/get-started", true);
 }
 
 function showroomAbsoluteUrl(slug: string): string {
@@ -1432,6 +1439,20 @@ async function showOnboardingGetStartedScreen(): Promise<void> {
   const user = getCurrentUser();
   if (!user) {
     navigateTo("/login", true);
+    return;
+  }
+  if (isMobileExperience()) {
+    try {
+      const next = await ensureWorkspaceAfterAuth();
+      if (next === "onboard") {
+        navigateTo("/onboard", true);
+        return;
+      }
+      activeWorkspace = applyPlatformOverrides(next);
+    } catch {
+      /* hub still useful */
+    }
+    showMobileAdminDesktopOnlyGate();
     return;
   }
   try {
@@ -1487,7 +1508,7 @@ async function showOnboardingGetStartedScreen(): Promise<void> {
     });
     routePainted();
   } catch (e) {
-    app.innerHTML = `<div class="home"><p class="camera-warning">${escapeHtml(e instanceof Error ? e.message : String(e))}</p><button class="btn btn-ghost btn-block" data-action="back">Back</button></div>`;
+    app.innerHTML = `<div class="home"><p class="camera-warning">${escapeHtml(bootstrapErrorText(e))}</p><button class="btn btn-ghost btn-block" data-action="back">Back</button></div>`;
     app.querySelector("[data-action=back]")?.addEventListener("click", () => goHome());
     routePainted();
   }
@@ -1517,7 +1538,7 @@ async function showAdminHelpScreen(): Promise<void> {
     });
     routePainted();
   } catch (e) {
-    app.innerHTML = `<div class="home"><p class="camera-warning">${escapeHtml(e instanceof Error ? e.message : String(e))}</p><button class="btn btn-ghost btn-block" data-action="back">Back</button></div>`;
+    app.innerHTML = `<div class="home"><p class="camera-warning">${escapeHtml(bootstrapErrorText(e))}</p><button class="btn btn-ghost btn-block" data-action="back">Back</button></div>`;
     app.querySelector("[data-action=back]")?.addEventListener("click", () => navigateTo("/admin"));
     routePainted();
   }
@@ -1592,7 +1613,7 @@ async function showAdminScreen(): Promise<void> {
     });
     routePainted();
   } catch (e) {
-    app.innerHTML = `<div class="home"><p class="camera-warning">${escapeHtml(e instanceof Error ? e.message : String(e))}</p><button class="btn btn-ghost btn-block" data-action="back">Back</button></div>`;
+    app.innerHTML = `<div class="home"><p class="camera-warning">${escapeHtml(bootstrapErrorText(e))}</p><button class="btn btn-ghost btn-block" data-action="back">Back</button></div>`;
     app.querySelector("[data-action=back]")?.addEventListener("click", () => goHome());
     routePainted();
   }
@@ -1657,7 +1678,7 @@ async function showAdminBrandingScreen(saved = false, error?: string): Promise<v
     });
     routePainted();
   } catch (e) {
-    app.innerHTML = `<div class="home"><p class="camera-warning">${escapeHtml(e instanceof Error ? e.message : String(e))}</p><button class="btn btn-ghost btn-block" data-action="back">Back</button></div>`;
+    app.innerHTML = `<div class="home"><p class="camera-warning">${escapeHtml(bootstrapErrorText(e))}</p><button class="btn btn-ghost btn-block" data-action="back">Back</button></div>`;
     app.querySelector("[data-action=back]")?.addEventListener("click", () => navigateTo("/admin"));
     routePainted();
   }
@@ -1742,7 +1763,7 @@ async function showTenantHome(slug: string): Promise<void> {
       }
       return;
     }
-    app.innerHTML = `<div class="home"><p class="camera-warning">${escapeHtml(e instanceof Error ? e.message : String(e))}</p><button class="btn btn-ghost btn-block" data-action="back">Back</button></div>`;
+    app.innerHTML = `<div class="home"><p class="camera-warning">${escapeHtml(bootstrapErrorText(e))}</p><button class="btn btn-ghost btn-block" data-action="back">Back</button></div>`;
     app.querySelector("[data-action=back]")?.addEventListener("click", () => goHome());
     routePainted();
   }
@@ -1796,7 +1817,7 @@ async function showTenantArDirect(slug: string, modelId: string): Promise<void> 
       renderPublicShowroomBlocked(e.kind, e.message);
       return;
     }
-    app.innerHTML = `<div class="home"><p class="camera-warning">${escapeHtml(e instanceof Error ? e.message : String(e))}</p><button class="btn btn-ghost btn-block" data-action="back">Back</button></div>`;
+    app.innerHTML = `<div class="home"><p class="camera-warning">${escapeHtml(bootstrapErrorText(e))}</p><button class="btn btn-ghost btn-block" data-action="back">Back</button></div>`;
     app.querySelector("[data-action=back]")?.addEventListener("click", () => goHome());
     routePainted();
   }
@@ -1827,7 +1848,7 @@ async function showGlobalArDirect(modelId: string): Promise<void> {
     });
     routePainted();
   } catch (e) {
-    app.innerHTML = `<div class="home"><p class="camera-warning">${escapeHtml(e instanceof Error ? e.message : String(e))}</p><button class="btn btn-ghost btn-block" data-action="back">Back</button></div>`;
+    app.innerHTML = `<div class="home"><p class="camera-warning">${escapeHtml(bootstrapErrorText(e))}</p><button class="btn btn-ghost btn-block" data-action="back">Back</button></div>`;
     app.querySelector("[data-action=back]")?.addEventListener("click", () => goHome());
     routePainted();
   }
@@ -2197,7 +2218,7 @@ async function startIosQuickLookAr(): Promise<void> {
     });
     routePainted();
   } catch (e) {
-    app.innerHTML = `<div class="home"><p class="camera-warning">${escapeHtml(e instanceof Error ? e.message : String(e))}</p><button class="btn btn-ghost btn-block" data-action="back">Back</button></div>`;
+    app.innerHTML = `<div class="home"><p class="camera-warning">${escapeHtml(bootstrapErrorText(e))}</p><button class="btn btn-ghost btn-block" data-action="back">Back</button></div>`;
     app.querySelector("[data-action=back]")?.addEventListener("click", () => showGlobalDemoHome());
     routePainted();
   }

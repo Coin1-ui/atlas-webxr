@@ -1,7 +1,6 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import {
   DynamoDBDocumentClient,
-  DeleteCommand,
   GetCommand,
   PutCommand,
   TransactWriteCommand,
@@ -716,6 +715,36 @@ export async function markBillingCancelScheduled(workspaceId) {
   );
 }
 
+/** Clears cancel-at-period-end after provider uncancel succeeds. */
+export async function markBillingCancelCleared(workspaceId) {
+  const now = new Date().toISOString();
+  await client.send(
+    new TransactWriteCommand({
+      TransactItems: [
+        {
+          Update: {
+            TableName: billingTable(),
+            Key: { pk: `WORKSPACE#${workspaceId}`, sk: "SUBSCRIPTION#CURRENT" },
+            UpdateExpression: "SET cancelAtPeriodEnd = :false, updatedAt = :now",
+            ConditionExpression: "attribute_exists(pk)",
+            ExpressionAttributeValues: { ":false": false, ":now": now },
+          },
+        },
+        {
+          Update: {
+            TableName: workspacesTable(),
+            Key: { pk: `WORKSPACE#${workspaceId}`, sk: "META" },
+            UpdateExpression:
+              "SET billingCancelAtPeriodEnd = :false, billingUpdatedAt = :now, updatedAt = :now",
+            ConditionExpression: "attribute_exists(pk)",
+            ExpressionAttributeValues: { ":false": false, ":now": now },
+          },
+        },
+      ],
+    })
+  );
+}
+
 async function getBillingEvent(provider, eventId) {
   const row = await client.send(
     new GetCommand({
@@ -1163,10 +1192,7 @@ export async function getWorkspaceOverage(workspaceId, month) {
       ConsistentRead: true,
     })
   );
-  const item = row.Item ?? null;
-  // Soft-cleared rows (IAM often lacks DeleteItem) must not show as paid/accepted.
-  if (item?.status === "cleared") return null;
-  return item;
+  return row.Item ?? null;
 }
 
 /**
@@ -1180,8 +1206,6 @@ export async function getWorkspaceOverage(workspaceId, month) {
  *   operationId?: string | null;
  *   paidAt?: string | null;
  *   note?: string | null;
- *   usageSnapshot?: { modelCount: number; sessionCount: number; storageBytes: number } | null;
- *   sandbox?: boolean;
  * }} input
  */
 export async function recordWorkspaceOverageCharge(input) {
@@ -1197,8 +1221,6 @@ export async function recordWorkspaceOverageCharge(input) {
     operationId: input.operationId ?? null,
     paidAt: input.paidAt ?? (input.status === "paid" ? now : null),
     note: input.note ?? null,
-    usageSnapshot: input.usageSnapshot ?? null,
-    sandbox: input.sandbox === true,
     updatedAt: now,
     createdAt: now,
   };
@@ -1245,54 +1267,5 @@ export async function markWorkspaceOveragePaidFromWebhook(workspaceId, month, pa
     })
   );
   return getWorkspaceOverage(workspaceId, month);
-}
-
-/**
- * Remove overage row for a month.
- * Uses Put soft-clear when DeleteItem is denied (common Lambda IAM gap).
- * @param {string} workspaceId
- * @param {string} month
- */
-export async function deleteWorkspaceOverage(workspaceId, month) {
-  try {
-    await client.send(
-      new DeleteCommand({
-        TableName: billingTable(),
-        Key: overageRecordKey(workspaceId, month),
-      })
-    );
-    return { workspaceId, month, deleted: true, method: "delete" };
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    const accessDenied =
-      err?.name === "AccessDeniedException" ||
-      /not authorized|AccessDenied|dynamodb:DeleteItem/i.test(msg);
-    if (!accessDenied) throw err;
-    const now = new Date().toISOString();
-    await client.send(
-      new PutCommand({
-        TableName: billingTable(),
-        Item: {
-          ...overageRecordKey(workspaceId, month),
-          entityType: "OVERAGE",
-          workspaceId,
-          month,
-          status: "cleared",
-          amountUsd: 0,
-          provider: null,
-          providerPaymentId: null,
-          operationId: null,
-          paidAt: null,
-          note: "cleared-test-overage",
-          usageSnapshot: null,
-          sandbox: true,
-          clearedAt: now,
-          updatedAt: now,
-          createdAt: now,
-        },
-      })
-    );
-    return { workspaceId, month, deleted: true, method: "soft-clear" };
-  }
 }
 

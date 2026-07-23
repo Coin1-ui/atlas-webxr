@@ -2,13 +2,12 @@ import { jsonResponse, optionsResponse } from "../lib/http.mjs";
 import { requireWorkspaceAdmin } from "../lib/authz.mjs";
 import { billingEntitlementTier } from "../lib/billing-state.mjs";
 import { getBillingSubscription } from "../lib/billing-store.mjs";
-import {
-  getDodoSubscription,
-  scheduledPlanChangeFromDodoSubscription,
-} from "../lib/billing-provider-dodo.mjs";
+import { scheduledPlanChangeFromDodoSubscription, getDodoSubscription } from "../lib/billing-provider-dodo.mjs";
+import { reconcileDodoSubscriptionIfDrifted } from "../lib/billing-reconcile-dodo.mjs";
 
 /**
  * GET /v2/workspaces/{id}/billing/status — authoritative provider subscription state.
+ * Reconciles cancel/terminal drift from live Dodo when Dynamo lags (missed webhooks).
  * @param {import("aws-lambda").APIGatewayProxyEventV2} event
  * @param {string} workspaceId
  */
@@ -18,21 +17,39 @@ export async function handleBillingStatus(event, workspaceId) {
   }
   try {
     await requireWorkspaceAdmin(event, workspaceId, { allowSuspended: true });
-    const subscription = await getBillingSubscription(workspaceId);
+    let subscription = await getBillingSubscription(workspaceId);
     let scheduledPlanChange = null;
+
     if (
       process.env.ATLAS_BILLING_ENABLED === "true" &&
       subscription?.provider === "dodo" &&
-      subscription.providerSubscriptionId &&
-      !["expired", "canceled"].includes(String(subscription.status || ""))
+      subscription.providerSubscriptionId
     ) {
       try {
-        const live = await getDodoSubscription(subscription.providerSubscriptionId);
-        scheduledPlanChange = scheduledPlanChangeFromDodoSubscription(live);
-      } catch {
-        scheduledPlanChange = null;
+        const reconciled = await reconcileDodoSubscriptionIfDrifted({
+          workspaceId,
+          providerSubscriptionId: subscription.providerSubscriptionId,
+          current: subscription,
+        });
+        subscription = reconciled.subscription ?? subscription;
+        scheduledPlanChange = reconciled.scheduledPlanChange;
+      } catch (error) {
+        // Soft-fail: still return Dynamo projection + best-effort schedule read.
+        console.error("billing/status Dodo reconcile failed", {
+          workspaceId,
+          error: error instanceof Error ? error.message : "Unknown error",
+        });
+        try {
+          if (!["expired", "canceled"].includes(String(subscription.status || ""))) {
+            const live = await getDodoSubscription(subscription.providerSubscriptionId);
+            scheduledPlanChange = scheduledPlanChangeFromDodoSubscription(live);
+          }
+        } catch {
+          scheduledPlanChange = null;
+        }
       }
     }
+
     return jsonResponse(200, {
       subscription,
       entitlementTier: billingEntitlementTier(subscription),

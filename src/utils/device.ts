@@ -11,14 +11,9 @@ export function isMobileExperience(): boolean {
   return !isDesktopAdmin();
 }
 
-/** Mobile-allowed setup & operator routes (workspace create, branding, owner console). */
+/** Mobile-allowed setup & operator routes (workspace create, branding, owner console). Get started / upload wizard is desktop-only. */
 export function isMobileAllowedRoute(path: string): boolean {
-  return (
-    path === "/onboard" ||
-    path === "/owner" ||
-    path === "/admin/branding" ||
-    path === "/admin/get-started"
-  );
+  return path === "/onboard" || path === "/owner" || path === "/admin/branding";
 }
 
 /** Full admin dashboard & model manager — desktop only. Auth + setup routes allowed on mobile. */
