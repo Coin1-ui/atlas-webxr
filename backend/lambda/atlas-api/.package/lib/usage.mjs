@@ -124,6 +124,10 @@ export async function recordQualifiedSession(workspaceId, sessionId, placementCo
   }
 
   await incrementUsage(workspaceId, { sessionDelta: 1 });
+  // Fire-and-forget meter ingest — never block session analytics.
+  import("./dodo-usage-ingest.mjs")
+    .then(({ ingestDodoArSession }) => ingestDodoArSession(workspaceId, sessionId))
+    .catch(() => {});
   return { counted: true };
 }
 

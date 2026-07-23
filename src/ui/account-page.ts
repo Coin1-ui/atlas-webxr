@@ -202,8 +202,9 @@ export function renderAccountPage(
     )
     .join("");
 
-  const upgradeHtml =
-    upgrades.length > 0
+  const upgradeHtml = cancelScheduled
+    ? `<p class="auth-hint">Cancellation is scheduled. Upgrade and Downgrade are unavailable until you undo cancellation (Manage payment method &amp; invoices) or the period ends.</p>`
+    : upgrades.length > 0
       ? `<div class="account-plan-grid">
           ${upgrades
             .map((tier) => {
@@ -323,7 +324,7 @@ export function renderAccountPage(
                       : ""
                   }
                   ${
-                    scheduledPlanChange
+                    scheduledPlanChange && !cancelScheduled
                       ? `<p class="auth-hint">Plan change scheduled to <strong>${escapeHtml(scheduledPlanName)}</strong>${
                           scheduledPlanChange.effectiveAt
                             ? ` on ${escapeHtml(formatDate(scheduledPlanChange.effectiveAt))}`
@@ -350,7 +351,7 @@ export function renderAccountPage(
             </div>
             ${upgradeHtml}
             ${handlers.onManageBilling && workspace.billingSubscriptionId && billingIsLive ? `<button type="button" class="mkt-btn mkt-btn-primary account-secondary-btn" data-action="manage-billing">Manage payment method &amp; invoices</button>` : ""}
-            ${handlers.onCancelScheduledPlanChange && scheduledPlanChange ? `<button type="button" class="mkt-btn mkt-btn-ghost account-secondary-btn" data-action="cancel-scheduled-plan">Cancel scheduled plan change</button>` : ""}
+            ${handlers.onCancelScheduledPlanChange && scheduledPlanChange && !cancelScheduled ? `<button type="button" class="mkt-btn mkt-btn-ghost account-secondary-btn" data-action="cancel-scheduled-plan">Cancel scheduled change to ${escapeHtml(scheduledPlanName)}</button>` : ""}
             ${handlers.onCancelBilling && workspace.billingSubscriptionId && billingIsLive && !cancelScheduled ? `<button type="button" class="mkt-btn mkt-btn-ghost account-secondary-btn" data-action="cancel-billing">Cancel at renewal</button>` : ""}
             <button type="button" class="mkt-btn mkt-btn-ghost account-secondary-btn" data-action="pricing">Compare all plans</button>
           </section>

@@ -78,12 +78,22 @@ export async function handleBillingCancel(event, workspaceId) {
       return jsonResponse(200, { ok: true, pending: false, status: subscription.status });
     }
     if (subscription.provider === "dodo") {
+      // Product rule: cancel-at-renewal clears any pending plan change so both
+      // intents cannot coexist (cancel wins; scheduled upgrade would never activate).
+      await cancelDodoScheduledPlanChange(subscription.providerSubscriptionId, {
+        ignoreMissing: true,
+      });
       await cancelDodoSubscription(subscription.providerSubscriptionId);
     } else {
       await cancelZohoSubscription(subscription.providerSubscriptionId);
     }
     await markBillingCancelScheduled(workspaceId);
-    return jsonResponse(202, { ok: true, pending: true, cancelAtPeriodEnd: true });
+    return jsonResponse(202, {
+      ok: true,
+      pending: true,
+      cancelAtPeriodEnd: true,
+      scheduledPlanChange: null,
+    });
   } catch (error) {
     return errorResponse(error, "Unable to schedule cancellation");
   }
@@ -114,10 +124,24 @@ export async function handleBillingChangePlan(event, workspaceId) {
     if (targetTier === subscription.tier) {
       return jsonResponse(200, { ok: true, pending: false, tier: targetTier });
     }
+    if (subscription.cancelAtPeriodEnd === true) {
+      return jsonResponse(409, {
+        error:
+          "This subscription is set to cancel at renewal. Undo cancellation first, then Upgrade or Downgrade.",
+        code: "CANCEL_SCHEDULED_BLOCKS_PLAN_CHANGE",
+      });
+    }
     const effectiveAt = planChangeEffectiveAt(subscription.tier, targetTier);
     const immediate = effectiveAt === "after_confirmed_payment";
     if (subscription.provider === "dodo") {
       const dodoSub = await getDodoSubscription(subscription.providerSubscriptionId);
+      if (dodoSub?.cancel_at_next_billing_date === true) {
+        return jsonResponse(409, {
+          error:
+            "This subscription is set to cancel at renewal. Undo cancellation first, then Upgrade or Downgrade.",
+          code: "CANCEL_SCHEDULED_BLOCKS_PLAN_CHANGE",
+        });
+      }
       if (dodoSub?.on_demand === true) {
         return jsonResponse(409, {
           error:
@@ -137,7 +161,11 @@ export async function handleBillingChangePlan(event, workspaceId) {
       ok: true,
       pending: true,
       tier: targetTier,
+      currentTier: subscription.tier,
       effectiveAt,
+      // Atlas entitlements stay on currentTier until Dodo applies the change
+      // (period end / cancel-at-period-end) and webhooks update product_id.
+      activatesOnAtlas: "when_current_period_ends",
     });
   } catch (error) {
     return errorResponse(error, "Unable to change billing plan");

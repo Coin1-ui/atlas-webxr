@@ -5,10 +5,12 @@ import {
   getAssetBytes,
   presignUpload,
   readManifest,
+  sumWorkspaceStorageBytes,
   updateModelSettings,
 } from "../lib/models-store.mjs";
 import { requireWorkspaceAdmin, resolveWorkspaceBySlug } from "../lib/authz.mjs";
 import { incrementModelCount } from "../lib/usage.mjs";
+import { ingestDodoModelCount, ingestDodoStorageBytes } from "../lib/dodo-usage-ingest.mjs";
 import { isTrialSuspended } from "../lib/trial.mjs";
 import { assertModelUploadAllowed, maxAssetBytesForWorkspace } from "../lib/upload-limits.mjs";
 
@@ -106,6 +108,11 @@ export async function handleModelUpload(event, workspaceId) {
       if (afterCount > beforeCount) {
         await incrementModelCount(workspaceId);
       }
+      // Best-effort Dodo gauges for hybrid usage products (never block upload).
+      void ingestDodoModelCount(workspaceId, afterCount);
+      void sumWorkspaceStorageBytes(workspaceId)
+        .then((bytes) => ingestDodoStorageBytes(workspaceId, bytes))
+        .catch(() => {});
       return jsonResponse(200, result);
     }
     return jsonResponse(400, {

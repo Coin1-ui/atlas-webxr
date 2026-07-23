@@ -22,22 +22,35 @@ function atlasBillingUrl(name) {
   return url.toString();
 }
 
+/** Known test hybrid usage products (meters). Mapped so webhooks still resolve during migration. */
+const KNOWN_USAGE_HYBRID_PRODUCTS = Object.freeze({
+  pdt_0Njk5Xz9AdIoBNmgRoIEK: "starter",
+  pdt_0Njk5QMJ8uCwSvseuHeo0: "launch",
+  pdt_0Njk5Y261cDq9TWLto4dR: "growth",
+});
+
 function productIdForTier(tier) {
-  const variable = {
-    starter: "DODO_PRODUCT_STARTER_MONTHLY",
-    launch: "DODO_PRODUCT_LAUNCH_MONTHLY",
-    growth: "DODO_PRODUCT_GROWTH_MONTHLY",
-  }[tier];
-  if (!variable) throw new Error("Dodo checkout tier is not self-service");
-  return requiredEnv(variable);
+  if (!["starter", "launch", "growth"].includes(tier)) {
+    throw new Error("Dodo checkout tier is not self-service");
+  }
+  // Prefer usage-hybrid catalog when configured (session meters at renewal).
+  const usage = process.env[`DODO_PRODUCT_${tier.toUpperCase()}_USAGE`]?.trim();
+  if (usage) return usage;
+  if (process.env.ATLAS_DODO_USAGE_HYBRID === "true") {
+    const hybridId = Object.entries(KNOWN_USAGE_HYBRID_PRODUCTS).find(([, t]) => t === tier)?.[0];
+    if (hybridId) return hybridId;
+  }
+  return requiredEnv(`DODO_PRODUCT_${tier.toUpperCase()}_MONTHLY`);
 }
 
 function tierForProductId(productId) {
+  const id = String(productId || "");
   for (const tier of ["starter", "launch", "growth"]) {
-    if (process.env[`DODO_PRODUCT_${tier.toUpperCase()}_MONTHLY`]?.trim() === productId) {
-      return tier;
-    }
+    const monthly = process.env[`DODO_PRODUCT_${tier.toUpperCase()}_MONTHLY`]?.trim();
+    const usage = process.env[`DODO_PRODUCT_${tier.toUpperCase()}_USAGE`]?.trim();
+    if (monthly === id || usage === id) return tier;
   }
+  if (KNOWN_USAGE_HYBRID_PRODUCTS[id]) return KNOWN_USAGE_HYBRID_PRODUCTS[id];
   throw new Error("Dodo product is not mapped to an Atlas tier");
 }
 
@@ -161,12 +174,26 @@ export async function cancelDodoSubscription(subscriptionId) {
   });
 }
 
-/** Clears a pending next-billing-date plan change (Dodo DELETE …/change-plan/scheduled). */
-export async function cancelDodoScheduledPlanChange(subscriptionId) {
-  await dodoRequest(
-    `/subscriptions/${encodeURIComponent(subscriptionId)}/change-plan/scheduled`,
-    { method: "DELETE" },
-  );
+/**
+ * Clears a pending next-billing-date plan change (Dodo DELETE …/change-plan/scheduled).
+ * @param {string} subscriptionId
+ * @param {{ ignoreMissing?: boolean }} [options] When true, 404 SCHEDULED_PLAN_CHANGE_NOT_FOUND is OK.
+ */
+export async function cancelDodoScheduledPlanChange(subscriptionId, options = {}) {
+  try {
+    await dodoRequest(
+      `/subscriptions/${encodeURIComponent(subscriptionId)}/change-plan/scheduled`,
+      { method: "DELETE" },
+    );
+  } catch (error) {
+    if (options.ignoreMissing === true) {
+      const msg = error instanceof Error ? error.message : String(error ?? "");
+      // dodoRequest maps HTTP 404 → statusCode 400; match message / code text.
+      if (/no scheduled plan change|SCHEDULED_PLAN_CHANGE_NOT_FOUND/i.test(msg)) return;
+      if (Number(error?.statusCode) === 404) return;
+    }
+    throw error;
+  }
 }
 
 /**
@@ -196,19 +223,41 @@ export function scheduledPlanChangeFromDodoSubscription(subscription) {
   };
 }
 
+/**
+ * Schedule or apply a plan change in Dodo.
+ * - next_billing_date: Dodo requires `full_immediately` proration with this effective_at
+ *   (not `do_not_bill` — API rejects that combo). Product switches at period end; Atlas
+ *   keeps the old tier until webhooks show the new product_id.
+ * - immediately: charge the price difference now and switch product right away.
+ */
 export async function changeDodoPlan(subscriptionId, tier, effectiveAt = "next_billing_date") {
+  const scheduled = effectiveAt === "next_billing_date";
   await dodoRequest(`/subscriptions/${encodeURIComponent(subscriptionId)}/change-plan`, {
     method: "POST",
     body: {
       product_id: productIdForTier(tier),
       quantity: 1,
-      proration_billing_mode:
-        effectiveAt === "immediately" ? "difference_immediately" : "full_immediately",
+      // Dodo: "Only full_immediately proration mode is allowed with effective_at: next_billing_date"
+      proration_billing_mode: scheduled ? "full_immediately" : "difference_immediately",
       effective_at: effectiveAt,
       on_payment_failure: "prevent_change",
     },
   });
 }
+
+/**
+ * Ingest usage meter events (sessions / models / storage). Best-effort for billing.
+ * @param {Array<{ event_id: string; customer_id: string; event_name: string; timestamp?: string; metadata?: Record<string, string|number|boolean> }>} events
+ */
+export async function ingestDodoUsageEvents(events) {
+  if (!Array.isArray(events) || events.length === 0) return { ingested_count: 0 };
+  return dodoRequest("/events/ingest", {
+    method: "POST",
+    body: { events },
+  });
+}
+
+export { KNOWN_USAGE_HYBRID_PRODUCTS };
 
 /**
  * Charge usage overage against an on-demand-capable Dodo subscription.

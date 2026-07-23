@@ -171,7 +171,7 @@ import {
   type BillingStatus,
 } from "./data/workspace-api";
 import { fetchWorkspaceUsage } from "./data/usage-api";
-import { acceptOverageCharge, clearOveragePaidLocally, clearTestOverage, seedSandboxUsage } from "./data/billing-api";
+import { acceptOverageCharge, isOveragePaidLocally } from "./data/billing-api";
 import type { PlanTier } from "./shared/plan-display";
 import { planChangeScheduledMessage, planDisplayName } from "./shared/plan-display";
 import {
@@ -626,7 +626,7 @@ function renderDirectModelLanding(
 
 function arStartFailureMessage(): string {
   if (isIOS()) {
-    return "Browser AR is not available on iOS for this path. Use View in AR (Safari AR) from the home screen.";
+    return "WebXR AR is not available on iOS. Use View in AR (Safari AR) from the home screen.";
   }
   return "AR could not start. Use Chrome on Android and allow camera access.";
 }
@@ -723,25 +723,19 @@ function openTenantShowroom(slug: string): void {
 }
 
 async function afterAuthRoute(): Promise<void> {
-  try {
-    const next = await ensureWorkspaceAfterAuth();
-    if (next === "onboard") {
-      navigateTo("/onboard", true);
-      return;
-    }
-    activeWorkspace = next;
-    if (isDesktopAdmin()) {
-      void navigateAdminEntry(next);
-      return;
-    }
-    activeTenantSlug = next.slug;
-    setCatalogWorkspaceSlug(next.slug);
-    openTenantShowroom(next.slug);
-  } catch (e) {
-    const msg = e instanceof Error ? e.message : String(e);
-    console.error("afterAuthRoute failed", e);
-    showLoginScreen(msg || "Signed in, but loading your workspace failed. Try again.");
+  const next = await ensureWorkspaceAfterAuth();
+  if (next === "onboard") {
+    navigateTo("/onboard", true);
+    return;
   }
+  activeWorkspace = next;
+  if (isDesktopAdmin()) {
+    void navigateAdminEntry(next);
+    return;
+  }
+  activeTenantSlug = next.slug;
+  setCatalogWorkspaceSlug(next.slug);
+  openTenantShowroom(next.slug);
 }
 
 function showMobileAdminDesktopOnlyGate(): void {
@@ -1226,9 +1220,7 @@ async function showAccountScreen(opts?: {
         workspace: workspace,
         usage,
         usageUnrestricted: isPlatformOwner,
-        overagePaid: usage?.overagePaid ?? false,
-        overageAccepted: usage?.overageAccepted ?? false,
-        sandboxSeedEnabled: Boolean(usage?.sandboxSeedEnabled),
+        overagePaid: usage ? isOveragePaidLocally(workspace.id, usage.usage.month) : false,
         scheduledPlanChange,
         ...opts,
       },
@@ -1297,7 +1289,13 @@ async function showAccountScreen(opts?: {
           : undefined,
         onCancelBilling: hasLiveBillingSubscription(activeWorkspace)
           ? async () => {
-              if (!window.confirm("Cancel this subscription at the end of its billing period?")) return;
+              if (
+                !window.confirm(
+                  "Cancel this subscription at the end of its billing period? Any scheduled Upgrade or Downgrade will be cleared.",
+                )
+              ) {
+                return;
+              }
               try {
                 await cancelBillingSubscription(activeWorkspace!.id);
                 activeWorkspace = {
@@ -1305,7 +1303,8 @@ async function showAccountScreen(opts?: {
                   billingCancelAtPeriodEnd: true,
                 };
                 void showAccountScreen({
-                  billingSuccess: "Cancellation requested. Access continues through the paid period.",
+                  billingSuccess:
+                    "Cancellation requested. Access continues through the paid period. Any scheduled plan change was cleared.",
                 });
               } catch (e) {
                 void showAccountScreen({ billingError: e instanceof Error ? e.message : String(e) });
@@ -1338,61 +1337,14 @@ async function showAccountScreen(opts?: {
         onPayOverage: async (amountUsd) => {
           if (!usage) return;
           try {
-            const result = await acceptOverageCharge(activeWorkspace!.id, usage.usage.month, amountUsd);
-            const message =
-              result.paymentPending
-                ? `Overage of $${amountUsd.toFixed(2)} accepted for ${usage.usage.month}. Invoicing is pending.`
-                : `Overage of $${amountUsd.toFixed(2)} accepted for ${usage.usage.month}.`;
-            void showAccountScreen({ billingSuccess: message });
-          } catch (e) {
-            void showAccountScreen({ billingError: e instanceof Error ? e.message : String(e) });
-          }
-        },
-        onSeedSandboxOverage: usage?.sandboxSeedEnabled
-          ? async () => {
-          try {
-            const result = await seedSandboxUsage(activeWorkspace!.id, { preset: "overage" });
+            await acceptOverageCharge(activeWorkspace!.id, usage.usage.month, amountUsd);
             void showAccountScreen({
-              billingSuccess: `Sandbox overage seeded (sessions ${result.usage?.sessionCount ?? "?"}, est. $${(result.estimatedOverageUsd ?? 0).toFixed(2)}).`,
+              billingSuccess: `Overage of $${amountUsd.toFixed(2)} accepted for ${usage.usage.month}.`,
             });
           } catch (e) {
             void showAccountScreen({ billingError: e instanceof Error ? e.message : String(e) });
           }
-        }
-          : undefined,
-        onClearSandboxUsage:
-          usage?.overageAccepted ||
-          usage?.overagePaid ||
-          usage?.sandboxClearAvailable ||
-          usage?.usageIsSandboxSeeded ||
-          usage?.overageSandbox
-            ? async () => {
-          try {
-            const month = usage?.usage?.month ?? usage?.liveUsage?.month ?? "";
-            try {
-              await clearTestOverage(activeWorkspace!.id, {
-                month: month || undefined,
-                force: isPlatformOwner,
-              });
-            } catch (billingClearErr) {
-              const msg = billingClearErr instanceof Error ? billingClearErr.message : String(billingClearErr);
-              // Old Lambda ignores clearTestOverage and replies "accept must be true".
-              // Do not fall back to sandbox reset — that path fails when seed env is off
-              // and surfaces a misleading "Only leftover test usage…" error.
-              if (/accept must be true/i.test(msg)) {
-                throw new Error(
-                  "API Lambda is outdated (missing clearTestOverage). Upload backend/lambda/atlas-api-deploy.zip to atlas-api, then retry Clear.",
-                );
-              }
-              throw billingClearErr;
-            }
-            if (month) clearOveragePaidLocally(activeWorkspace!.id, month);
-            void showAccountScreen({ billingSuccess: "Test overage and seeded usage cleared." });
-          } catch (e) {
-            void showAccountScreen({ billingError: e instanceof Error ? e.message : String(e) });
-          }
-        }
-            : undefined,
+        },
         onAdmin: () => navigateTo("/admin"),
         onBranding: isMobileExperience() ? () => navigateTo("/admin/branding") : undefined,
         onOwner: isPlatformOwnerEmail(user.email) ? () => navigateTo("/owner") : undefined,
@@ -2460,9 +2412,8 @@ async function showOwnerScreen(tab: OwnerTab = ownerTab): Promise<void> {
   routePainted();
 }
 
-function escapeHtml(s: string | null | undefined): string {
-  if (s == null) return "";
-  return String(s)
+function escapeHtml(s: string): string {
+  return s
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")

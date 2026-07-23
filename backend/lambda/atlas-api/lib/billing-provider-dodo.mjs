@@ -174,12 +174,26 @@ export async function cancelDodoSubscription(subscriptionId) {
   });
 }
 
-/** Clears a pending next-billing-date plan change (Dodo DELETE …/change-plan/scheduled). */
-export async function cancelDodoScheduledPlanChange(subscriptionId) {
-  await dodoRequest(
-    `/subscriptions/${encodeURIComponent(subscriptionId)}/change-plan/scheduled`,
-    { method: "DELETE" },
-  );
+/**
+ * Clears a pending next-billing-date plan change (Dodo DELETE …/change-plan/scheduled).
+ * @param {string} subscriptionId
+ * @param {{ ignoreMissing?: boolean }} [options] When true, 404 SCHEDULED_PLAN_CHANGE_NOT_FOUND is OK.
+ */
+export async function cancelDodoScheduledPlanChange(subscriptionId, options = {}) {
+  try {
+    await dodoRequest(
+      `/subscriptions/${encodeURIComponent(subscriptionId)}/change-plan/scheduled`,
+      { method: "DELETE" },
+    );
+  } catch (error) {
+    if (options.ignoreMissing === true) {
+      const msg = error instanceof Error ? error.message : String(error ?? "");
+      // dodoRequest maps HTTP 404 → statusCode 400; match message / code text.
+      if (/no scheduled plan change|SCHEDULED_PLAN_CHANGE_NOT_FOUND/i.test(msg)) return;
+      if (Number(error?.statusCode) === 404) return;
+    }
+    throw error;
+  }
 }
 
 /**
