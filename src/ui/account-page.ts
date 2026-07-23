@@ -118,7 +118,7 @@ export function renderAccountPage(
   const showSandboxClear = canClearSandbox;
   const clearOverageBtn = showSandboxClear
     ? `<button type="button" class="mkt-btn mkt-btn-ghost auth-submit" data-action="clear-sandbox-usage" style="margin-top:0.75rem">Clear test overage</button>
-       <p class="auth-hint" style="margin-top:0.35rem">Clears Atlas test usage only — Dodo meter events already ingested still apply at cycle. Real card payments are not deleted.</p>`
+       <p class="auth-hint" style="margin-top:0.35rem">Clears Atlas test usage only — Dodo meter events already ingested still apply at cycle. After your next renewal, Atlas may auto-clear sandbox seed counters; Dodo charges stay. Real card payments are not deleted.</p>`
     : "";
   // Hide Seed while a sandbox seed is already active — Clear first.
   const showSandboxSeed =

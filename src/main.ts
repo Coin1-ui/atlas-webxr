@@ -1435,7 +1435,7 @@ async function showAccountScreen(opts?: {
                   await clearSandboxUsage(activeWorkspace!.id);
                   void showAccountScreen({
                     billingSuccess:
-                      "Atlas sandbox usage cleared. Dodo meter events already ingested still apply at cycle.",
+                      "Atlas sandbox usage cleared. Dodo meter events already ingested still apply at cycle. After renewal, Atlas may also auto-clear seed counters.",
                   });
                 } catch (e) {
                   void showAccountScreen({
