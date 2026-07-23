@@ -331,6 +331,14 @@ export async function cancelBillingSubscription(workspaceId: string): Promise<vo
   await billingRequest(workspaceId, "cancel", { method: "POST" });
 }
 
+/** Clears cancel-at-renewal so the subscription renews (Dodo). */
+export async function undoCancelBillingSubscription(workspaceId: string): Promise<void> {
+  await billingRequest(workspaceId, "cancel", {
+    method: "POST",
+    body: JSON.stringify({ undoCancel: true }),
+  });
+}
+
 export async function changeBillingPlan(
   workspaceId: string,
   tier: "starter" | "launch" | "growth",

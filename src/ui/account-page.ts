@@ -64,6 +64,7 @@ export function renderAccountPage(
     ) => void | Promise<void>;
     onManageBilling?: (checkout: { billingCountry: string }) => void | Promise<void>;
     onCancelBilling?: () => void | Promise<void>;
+    onUndoCancelBilling?: () => void | Promise<void>;
     onCancelScheduledPlanChange?: () => void | Promise<void>;
     onPayOverage: (amountUsd: number) => void | Promise<void>;
     onSeedSandboxOverage?: () => void | Promise<void>;
@@ -203,7 +204,7 @@ export function renderAccountPage(
     .join("");
 
   const upgradeHtml = cancelScheduled
-    ? `<p class="auth-hint">Cancellation is scheduled. Upgrade and Downgrade are unavailable until you undo cancellation (Manage payment method &amp; invoices) or the period ends.</p>`
+    ? `<p class="auth-hint">Cancellation is scheduled. Upgrade and Downgrade are unavailable until you <strong>Undo cancel</strong> or the period ends. You can also manage the subscription in the Dodo Customer Portal via Manage payment method &amp; invoices.</p>`
     : upgrades.length > 0
       ? `<div class="account-plan-grid">
           ${upgrades
@@ -351,6 +352,7 @@ export function renderAccountPage(
             </div>
             ${upgradeHtml}
             ${handlers.onManageBilling && workspace.billingSubscriptionId && billingIsLive ? `<button type="button" class="mkt-btn mkt-btn-primary account-secondary-btn" data-action="manage-billing">Manage payment method &amp; invoices</button>` : ""}
+            ${handlers.onUndoCancelBilling && workspace.billingSubscriptionId && billingIsLive && cancelScheduled ? `<button type="button" class="mkt-btn mkt-btn-ghost account-secondary-btn" data-action="undo-cancel-billing">Undo cancel</button>` : ""}
             ${handlers.onCancelScheduledPlanChange && scheduledPlanChange && !cancelScheduled ? `<button type="button" class="mkt-btn mkt-btn-ghost account-secondary-btn" data-action="cancel-scheduled-plan">Cancel scheduled change to ${escapeHtml(scheduledPlanName)}</button>` : ""}
             ${handlers.onCancelBilling && workspace.billingSubscriptionId && billingIsLive && !cancelScheduled ? `<button type="button" class="mkt-btn mkt-btn-ghost account-secondary-btn" data-action="cancel-billing">Cancel at renewal</button>` : ""}
             <button type="button" class="mkt-btn mkt-btn-ghost account-secondary-btn" data-action="pricing">Compare all plans</button>
@@ -462,6 +464,9 @@ export function renderAccountPage(
     void handlers.onManageBilling?.({ billingCountry: country });
   });
   root.querySelector("[data-action=cancel-billing]")?.addEventListener("click", () => void handlers.onCancelBilling?.());
+  root
+    .querySelector("[data-action=undo-cancel-billing]")
+    ?.addEventListener("click", () => void handlers.onUndoCancelBilling?.());
   root
     .querySelector("[data-action=cancel-scheduled-plan]")
     ?.addEventListener("click", () => void handlers.onCancelScheduledPlanChange?.());

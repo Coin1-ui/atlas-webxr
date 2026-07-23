@@ -166,6 +166,7 @@ import {
   fetchPublicWorkspaceConfig,
   getBillingStatus,
   PublicShowroomBlockedError,
+  undoCancelBillingSubscription,
   updateWorkspaceSettings,
   uploadWorkspaceLogo,
   type BillingStatus,
@@ -1317,6 +1318,33 @@ async function showAccountScreen(opts?: {
               }
             }
           : undefined,
+        onUndoCancelBilling:
+          hasLiveBillingSubscription(activeWorkspace) &&
+          activeWorkspace?.billingCancelAtPeriodEnd === true
+            ? async () => {
+                if (
+                  !window.confirm(
+                    "Undo cancellation? Your subscription will renew at the end of the current billing period.",
+                  )
+                ) {
+                  return;
+                }
+                try {
+                  await undoCancelBillingSubscription(activeWorkspace!.id);
+                  activeWorkspace = {
+                    ...activeWorkspace!,
+                    billingCancelAtPeriodEnd: false,
+                  };
+                  void showAccountScreen({
+                    billingSuccess: "Cancellation undone. Your plan will renew as usual.",
+                  });
+                } catch (e) {
+                  void showAccountScreen({
+                    billingError: e instanceof Error ? e.message : String(e),
+                  });
+                }
+              }
+            : undefined,
         onCancelScheduledPlanChange:
           hasLiveBillingSubscription(activeWorkspace) &&
           activeWorkspace?.billingProvider === "dodo"
