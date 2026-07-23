@@ -165,13 +165,13 @@ export function renderAccountPage(
       </div>
       ${
         unrestricted
-          ? `<p class="auth-hint admin-usage-operator-note">Platform operator account ΓÇö usage tracked for visibility; no plan limits or overage.</p>`
+          ? `<p class="auth-hint admin-usage-operator-note">Platform operator account — usage tracked for visibility; no plan limits or overage.</p>`
           : (overagePaid || overageAccepted) && effectiveLimits?.overageExtended?.sessions
-            ? `<p class="auth-hint">Session cap raised${usageMonth ? ` for ${escapeHtml(usageMonth)}` : ""} after overage payment. Models and storage stay on plan limits ΓÇö upgrade to add catalog slots.</p>`
+            ? `<p class="auth-hint">Session cap raised${usageMonth ? ` for ${escapeHtml(usageMonth)}` : ""} after overage payment. Models and storage stay on plan limits — upgrade to add catalog slots.</p>`
             : (overagePaid || overageAccepted)
               ? `<p class="auth-hint">Overage settled${usageMonth ? ` for ${escapeHtml(usageMonth)}` : ""}. Models and storage follow your plan tier; session overage extends your monthly cap when applicable.</p>`
               : modelsRetained
-            ? `<p class="auth-hint">Plan inactive ΓÇö models stay in your workspace. Public showroom and new uploads stay paused until you subscribe. Usage overage is not charged while the plan is canceled or expired.</p>`
+            ? `<p class="auth-hint">Plan inactive — models stay in your workspace. Public showroom and new uploads stay paused until you subscribe. Usage overage is not charged while the plan is canceled or expired.</p>`
             : usage.warnings.length
               ? usage.warnings
                   .map(
@@ -208,7 +208,7 @@ export function renderAccountPage(
           ${upgrades
             .map((tier) => {
               const verb = planActionVerbForTier(workspace, tier.id);
-              // Paid: Plan name is in Plan & billing ΓÇö hide redundant Current card.
+              // Paid: Plan name is in Plan & billing — hide redundant Current card.
               // Trial (no paid entitlement): keep Current so the trial plan is visible in the grid.
               if (
                 verb === "Current" &&
@@ -241,7 +241,7 @@ export function renderAccountPage(
                   );
                 }
                 return bits.length
-                  ? `<p class="auth-hint">Plan changes apply on your next billing date ΓÇö ${escapeHtml(bits.join("; "))}. You keep your current plan until then.</p>`
+                  ? `<p class="auth-hint">Plan changes apply on your next billing date — ${escapeHtml(bits.join("; "))}. You keep your current plan until then.</p>`
                   : `<p class="auth-hint">You are on our highest self-serve tier. Plan changes apply on your next billing date.</p>`;
               })()
             : ""
@@ -317,7 +317,7 @@ export function renderAccountPage(
                     billingCanceled
                       ? `<p class="auth-hint">Subscription canceled.${
                           isTrialActive(workspace)
-                            ? " Your trial limits still apply until the trial ends ΓÇö subscribe below to continue on a paid plan."
+                            ? " Your trial limits still apply until the trial ends — subscribe below to continue on a paid plan."
                             : " Subscribe below to restore paid access."
                         }</p>`
                       : ""
@@ -350,7 +350,7 @@ export function renderAccountPage(
             </div>
             ${upgradeHtml}
             ${handlers.onManageBilling && workspace.billingSubscriptionId && billingIsLive ? `<button type="button" class="mkt-btn mkt-btn-primary account-secondary-btn" data-action="manage-billing">Manage payment method &amp; invoices</button>` : ""}
-            ${handlers.onCancelScheduledPlanChange && scheduledPlanChange ? `<button type="button" class="mkt-btn mkt-btn-ghost account-secondary-btn" data-action="cancel-scheduled-plan">Cancel scheduled change to ${escapeHtml(scheduledPlanName)}</button>` : ""}
+            ${handlers.onCancelScheduledPlanChange && scheduledPlanChange ? `<button type="button" class="mkt-btn mkt-btn-ghost account-secondary-btn" data-action="cancel-scheduled-plan">Cancel scheduled plan change</button>` : ""}
             ${handlers.onCancelBilling && workspace.billingSubscriptionId && billingIsLive && !cancelScheduled ? `<button type="button" class="mkt-btn mkt-btn-ghost account-secondary-btn" data-action="cancel-billing">Cancel at renewal</button>` : ""}
             <button type="button" class="mkt-btn mkt-btn-ghost account-secondary-btn" data-action="pricing">Compare all plans</button>
           </section>
@@ -364,7 +364,7 @@ export function renderAccountPage(
             <h2 class="admin-section-title">Usage overage</h2>
             ${
               unrestricted
-                ? `<p class="auth-hint">Not applicable ΓÇö platform operator accounts have no usage caps.</p>`
+                ? `<p class="auth-hint">Not applicable — platform operator accounts have no usage caps.</p>`
                 : overagePaid
                 ? `<div class="account-overage-box">
                     <p class="camera-success" role="status">Usage overage${usageMonth ? ` for ${escapeHtml(usageMonth)}` : ""} is paid${overageAmountUsd != null ? ` ($${overageAmountUsd.toFixed(2)})` : ""}.</p>
@@ -373,11 +373,11 @@ export function renderAccountPage(
                   </div>`
                 : overageAccepted
                 ? `<div class="account-overage-box">
-                    <p class="camera-success" role="status">Usage overage${usageMonth ? ` for ${escapeHtml(usageMonth)}` : ""} accepted ΓÇö invoicing is pending${overageAmountUsd != null ? ` ($${overageAmountUsd.toFixed(2)})` : ""}.</p>
+                    <p class="camera-success" role="status">Usage overage${usageMonth ? ` for ${escapeHtml(usageMonth)}` : ""} accepted — invoicing is pending${overageAmountUsd != null ? ` ($${overageAmountUsd.toFixed(2)})` : ""}.</p>
                     ${clearOverageBtn}
                   </div>`
                 : !overageBillable
-                ? `<p class="auth-hint">Usage overage is a meter add-on for active paid plans. It is not charged while your plan is canceled or expired. Models stay saved ΓÇö subscribe to restore the showroom.</p>`
+                ? `<p class="auth-hint">Usage overage is a meter add-on for active paid plans. It is not charged while your plan is canceled or expired. Models stay saved — subscribe to restore the showroom.</p>`
                 : hasOverage
                 ? `<div class="account-overage-box">
                     <p class="account-overage-amount">Estimated overage: <strong>$${overageUsd.toFixed(2)}</strong></p>
@@ -385,7 +385,7 @@ export function renderAccountPage(
                     <button type="button" class="mkt-btn mkt-btn-primary auth-submit" data-action="pay-overage" data-amount="${overageUsd}">Accept &amp; pay overage</button>
                     ${clearOverageBtn}
                   </div>`
-                : `<p class="auth-hint">No overage charges this period ΓÇö you are within included limits.</p>${
+                : `<p class="auth-hint">No overage charges this period — you are within included limits.</p>${
                     showSandboxSeed
                       ? `<p class="auth-hint" style="margin-top:0.75rem">Sandbox: simulate overage without real AR sessions.</p>
                          <button type="button" class="mkt-btn mkt-btn-ghost auth-submit" data-action="seed-sandbox-overage">Seed overage (sandbox)</button>`
