@@ -182,6 +182,11 @@ export function hasLiveBillingSubscription(ws: TrialWorkspace): boolean {
   return subscribedBillingTier(ws) !== null;
 }
 
+/** Meter overage is a paid-plan add-on only (active / cancel-scheduled / past-due grace). */
+export function isOverageBillable(ws: TrialWorkspace): boolean {
+  return hasLiveBillingSubscription(ws) && !isServicePaused(ws);
+}
+
 /** User-facing Plan & billing status — drives labels and gated actions. */
 export type BillingPlanDisplayStatus =
   | "active"

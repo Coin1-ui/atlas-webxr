@@ -176,7 +176,6 @@ import type { PlanTier } from "./shared/plan-display";
 import { planChangeScheduledMessage, planDisplayName } from "./shared/plan-display";
 import {
   hasLiveBillingSubscription,
-  isServicePaused,
   planActionVerb,
   planActionVerbForTier,
   servicePauseBody,
