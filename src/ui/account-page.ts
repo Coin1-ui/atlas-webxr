@@ -336,7 +336,7 @@ export function renderAccountPage(
             <div class="account-checkout-fields">
               <label class="auth-label">Billing country (required)
                 <select class="auth-input" name="billingCountry" autocomplete="country" required>
-                  <option value="" selected disabled>Select countryΓÇª</option>
+                  <option value="" selected disabled>Select country\u2026</option>
                   ${countryOptionsHtml}
                 </select>
               </label>
@@ -398,7 +398,7 @@ export function renderAccountPage(
             ${handlers.showAdminLink !== false ? `<button type="button" class="mkt-btn mkt-btn-ghost" data-action="admin">Admin dashboard</button>` : ""}
             ${handlers.onBranding ? `<button type="button" class="mkt-btn mkt-btn-ghost" data-action="branding">Edit branding</button>` : ""}
             ${handlers.showOwnerLink && handlers.onOwner ? `<button type="button" class="mkt-btn mkt-btn-ghost" data-action="owner">Owner dashboard</button>` : ""}
-            <button type="button" class="mkt-btn mkt-btn-ghost" data-action="back">ΓåÉ Back to showroom</button>
+            <button type="button" class="mkt-btn mkt-btn-ghost" data-action="back">\u2190 Back to showroom</button>
             <button type="button" class="mkt-btn mkt-btn-ghost" data-action="signout">Sign out</button>
           </div>
         </div>
