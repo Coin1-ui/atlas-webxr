@@ -52,6 +52,10 @@ export async function handleWorkspaceUsage(event, workspaceId) {
       limits,
       usage,
       warnings,
+      // FE Seed overage button reads this — env alone is not enough.
+      sandboxSeedEnabled: process.env.ATLAS_SANDBOX_USAGE_SEED === "true",
+      sandboxSeededAt: monthly.sandboxSeededAt ?? null,
+      usageIsSandboxSeeded: Boolean(monthly.sandboxSeededAt),
     });
   } catch (e) {
     const status = /** @type {{ statusCode?: number }} */ (e).statusCode || 500;

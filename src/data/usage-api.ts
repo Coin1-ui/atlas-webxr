@@ -107,3 +107,47 @@ export async function fetchWorkspaceUsage(workspaceId: string): Promise<Workspac
   const raw = (await res.json()) as Record<string, unknown>;
   return normalizeUsageResponse(raw);
 }
+
+async function postSandboxUsage(
+  workspaceId: string,
+  body: Record<string, unknown>,
+): Promise<Record<string, unknown>> {
+  const token = authBearerToken(loadSession());
+  if (!token) throw new Error("Sign in required");
+  const res = await fetch(apiUrl(`/v2/workspaces/${encodeURIComponent(workspaceId)}/sandbox/usage`), {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  const text = await res.text();
+  let data: Record<string, unknown> = {};
+  try {
+    data = text ? (JSON.parse(text) as Record<string, unknown>) : {};
+  } catch {
+    data = { raw: text };
+  }
+  if (!res.ok) {
+    const err =
+      (typeof data.error === "string" && data.error) ||
+      (typeof data.message === "string" && data.message) ||
+      text ||
+      `HTTP ${res.status}`;
+    throw new Error(err);
+  }
+  return data;
+}
+
+/** Seed monthly sessions above plan limit for overage UI testing. */
+export function seedSandboxOverage(workspaceId: string): Promise<Record<string, unknown>> {
+  return postSandboxUsage(workspaceId, { preset: "overage" });
+}
+
+/** Clear sandbox session seed + soft-clear test overage rows. */
+export async function clearSandboxUsage(workspaceId: string): Promise<void> {
+  await postSandboxUsage(workspaceId, { reset: true });
+  try {
+    await postSandboxUsage(workspaceId, { resetOverage: true });
+  } catch {
+    /* overage row may not exist */
+  }
+}

@@ -113,13 +113,19 @@ export function renderAccountPage(
       overageAccepted ||
       Boolean(usage?.sandboxClearAvailable) ||
       Boolean(usage?.usageIsSandboxSeeded) ||
+      Boolean(usage?.sandboxSeededAt) ||
       Boolean(usage?.overageSandbox));
   const showSandboxClear = canClearSandbox;
   const clearOverageBtn = showSandboxClear
     ? `<button type="button" class="mkt-btn mkt-btn-ghost auth-submit" data-action="clear-sandbox-usage" style="margin-top:0.75rem">Clear test overage</button>
        <p class="auth-hint" style="margin-top:0.35rem">Removes leftover seed / invoicing-pending test rows. Real card payments are not deleted.</p>`
     : "";
-  const showSandboxSeed = Boolean(handlers.onSeedSandboxOverage) && sandboxModeActive;
+  // Hide Seed while a sandbox seed is already active — Clear first.
+  const showSandboxSeed =
+    Boolean(handlers.onSeedSandboxOverage) &&
+    sandboxModeActive &&
+    !Boolean(usage?.sandboxSeededAt) &&
+    !Boolean(usage?.usageIsSandboxSeeded);
   const planInactive = !unrestricted && isServicePaused(workspace);
   const modelsRetained =
     Boolean(usage?.modelsRetained) ||
@@ -386,6 +392,12 @@ export function renderAccountPage(
                     <p class="account-overage-amount">Atlas overage estimate: <strong>$${overageUsd.toFixed(2)}</strong></p>
                     <p class="auth-hint">Pack-rounded guide based on usage above included plan limits. On Dodo hybrid plans, overage is charged automatically with your next subscription payment when meters exceed free thresholds — the invoice uses per-unit meter rates and may differ slightly from this estimate.</p>
                     ${clearOverageBtn}
+                    ${
+                      showSandboxSeed
+                        ? `<p class="auth-hint" style="margin-top:0.75rem">Sandbox: simulate overage without real AR sessions.</p>
+                           <button type="button" class="mkt-btn mkt-btn-ghost auth-submit" data-action="seed-sandbox-overage">Seed overage (sandbox)</button>`
+                        : ""
+                    }
                   </div>`
                 : `<p class="auth-hint">No overage this period — you are within included limits. Extra usage is billed automatically with your subscription payment when meters exceed included amounts.</p>${
                     showSandboxSeed

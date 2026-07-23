@@ -171,7 +171,7 @@ import {
   uploadWorkspaceLogo,
   type BillingStatus,
 } from "./data/workspace-api";
-import { fetchWorkspaceUsage } from "./data/usage-api";
+import { clearSandboxUsage, fetchWorkspaceUsage, seedSandboxOverage } from "./data/usage-api";
 import { acceptOverageCharge, isOveragePaidLocally } from "./data/billing-api";
 import type { PlanTier } from "./shared/plan-display";
 import { planChangeScheduledMessage, planDisplayName } from "./shared/plan-display";
@@ -1382,6 +1382,37 @@ async function showAccountScreen(opts?: {
             void showAccountScreen({ billingError: e instanceof Error ? e.message : String(e) });
           }
         },
+        onSeedSandboxOverage:
+          usage?.sandboxSeedEnabled === true
+            ? async () => {
+                try {
+                  await seedSandboxOverage(activeWorkspace!.id);
+                  void showAccountScreen({
+                    billingSuccess:
+                      "Sandbox overage seeded. Refresh shows sessions above the plan limit and an Atlas overage estimate.",
+                  });
+                } catch (e) {
+                  void showAccountScreen({
+                    billingError: e instanceof Error ? e.message : String(e),
+                  });
+                }
+              }
+            : undefined,
+        onClearSandboxUsage:
+          usage?.sandboxSeedEnabled === true
+            ? async () => {
+                try {
+                  await clearSandboxUsage(activeWorkspace!.id);
+                  void showAccountScreen({
+                    billingSuccess: "Sandbox usage / test overage cleared.",
+                  });
+                } catch (e) {
+                  void showAccountScreen({
+                    billingError: e instanceof Error ? e.message : String(e),
+                  });
+                }
+              }
+            : undefined,
         onAdmin: () => navigateTo("/admin"),
         onBranding: isMobileExperience() ? () => navigateTo("/admin/branding") : undefined,
         onOwner: isPlatformOwnerEmail(user.email) ? () => navigateTo("/owner") : undefined,
