@@ -34,6 +34,19 @@ Atlas usage → POST /events/ingest → Dodo meters → auto-bill on payment cyc
 
 **Ingest event names (must match meters):** `atlas.ar_session` (count) · `atlas.model_count` (max) · `atlas.storage_bytes` (max).
 
+### Sandbox Seed → Dodo (prod-readiness)
+
+Account **Seed overage** writes Atlas Dynamo usage for UI. To also ingest **real** Dodo meter events:
+
+1. Lambda env `ATLAS_SANDBOX_USAGE_SEED=true` (Seed button)
+2. Lambda env **`ATLAS_SANDBOX_DODO_INGEST=true`** (opt-in meter ingest)
+3. Workspace must have an active Dodo subscription + customer mapping
+4. FE shows a confirm warning before Seed when ingest is on
+
+Sessions are batched (100/event request) with ids `atlas_sandbox_session_{workspaceId}_{seedRunId}_{i}`. Models/storage are single gauge events. **Clear test overage does not reverse Dodo meters** — turn `ATLAS_SANDBOX_DODO_INGEST=false` after readiness tests.
+
+`GET /health` exposes `sandboxDodoIngest` for verification.
+
 ## Live hybrid product IDs (test)
 
 | Tier | Product ID | Fixed | Session free / PPU | Model free / PPU | Storage free (bytes) |

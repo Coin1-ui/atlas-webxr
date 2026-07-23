@@ -33,6 +33,7 @@ export type WorkspaceUsageResponse = {
   overageHasPayment?: boolean;
   modelsRetained?: boolean;
   sandboxSeedEnabled?: boolean;
+  sandboxDodoIngest?: boolean;
   sandboxSeededAt?: string | null;
   usageIsSandboxSeeded?: boolean;
   sandboxClearAvailable?: boolean;

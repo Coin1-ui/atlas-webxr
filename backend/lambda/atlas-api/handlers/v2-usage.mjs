@@ -5,6 +5,10 @@ import { readManifest, sumWorkspaceStorageBytes } from "../lib/models-store.mjs"
 import { getMonthlyUsage } from "../lib/usage.mjs";
 import { buildUsageWarnings, limitsForWorkspace } from "../lib/plan-limits.mjs";
 import { effectiveBillingTier, hasPurchasedTrialFallback, isTrialActive, isTrialSuspended, isServicePaused, servicePauseReason } from "../lib/trial.mjs";
+import {
+  isSandboxDodoIngestEnabled,
+  isSandboxUsageSeedEnabled,
+} from "../lib/sandbox-seed-flag.mjs";
 
 /**
  * @param {import("aws-lambda").APIGatewayProxyEventV2} event
@@ -59,7 +63,8 @@ export async function handleWorkspaceUsage(event, workspaceId) {
       usage,
       warnings,
       // FE Seed overage button reads this — env alone is not enough.
-      sandboxSeedEnabled: process.env.ATLAS_SANDBOX_USAGE_SEED === "true",
+      sandboxSeedEnabled: isSandboxUsageSeedEnabled(),
+      sandboxDodoIngest: isSandboxDodoIngestEnabled(),
       sandboxSeededAt: monthly.sandboxSeededAt ?? null,
       usageIsSandboxSeeded: Boolean(monthly.sandboxSeededAt),
     });

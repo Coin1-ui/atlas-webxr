@@ -12,6 +12,7 @@ import {
 } from "../lib/usage.mjs";
 import { deleteWorkspaceOverage, getWorkspaceOverage } from "../lib/billing-store.mjs";
 import { isSandboxUsageContext } from "../lib/overage-entitlements.mjs";
+import { ingestSandboxOverageToDodo } from "../lib/dodo-usage-ingest.mjs";
 
 import { isSandboxUsageSeedEnabled } from "../lib/sandbox-seed-flag.mjs";
 
@@ -161,6 +162,11 @@ export async function handleSandboxSeedUsage(event, workspaceId) {
     };
     const estimatedOverageUsd = estimateOverageUsd(tier, usage, limits);
     const overage = await getWorkspaceOverage(workspaceId, seeded.month);
+    const dodoIngest = await ingestSandboxOverageToDodo(workspaceId, {
+      sessionCount: seeded.sessionCount,
+      modelCount: seeded.modelCount,
+      storageBytes: seeded.storageBytes,
+    });
 
     return jsonResponse(200, {
       ok: true,
@@ -172,7 +178,10 @@ export async function handleSandboxSeedUsage(event, workspaceId) {
       estimatedOverageUsd,
       overagePaid: overage?.status === "paid",
       overageStatus: overage?.status ?? (estimatedOverageUsd > 0 ? "unpaid" : "none"),
-      next: "Refresh Account — Usage shows seeded sessions, models, and storage above plan limits",
+      dodoIngest,
+      next: dodoIngest.enabled
+        ? "Atlas usage seeded. Dodo meter ingest attempted — check dodoIngest (Clear does not reverse meters)."
+        : "Refresh Account — Usage shows seeded sessions, models, and storage above plan limits (UI only; Dodo ingest flag off).",
     });
   } catch (error) {
     const status = error?.statusCode || 500;

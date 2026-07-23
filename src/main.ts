@@ -1385,12 +1385,42 @@ async function showAccountScreen(opts?: {
         onSeedSandboxOverage:
           usage?.sandboxSeedEnabled === true
             ? async () => {
+                const dodoIngestOn = usage?.sandboxDodoIngest === true;
+                if (dodoIngestOn) {
+                  const ok = window.confirm(
+                    "Seed will send usage to Dodo meters (sessions, models, storage). That can bill on the next subscription cycle. Clear test overage cannot undo Dodo meter events. Continue?",
+                  );
+                  if (!ok) return;
+                }
                 try {
-                  await seedSandboxOverage(activeWorkspace!.id);
-                  void showAccountScreen({
-                    billingSuccess:
-                      "Sandbox overage seeded (sessions + models + storage above plan). Not sent to Dodo meters.",
-                  });
+                  const result = await seedSandboxOverage(activeWorkspace!.id);
+                  const ingest = result.dodoIngest as
+                    | {
+                        enabled?: boolean;
+                        sessionsIngested?: number;
+                        modelsIngested?: boolean;
+                        storageIngested?: boolean;
+                        errors?: string[];
+                        skippedReason?: string;
+                      }
+                    | undefined;
+                  let msg =
+                    "Sandbox overage seeded (sessions + models + storage above plan).";
+                  if (ingest?.enabled) {
+                    const parts = [
+                      `sessions ${ingest.sessionsIngested ?? 0}`,
+                      ingest.modelsIngested ? "models" : null,
+                      ingest.storageIngested ? "storage" : null,
+                    ].filter(Boolean);
+                    msg += ` Dodo ingest: ${parts.join(", ") || "attempted"}.`;
+                    if (ingest.errors?.length) {
+                      msg += ` Partial errors: ${ingest.errors.slice(0, 2).join("; ")}`;
+                    }
+                    msg += " Clear does not reverse meters.";
+                  } else {
+                    msg += " Not sent to Dodo meters (ingest flag off).";
+                  }
+                  void showAccountScreen({ billingSuccess: msg });
                 } catch (e) {
                   void showAccountScreen({
                     billingError: e instanceof Error ? e.message : String(e),
@@ -1404,7 +1434,8 @@ async function showAccountScreen(opts?: {
                 try {
                   await clearSandboxUsage(activeWorkspace!.id);
                   void showAccountScreen({
-                    billingSuccess: "Sandbox usage / test overage cleared.",
+                    billingSuccess:
+                      "Atlas sandbox usage cleared. Dodo meter events already ingested still apply at cycle.",
                   });
                 } catch (e) {
                   void showAccountScreen({

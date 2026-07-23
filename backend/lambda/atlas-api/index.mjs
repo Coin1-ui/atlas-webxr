@@ -1,5 +1,5 @@
 import { jsonResponse, optionsResponse } from "./lib/http.mjs";
-import { isSandboxUsageSeedEnabled } from "./lib/sandbox-seed-flag.mjs";
+import { isSandboxDodoIngestEnabled, isSandboxUsageSeedEnabled } from "./lib/sandbox-seed-flag.mjs";
 import { handlePublicConfig } from "./handlers/v2-public-config.mjs";
 import { handleCreateWorkspace, handleListMyWorkspaces } from "./handlers/v2-workspaces.mjs";
 import { handleUpdateWorkspaceSettings } from "./handlers/v2-workspace-settings.mjs";
@@ -249,6 +249,7 @@ export async function handler(event) {
         // Verify Console env without a Cognito token (not a secret).
         sandboxUsageSeed: isSandboxUsageSeedEnabled(raw ?? undefined),
         sandboxUsageSeedRaw: raw,
+        sandboxDodoIngest: isSandboxDodoIngestEnabled(),
         clearTestOverage: true,
       });
     }
