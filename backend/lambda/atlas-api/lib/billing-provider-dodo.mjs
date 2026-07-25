@@ -281,12 +281,51 @@ export async function cancelDodoSubscription(subscriptionId) {
   });
 }
 
+/**
+ * Hard-cancel now (revoke mandate). Used when a renewal payment stays processing too long.
+ * Distinct from cancel-at-next (Account “Cancel at renewal”).
+ */
+export async function cancelDodoSubscriptionImmediately(subscriptionId) {
+  await dodoRequest(`/subscriptions/${encodeURIComponent(subscriptionId)}`, {
+    method: "PATCH",
+    body: { status: "cancelled" },
+  });
+}
+
 /** Clears cancel-at-next-billing-date so the subscription renews normally. */
 export async function uncancelDodoSubscription(subscriptionId) {
   await dodoRequest(`/subscriptions/${encodeURIComponent(subscriptionId)}`, {
     method: "PATCH",
     body: { cancel_at_next_billing_date: false },
   });
+}
+
+/**
+ * @param {string} paymentId
+ */
+export async function getDodoPayment(paymentId) {
+  return dodoRequest(`/payments/${encodeURIComponent(paymentId)}`);
+}
+
+/**
+ * List Dodo payments (paginated). Prefer customerId and/or status filters when set.
+ * @param {{
+ *   customerId?: string;
+ *   subscriptionId?: string;
+ *   status?: string;
+ *   pageSize?: number;
+ *   cursor?: string | null;
+ * }} [opts]
+ */
+export async function listDodoPayments(opts = {}) {
+  const params = new URLSearchParams({
+    page_size: String(opts.pageSize ?? 50),
+  });
+  if (opts.customerId) params.set("customer_id", String(opts.customerId));
+  if (opts.subscriptionId) params.set("subscription_id", String(opts.subscriptionId));
+  if (opts.status) params.set("status", String(opts.status));
+  if (opts.cursor) params.set("cursor", String(opts.cursor));
+  return dodoRequest(`/payments?${params}`);
 }
 
 /**

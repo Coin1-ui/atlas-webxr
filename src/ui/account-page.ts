@@ -61,6 +61,7 @@ export function renderAccountPage(
     /** Current-month usage exceeds included limits — Upgrade/Downgrade remounts. */
     inOverage?: boolean;
     planChangeMode?: "remount_checkout" | "scheduled";
+    cancelReason?: string | null;
   },
   handlers: {
     onChangePassword: (current: string, next: string) => void | Promise<void>;
@@ -210,6 +211,7 @@ export function renderAccountPage(
   const usageHybrid = data.usageHybrid === true;
   const inOverage =
     data.inOverage === true || data.planChangeMode === "remount_checkout";
+  const stuckPaymentCancel = data.cancelReason === "stuck_payment";
   const scheduledPlanName = scheduledPlanChange
     ? planDisplayName(workspace.plan, scheduledPlanChange.tier)
     : "";
@@ -331,6 +333,11 @@ export function renderAccountPage(
             <h2 class="admin-section-title">Plan &amp; billing</h2>
             ${data.billingError ? `<div class="camera-warning" role="alert">${escapeHtml(data.billingError)}</div>` : ""}
             ${data.billingSuccess ? `<div class="camera-success" role="status">${escapeHtml(data.billingSuccess)}</div>` : ""}
+            ${
+              stuckPaymentCancel
+                ? `<div class="camera-warning" role="alert">Renewal payment did not clear within 1 hour, so the subscription was canceled. Subscribe again to restore AR.</div>`
+                : ""
+            }
             ${
               meterSync && meterSync.ok === false && meterSync.message
                 ? `<div class="camera-warning" role="alert">${escapeHtml(meterSync.message)}</div>`

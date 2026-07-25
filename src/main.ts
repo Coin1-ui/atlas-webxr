@@ -1203,6 +1203,7 @@ async function showAccountScreen(opts?: {
     let usageHybrid = false;
     let inOverage = false;
     let planChangeMode: BillingStatus["planChangeMode"] = undefined;
+    let cancelReason: string | null = null;
     try {
       const billing = await getBillingStatus(workspaceBase.id);
       workspace = mergeBillingStatus(workspaceBase, billing);
@@ -1211,6 +1212,7 @@ async function showAccountScreen(opts?: {
       usageHybrid = billing.usageHybrid === true;
       inOverage = billing.inOverage === true;
       planChangeMode = billing.planChangeMode;
+      cancelReason = billing.cancelReason ?? null;
     } catch {
       /* billing status API optional until deployed */
     }
@@ -1254,6 +1256,7 @@ async function showAccountScreen(opts?: {
         usageHybrid,
         inOverage,
         planChangeMode,
+        cancelReason,
         ...opts,
       },
       {

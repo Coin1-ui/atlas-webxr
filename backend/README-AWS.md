@@ -81,7 +81,8 @@ Lambda environment (atlas-api):
 | `DODO_PAYMENTS_API_KEY` | secret | Dodo server API credential |
 | `DODO_PAYMENTS_WEBHOOK_SECRET` | secret | Standard Webhooks signing secret |
 | `DODO_PAYMENTS_BUSINESS_ID` | Dodo business ID | Reject events for another business |
-| `DODO_PRODUCT_*_MONTHLY` | Dodo product IDs | Environment-specific tier mapping |
+| `DODO_PRODUCT_*_USAGE` | Dodo usage-hybrid product IDs | Required for checkout / plan-change |
+| `DODO_PRODUCT_*_MONTHLY` | Legacy classic IDs | Optional webhook mapping only |
 | `ZOHO_CLIENT_ID` / `ZOHO_CLIENT_SECRET` / `ZOHO_BILLING_REFRESH_TOKEN` | secrets | India Zoho Billing OAuth |
 | `ZOHO_BILLING_ORGANIZATION_ID` | Zoho organization ID | Billing API organization |
 | `ZOHO_BILLING_PORTAL_URL` | Zoho customer portal HTTPS URL | India subscription management |
@@ -108,9 +109,13 @@ Billing ledger IAM for the `atlas-api` Lambda role:
 - Keep both table resources in the same account and region so the ledger append and workspace entitlement projection can use one DynamoDB transaction.
 
 Create an EventBridge Scheduler rule (for example, every five minutes) targeting the same
-`atlas-api` Lambda. The scheduled event runs the Zoho Books accounting worker. Configure a
-Lambda destination or SQS DLQ for failed asynchronous invocations; jobs also move to the
+`atlas-api` Lambda. The scheduled event runs (1) the **stuck Dodo payment sweeper**
+(`processing` &gt; `ATLAS_STUCK_PAYMENT_HOURS`, default 1 → immediate subscription cancel) and
+(2) the Zoho Books accounting worker when enabled. Configure a
+Lambda destination or SQS DLQ for failed asynchronous invocations; Zoho jobs also move to the
 `dead_letter` state after five provider failures for operator reconciliation.
+
+Optional Lambda env: `ATLAS_STUCK_PAYMENT_HOURS=1` (hours a payment may stay `processing` before hard cancel).
 
 **Platform routes** (add in API Gateway → same Lambda):
 

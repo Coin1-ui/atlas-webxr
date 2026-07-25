@@ -32,6 +32,7 @@ import {
 import { handlePlatformBillingRefund } from "./handlers/v2-billing-refunds.mjs";
 import { handleBillingOverage } from "./handlers/v2-billing-overage.mjs";
 import { handleBillingAccountingWorker } from "./handlers/billing-accounting-worker.mjs";
+import { handleStuckPaymentSweeper } from "./handlers/billing-stuck-payment-worker.mjs";
 import {
   handleCreatePlatformCoupon,
   handleDeletePlatformCoupon,
@@ -49,7 +50,9 @@ import {
  */
 export async function handler(event) {
   if (event?.source === "aws.events" && event?.["detail-type"] === "Scheduled Event") {
-    return handleBillingAccountingWorker();
+    const stuck = await handleStuckPaymentSweeper();
+    const accounting = await handleBillingAccountingWorker();
+    return { ok: true, stuckPayment: stuck, accounting };
   }
   const method = event.requestContext?.http?.method ?? "GET";
   const rawPath = event.rawPath || event.requestContext?.http?.path || "/";

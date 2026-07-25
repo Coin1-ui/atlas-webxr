@@ -9,6 +9,10 @@ import {
   scheduledPlanChangeFromDodoSubscription,
 } from "../lib/billing-provider-dodo.mjs";
 import { reconcileDodoSubscriptionIfDrifted } from "../lib/billing-reconcile-dodo.mjs";
+import {
+  enforceStuckPaymentsForSubscription,
+  workspaceStuckPaymentCancelInfo,
+} from "../lib/billing-stuck-payment.mjs";
 import { needsOveragePlanRemount } from "../lib/overage-estimate.mjs";
 import { limitsForBillingTier } from "../lib/plan-limits.mjs";
 import { loadWorkspaceUsageSnapshot } from "../lib/workspace-usage-snapshot.mjs";
@@ -60,10 +64,24 @@ export async function handleBillingStatus(event, workspaceId) {
       subscription.providerSubscriptionId
     ) {
       try {
+        if (!["expired", "canceled"].includes(String(subscription.status || ""))) {
+          const stuck = await enforceStuckPaymentsForSubscription({
+            workspaceId,
+            providerSubscriptionId: subscription.providerSubscriptionId,
+            providerCustomerId: subscription.providerCustomerId || null,
+          });
+          if (stuck.cancelled) {
+            console.info("billing/status stuck payment cancel", {
+              workspaceId,
+              paymentId: stuck.paymentId,
+              subscriptionId: stuck.subscriptionId,
+            });
+          }
+        }
         const reconciled = await reconcileDodoSubscriptionIfDrifted({
           workspaceId,
           providerSubscriptionId: subscription.providerSubscriptionId,
-          current: subscription,
+          current: await getBillingSubscription(workspaceId),
         });
         subscription = reconciled.subscription ?? subscription;
         scheduledPlanChange = reconciled.scheduledPlanChange;
@@ -83,6 +101,8 @@ export async function handleBillingStatus(event, workspaceId) {
         }
       }
     }
+
+    const stuckCancelInfo = await workspaceStuckPaymentCancelInfo(workspaceId);
 
     let meterSync = { ok: true, checked: false };
     let usageHybrid = false;
@@ -147,6 +167,8 @@ export async function handleBillingStatus(event, workspaceId) {
       inOverage,
       // Remount only while in overage; within limits uses scheduled change-plan.
       planChangeMode: inOverage ? "remount_checkout" : "scheduled",
+      cancelReason: stuckCancelInfo?.cancelReason || null,
+      stuckPaymentCancel: stuckCancelInfo,
     });
   } catch (e) {
     const status = /** @type {{ statusCode?: number }} */ (e).statusCode || 500;

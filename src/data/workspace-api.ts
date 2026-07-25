@@ -308,6 +308,13 @@ export type BillingStatus = {
   inOverage?: boolean;
   /** remount_checkout = in overage (cancel+resubscribe); scheduled = automatic change-plan. */
   planChangeMode?: "remount_checkout" | "scheduled";
+  /** Set when Atlas hard-cancelled due to stuck renewal payment. */
+  cancelReason?: "stuck_payment" | string | null;
+  stuckPaymentCancel?: {
+    cancelReason: string;
+    paymentId?: string | null;
+    cancelledAt?: string | null;
+  } | null;
 };
 
 export type ChangeBillingPlanResult = {
