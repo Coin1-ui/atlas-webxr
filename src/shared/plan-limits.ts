@@ -110,7 +110,9 @@ export function usageWarnings(
       const upgradeHint =
         check.metric === "models"
           ? " Upgrade on Account to add more models."
-          : " Contact sales to upgrade.";
+          : check.metric === "storage"
+            ? " New uploads are blocked until you free space or upgrade. Peak storage may still bill with your subscription on hybrid plans."
+            : " AR stays available; overage meters bill with your next subscription payment on hybrid plans.";
       warnings.push({
         metric: check.metric,
         level: "critical",

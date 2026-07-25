@@ -1,4 +1,4 @@
-﻿import type { Workspace } from "../shared/tenant";
+import type { Workspace } from "../shared/tenant";
 import { brandedHeaderHtml, mountWorkspaceLogo } from "../branding/workspace-theme";
 import type { WorkspaceUsageResponse } from "../data/usage-api";
 import type { BillingScheduledPlanChange } from "../data/workspace-api";
@@ -173,20 +173,24 @@ export function renderAccountPage(
       ${
         unrestricted
           ? `<p class="auth-hint admin-usage-operator-note">Platform operator account — usage tracked for visibility; no plan limits or overage.</p>`
-          : (overagePaid || overageAccepted) && effectiveLimits?.overageExtended?.sessions
-            ? `<p class="auth-hint">Session cap raised${usageMonth ? ` for ${escapeHtml(usageMonth)}` : ""} after overage was recorded. Models and storage stay on plan limits — upgrade to add catalog slots.</p>`
-            : (overagePaid || overageAccepted)
-              ? `<p class="auth-hint">Overage noted${usageMonth ? ` for ${escapeHtml(usageMonth)}` : ""}. On hybrid plans, meters bill with your subscription payment. Models and storage follow your plan tier.</p>`
-              : modelsRetained
-            ? `<p class="auth-hint">Plan inactive — models stay in your workspace. Public showroom and new uploads stay paused until you subscribe. Usage overage is not charged while the plan is canceled or expired.</p>`
-            : usage.warnings.length
-              ? usage.warnings
-                  .map(
-                    (w) =>
-                      `<div class="${w.level === "critical" ? "camera-warning" : "camera-success"}" role="status">${escapeHtml(w.message)}</div>`,
-                  )
-                  .join("")
-              : ""
+          : `${
+              (overagePaid || overageAccepted) && effectiveLimits?.overageExtended?.sessions
+                ? `<p class="auth-hint">Session cap raised${usageMonth ? ` for ${escapeHtml(usageMonth)}` : ""} after overage was recorded. Models and storage stay on plan limits — upgrade to add catalog slots.</p>`
+                : (overagePaid || overageAccepted)
+                  ? `<p class="auth-hint">Overage noted${usageMonth ? ` for ${escapeHtml(usageMonth)}` : ""}. On hybrid plans, meters bill with your subscription payment. Models and storage follow your plan tier.</p>`
+                  : modelsRetained
+                    ? `<p class="auth-hint">Plan inactive — models stay in your workspace. Public showroom and new uploads stay paused until you subscribe. Usage overage is not charged while the plan is canceled or expired.</p>`
+                    : ""
+            }${
+              !modelsRetained && usage.warnings.length
+                ? usage.warnings
+                    .map(
+                      (w) =>
+                        `<div class="${w.level === "critical" ? "camera-warning" : "camera-success"}" role="status">${escapeHtml(w.message)}</div>`,
+                    )
+                    .join("")
+                : ""
+            }`
       }`
     : `<p class="auth-hint">Usage stats will appear when the usage API is connected.</p>`;
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Deploy atlas-api Lambda zip via AWS CLI.
- * Prerequisite: npm run package (or npm run package:atlas-api from repo root)
+ * Prerequisite: npm run package (from backend/lambda/atlas-api)
  *
  * Usage:
  *   node scripts/deploy.mjs
@@ -35,7 +35,7 @@ function hasAwsCli() {
 }
 
 if (!fs.existsSync(zipPath)) {
-  console.error(`Missing ${zipPath}. Run: npm run package:atlas-api`);
+  console.error(`Missing ${zipPath}. Run from this folder: npm run package`);
   process.exit(1);
 }
 

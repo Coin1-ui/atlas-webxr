@@ -186,6 +186,9 @@ async function uploadViaPresignedS3(
         name,
         iconFilename: iconFile.name,
         includeUsdz: Boolean(usdzFile?.size),
+        iconBytes: iconFile.size,
+        glbBytes: glbFile.size,
+        usdzBytes: usdzFile?.size ? usdzFile.size : 0,
       }),
     });
   } catch (e) {

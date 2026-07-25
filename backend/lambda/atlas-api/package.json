@@ -6,6 +6,7 @@
   "main": "index.mjs",
   "scripts": {
     "package": "node scripts/package.mjs",
+    "package:atlas-api": "node scripts/package.mjs",
     "deploy": "node scripts/deploy.mjs"
   },
   "dependencies": {

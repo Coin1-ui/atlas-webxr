@@ -584,6 +584,7 @@ function renderDirectModelLanding(
     branding?: import("./shared/tenant").WorkspaceBranding;
     features?: WorkspaceFeatures;
     onBack: () => void;
+    sessionOverageWarning?: string;
   }
 ): void {
   const camera = getCameraSupport();
@@ -604,6 +605,7 @@ function renderDirectModelLanding(
     branding: options.branding,
     deviceLine: getDeviceSummary(),
     cameraWarning: buildHomeCameraWarning(camera),
+    sessionOverageWarning: options.sessionOverageWarning,
     iosQuickLookOnly: iosOnly,
     startArEnabled: features.startAr,
     cameraCheckEnabled: features.cameraCheck,
@@ -1036,7 +1038,9 @@ async function showAdminModelsScreen(): Promise<void> {
     setCatalogWorkspaceSlug(activeWorkspace.slug);
     const models = await fetchWorkspaceAdminManifest(activeWorkspace.id);
     syncOnboardingUpload(activeWorkspace.id, models.filter((m) => !isDemoCatalogModel(m)).length);
+    const usage = await fetchWorkspaceUsage(activeWorkspace.id);
     renderAdminModels(app, activeWorkspace, models, {
+      storageBytesUsed: usage?.usage.storageBytes ?? 0,
       onBack: () => navigateTo("/admin"),
       onHelp: () => navigateTo("/admin/help"),
       onChanged: () => {
@@ -1771,6 +1775,17 @@ async function showTenantHome(slug: string): Promise<void> {
     const records = await fetchCatalog({ bustCache: true });
     const catalog = records.filter((m) => !isDemoCatalogModel(m));
     const logoUrl = workspaceLogoUrl(config.slug, config.branding);
+    let usageWarning: string | undefined;
+    if (getCurrentUser() && activeWorkspace?.slug === slug) {
+      try {
+        const usage = await fetchWorkspaceUsage(activeWorkspace.id);
+        usageWarning = usage?.warnings.find(
+          (w) => w.metric === "sessions" && w.level === "critical",
+        )?.message;
+      } catch {
+        /* optional */
+      }
+    }
     renderTenantCatalog(
       app,
       {
@@ -1801,6 +1816,7 @@ async function showTenantHome(slug: string): Promise<void> {
             }
           : {}),
       },
+      { usageWarning },
     );
     void warmCatalogAtHome();
     routePainted();
@@ -1865,11 +1881,24 @@ async function showTenantArDirect(slug: string, modelId: string): Promise<void> 
       return;
     }
 
+    let sessionOverageWarning: string | undefined;
+    if (activeWorkspace?.slug === slug && getCurrentUser()) {
+      try {
+        const usage = await fetchWorkspaceUsage(activeWorkspace.id);
+        sessionOverageWarning = usage?.warnings.find(
+          (w) => w.metric === "sessions" && w.level === "critical",
+        )?.message;
+      } catch {
+        /* optional */
+      }
+    }
+
     renderDirectModelLanding(record, {
       slug: config.slug,
       branding: config.branding,
       features: tenantFeatures,
       onBack: () => goToCatalogDestination(record),
+      sessionOverageWarning,
     });
     invalidatePickerCache();
     void warmCatalogAtHome();

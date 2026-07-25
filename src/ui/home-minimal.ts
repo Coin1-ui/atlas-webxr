@@ -26,13 +26,15 @@ export function renderHomeMinimal(
     onAdmin?: () => void;
     onBack?: () => void;
     iosQuickLookOnly?: boolean;
-    /** Show “Download session log (JSON)” on landing (iPhone Safari AR / demo). */
+    /** Show “Download session log (JSON)” on landing (iOS Quick Look / demo). */
     sessionLogDownload?: boolean;
     onDownloadLog?: () => void;
     /** Hide Start AR when owner disabled it for this workspace. */
     startArEnabled?: boolean;
     /** Hide Run camera check when owner disabled it. */
     cameraCheckEnabled?: boolean;
+    /** Soft session overage notice — Start AR stays enabled. */
+    sessionOverageWarning?: string;
     /** e.g. "Android · Chrome · browser-based AR" */
     deviceLine?: string;
     footerLine?: string;
@@ -97,6 +99,11 @@ export function renderHomeMinimal(
         ${
           handlers.cameraWarning
             ? `<div class="camera-warning ar-landing-alert" role="alert"><strong>Setup.</strong> ${escapeHtml(handlers.cameraWarning)}</div>`
+            : ""
+        }
+        ${
+          handlers.sessionOverageWarning
+            ? `<div class="camera-warning ar-landing-alert" role="status">${escapeHtml(handlers.sessionOverageWarning)}</div>`
             : ""
         }
         <div class="ar-landing-actions">

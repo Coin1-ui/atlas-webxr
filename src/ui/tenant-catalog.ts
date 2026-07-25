@@ -13,8 +13,10 @@ export type TenantCatalogHandlers = {
 };
 
 export type TenantCatalogOptions = {
-  /** Safari AR path — show placement steps instead of Android floor-ring hints. */
+  /** Safari AR (Quick Look) — show placement steps instead of WebXR ring hints. */
   iosSafariAr?: boolean;
+  /** Soft overage / limit notice (e.g. sessions over plan — Start AR still works). */
+  usageWarning?: string;
 };
 
 export type TenantCatalogBranding = {
@@ -70,6 +72,12 @@ export function renderTenantCatalog(
           ${handlers.onSignOut ? `<button type="button" class="catalog-admin-link catalog-admin-link-secondary" data-action="signout">Sign out</button>` : ""}
         </div>
       </header>
+
+      ${
+        options.usageWarning
+          ? `<div class="camera-warning catalog-usage-warning" role="status" style="margin:0.75rem 1rem 0">${escapeHtml(options.usageWarning)}</div>`
+          : ""
+      }
 
       <section class="catalog-hero catalog-hero--v2">
         <div class="catalog-hero-copy">

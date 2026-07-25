@@ -227,7 +227,7 @@ Full matrix: [PRICING-FEATURE-READINESS.md](./PRICING-FEATURE-READINESS.md)
 | ID | Task | Priority | Owner | Status |
 |----|------|----------|-------|--------|
 | BILL-1 | Dodo international + Zoho India checkout (Starter/Launch/Growth) | **P1** ↑ | Backend | **in_progress** · Dodo sandbox automated gate **PASSED** (22/22, 2026-07-20) · Zoho India sandbox next · optional period-end clock E2E |
-| **BILL-2** | Hard enforce plan limits (upload + session + storage) | **P1** ↑ | Backend | **done** (2026-07-25) · models+storage hard-block; sessions soft-allow + meter warnings (hybrid) · `test:bill2` |
+| BILL-2 | Hard enforce plan limits (upload + session + storage) | **P1** ↑ | Backend | **done** (2026-07-25) · models+storage hard-block; sessions soft-allow + meter warnings · `npm run test:bill2` |
 | SEC-2 | External pen test | P2 | Security | todo |
 | ENG-20 | Custom domain per workspace (Scale) | P2 | DevOps | todo · do not promise in SAL-3 |
 | ENG-21 | SAML SSO (Scale) | P2 | Backend | todo · do not promise in SAL-3 |

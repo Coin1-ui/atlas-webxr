@@ -3,30 +3,35 @@
 
 import { effectiveBillingTier, isServicePaused, SUSPENDED_LIMITS } from "./trial.mjs";
 
-/** Max GLB/USDZ per file (all tiers). Storage = models × this × 2.5. Sessions = explicit workspace caps (Scale unlimited). */
+/** Max GLB/USDZ per file (all tiers). Storage = models × this × 2.5. Sessions = 100 / model slot (Scale unlimited). */
 const MAX_ASSET_BYTES = 50 * 1024 * 1024;
 const MODEL_STORAGE_MULTIPLIER = 2.5;
+const SESSIONS_PER_MODEL_PER_MONTH = 100;
 const UNLIMITED_SESSIONS_PER_MONTH = 0;
 
 function storageBytesForModelCount(models) {
   return Math.round(models * MAX_ASSET_BYTES * MODEL_STORAGE_MULTIPLIER);
 }
 
+function sessionsPerMonthForModelSlots(models) {
+  return models * SESSIONS_PER_MODEL_PER_MONTH;
+}
+
 /** @type {Record<BillingTierId, { models: number; sessionsPerMonth: number; storageBytes: number }>} */
 export const BILLING_TIER_LIMITS = {
   starter: {
     models: 5,
-    sessionsPerMonth: 1000,
+    sessionsPerMonth: sessionsPerMonthForModelSlots(5),
     storageBytes: storageBytesForModelCount(5),
   },
   launch: {
     models: 30,
-    sessionsPerMonth: 5000,
+    sessionsPerMonth: sessionsPerMonthForModelSlots(30),
     storageBytes: storageBytesForModelCount(30),
   },
   growth: {
     models: 100,
-    sessionsPerMonth: 15000,
+    sessionsPerMonth: sessionsPerMonthForModelSlots(100),
     storageBytes: storageBytesForModelCount(100),
   },
   scale: {
@@ -94,11 +99,17 @@ export function buildUsageWarnings(ws, usage) {
     if (check.limit <= 0) continue;
     const percent = Math.round((check.used / check.limit) * 100);
     if (percent >= 100) {
+      const overageHint =
+        check.metric === "models"
+          ? " Upgrade on Account to add more models."
+          : check.metric === "storage"
+            ? " New uploads are blocked until you free space or upgrade. Peak storage may still bill with your subscription on hybrid plans."
+            : " AR stays available; overage meters bill with your next subscription payment on hybrid plans.";
       warnings.push({
         metric: check.metric,
         level: "critical",
         percent,
-        message: `${check.label} at ${percent}% of your ${tierLabel} plan limit.`,
+        message: `${check.label} at ${percent}% of your ${tierLabel} plan limit.${overageHint}`,
       });
     } else if (percent >= 80) {
       warnings.push({

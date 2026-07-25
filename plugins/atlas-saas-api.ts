@@ -711,6 +711,20 @@ export function atlasSaasApiPlugin(): Plugin {
               });
               return;
             }
+            if (body.action === "presign" && isNew) {
+              const incoming =
+                Number(body.glbBytes || 0) +
+                Number(body.iconBytes || 0) +
+                Number(body.usdzBytes || 0);
+              // Dev plugin has no S3 sum — block only when client projects over plan storage from zero baseline.
+              if (incoming > 0 && incoming > limits.storageBytes) {
+                sendJson(res, 403, {
+                  error:
+                    "Storage limit reached on your plan. Free space or upgrade on Account to upload more.",
+                });
+                return;
+              }
+            }
           }
           if (body.action === "presign") {
             sendJson(

@@ -104,6 +104,9 @@ export async function uploadModelToWorkspace(
       name,
       iconFilename: iconFile.name,
       includeUsdz: Boolean(usdzFile?.size),
+      iconBytes: iconFile.size,
+      glbBytes: glbFile.size,
+      usdzBytes: usdzFile?.size ? usdzFile.size : 0,
     }),
   });
   const presignText = await presignRes.text();
