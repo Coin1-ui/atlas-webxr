@@ -6,11 +6,13 @@ import {
   markBillingCancelScheduled,
 } from "../lib/billing-store.mjs";
 import {
+  assertHybridMetersMatchProduct,
   cancelDodoSubscription,
   cancelDodoScheduledPlanChange,
   changeDodoPlan,
   createDodoPortalSession,
   getDodoSubscription,
+  isDodoUsageHybridEnabled,
   uncancelDodoSubscription,
 } from "../lib/billing-provider-dodo.mjs";
 import {
@@ -18,6 +20,7 @@ import {
   changeZohoPlan,
   createZohoPortalSession,
 } from "../lib/billing-provider-zoho.mjs";
+import { createHybridPlanRemountCheckout } from "../lib/billing-hybrid-remount.mjs";
 import { planChangeEffectiveAt } from "../lib/billing-policy.mjs";
 import { billingEntitlementTier } from "../lib/billing-state.mjs";
 
@@ -35,8 +38,12 @@ async function activeSubscription(event, workspaceId) {
 
 function errorResponse(error, fallback) {
   const status = error?.statusCode || 500;
+  const detail =
+    error instanceof Error && typeof error.message === "string" ? error.message.trim() : "";
+  // Prefer provider/detail messages even on 5xx — masking as a generic fallback hid Dodo
+  // INTERNAL_SERVER_ERROR / PENDING_PLAN_CHANGE_EXISTS causes on Account Upgrade/Downgrade.
   return jsonResponse(status, {
-    error: status >= 500 ? fallback : error instanceof Error ? error.message : "Error",
+    error: detail && detail !== "Error" ? detail : fallback,
   });
 }
 
@@ -143,9 +150,6 @@ export async function handleBillingChangePlan(event, workspaceId) {
         error: "This subscription has ended. Start a new checkout instead of changing plan.",
       });
     }
-    if (targetTier === subscription.tier) {
-      return jsonResponse(200, { ok: true, pending: false, tier: targetTier });
-    }
     if (subscription.cancelAtPeriodEnd === true) {
       return jsonResponse(409, {
         error:
@@ -155,6 +159,7 @@ export async function handleBillingChangePlan(event, workspaceId) {
     }
     const effectiveAt = planChangeEffectiveAt(subscription.tier, targetTier);
     const immediate = effectiveAt === "after_confirmed_payment";
+    const sameTier = targetTier === subscription.tier;
     if (subscription.provider === "dodo") {
       const dodoSub = await getDodoSubscription(subscription.providerSubscriptionId);
       if (dodoSub?.cancel_at_next_billing_date === true) {
@@ -171,12 +176,63 @@ export async function handleBillingChangePlan(event, workspaceId) {
           code: "ON_DEMAND_PLAN_CHANGE_NOT_SUPPORTED",
         });
       }
+      // BILL-METER-SYNC: usage hybrids must remount via checkout so meters match the new product.
+      // Same-tier remount is allowed when live meters do not match the product catalog.
+      if (isDodoUsageHybridEnabled()) {
+        if (sameTier) {
+          const meterAssert = await assertHybridMetersMatchProduct(dodoSub);
+          if (meterAssert.ok || meterAssert.skipped) {
+            return jsonResponse(200, { ok: true, pending: false, tier: targetTier });
+          }
+        }
+        const email =
+          typeof body?.email === "string" ? body.email.trim().toLowerCase() : "";
+        const couponCode =
+          typeof body?.couponCode === "string" ? body.couponCode.trim().toUpperCase() : "";
+        let customerId = subscription.providerCustomerId || null;
+        if (!customerId && dodoSub?.customer?.customer_id) {
+          customerId = String(dodoSub.customer.customer_id);
+        }
+        const remount = await createHybridPlanRemountCheckout({
+          workspaceId,
+          subscription: {
+            providerSubscriptionId: subscription.providerSubscriptionId,
+            providerCustomerId: customerId,
+          },
+          targetTier,
+          billingCountry,
+          email,
+          couponCode: couponCode || undefined,
+        });
+        return jsonResponse(200, {
+          ok: true,
+          pending: true,
+          remount: true,
+          checkoutUrl: remount.checkoutUrl,
+          operationId: remount.operationId,
+          provider: remount.provider,
+          tier: targetTier,
+          currentTier: subscription.tier,
+          replacesProviderSubscriptionId: remount.replacesProviderSubscriptionId,
+          // Entitlement switches when the new checkout subscription becomes active.
+          activatesOnAtlas: "when_remount_checkout_completes",
+          message: sameTier
+            ? "Complete checkout to refresh overage meters for your current plan."
+            : "Complete checkout to switch plans. Overage limits update from the new plan meters after payment.",
+        });
+      }
+      if (sameTier) {
+        return jsonResponse(200, { ok: true, pending: false, tier: targetTier });
+      }
       await changeDodoPlan(
         subscription.providerSubscriptionId,
         targetTier,
         immediate ? "immediately" : "next_billing_date"
       );
     } else {
+      if (sameTier) {
+        return jsonResponse(200, { ok: true, pending: false, tier: targetTier });
+      }
       await changeZohoPlan(subscription.providerSubscriptionId, targetTier, !immediate);
     }
     return jsonResponse(202, {

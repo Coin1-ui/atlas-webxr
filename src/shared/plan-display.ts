@@ -92,6 +92,16 @@ export function planChangeScheduledMessage(
   return `Your ${tierName} plan change is scheduled for your next billing date.`;
 }
 
+/** BILL-METER-SYNC: hybrid plan change opens checkout so overage meters remount. */
+export function planChangeRemountCheckoutMessage(
+  verb: "Upgrade" | "Downgrade" | "Subscribe" | "Current",
+  tierName: string,
+): string {
+  const action =
+    verb === "Downgrade" ? "downgrade" : verb === "Upgrade" ? "upgrade" : "switch";
+  return `Complete checkout to ${action} to ${tierName}. This updates overage limits to the new plan so the next billing cycle uses the correct math.`;
+}
+
 /** Rough overage estimate when usage exceeds included limits (USD). */
 export function estimateOverageUsd(
   tier: PlanTierId,

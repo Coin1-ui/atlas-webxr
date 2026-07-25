@@ -29,7 +29,18 @@ const KNOWN_USAGE_HYBRID_PRODUCTS = Object.freeze({
   pdt_0Njk5Y261cDq9TWLto4dR: "growth",
 });
 
-function productIdForTier(tier) {
+/**
+ * True when Atlas checkouts prefer usage-hybrid SKUs (meters bill at cycle).
+ * Hybrid plan changes must remount via checkout — Dodo change-plan does not refresh meters.
+ */
+export function isDodoUsageHybridEnabled() {
+  if (process.env.ATLAS_DODO_USAGE_HYBRID === "true") return true;
+  return ["starter", "launch", "growth"].some(
+    (tier) => Boolean(process.env[`DODO_PRODUCT_${tier.toUpperCase()}_USAGE`]?.trim())
+  );
+}
+
+export function productIdForTier(tier) {
   if (!["starter", "launch", "growth"].includes(tier)) {
     throw new Error("Dodo checkout tier is not self-service");
   }
@@ -71,14 +82,16 @@ async function dodoRequest(path, options = {}) {
     try {
       const parsed = text ? JSON.parse(text) : null;
       const message =
-        typeof parsed?.message === "string"
-          ? parsed.message
-          : typeof parsed?.error === "string"
-            ? parsed.error
-            : typeof parsed?.detail === "string"
-              ? parsed.detail
+        typeof parsed?.message === "string" && parsed.message.trim()
+          ? parsed.message.trim()
+          : typeof parsed?.error === "string" && parsed.error.trim()
+            ? parsed.error.trim()
+            : typeof parsed?.detail === "string" && parsed.detail.trim()
+              ? parsed.detail.trim()
               : null;
+      const code = typeof parsed?.code === "string" ? parsed.code.trim() : "";
       if (message) detail = message;
+      else if (code) detail = `Dodo Payments request failed (${code})`;
     } catch {
       if (text.trim()) detail = text.trim().slice(0, 240);
     }
@@ -110,24 +123,36 @@ export function preflightDodoCheckout(tier) {
 }
 
 export async function createDodoCheckout(operation, input) {
+  const customerId =
+    typeof input.customerId === "string" && input.customerId.trim()
+      ? input.customerId.trim()
+      : "";
+  const customer = customerId
+    ? { customer_id: customerId }
+    : {
+        email: String(input.email).trim().toLowerCase(),
+        ...(input.name ? { name: String(input.name).trim() } : {}),
+      };
+  const metadata = {
+    atlas_billing_operation_id: operation.operationId,
+  };
+  if (operation.purpose === "hybrid_plan_remount" && operation.replacesProviderSubscriptionId) {
+    metadata.atlas_checkout_purpose = "hybrid_plan_remount";
+    metadata.atlas_replaces_subscription_id = String(operation.replacesProviderSubscriptionId);
+  }
   const result = await dodoRequest("/checkouts", {
     method: "POST",
     headers: { "Idempotency-Key": String(operation.operationId) },
     body: {
       product_cart: [{ product_id: productIdForTier(operation.tier), quantity: 1 }],
-      customer: {
-        email: String(input.email).trim().toLowerCase(),
-        ...(input.name ? { name: String(input.name).trim() } : {}),
-      },
+      customer,
       billing_address: optionalAddress({
         ...input.billingAddress,
         billingCountry: operation.billingCountry,
       }),
       return_url: atlasBillingUrl("ATLAS_BILLING_RETURN_URL"),
       cancel_url: atlasBillingUrl("ATLAS_BILLING_CANCEL_URL"),
-      metadata: {
-        atlas_billing_operation_id: operation.operationId,
-      },
+      metadata,
       // Do NOT set subscription_data.on_demand — Dodo rejects change-plan on
       // on-demand subs (ON_DEMAND_PLAN_CHANGE_NOT_SUPPORTED). Hybrid overage
       // bills via usage meters at the payment cycle; POST …/charge is unsupported
@@ -146,6 +171,64 @@ export async function createDodoCheckout(operation, input) {
 
 export async function getDodoSubscription(subscriptionId) {
   return dodoRequest(`/subscriptions/${encodeURIComponent(subscriptionId)}`);
+}
+
+export async function getDodoProduct(productId) {
+  return dodoRequest(`/products/${encodeURIComponent(productId)}`);
+}
+
+/**
+ * Compare live subscription meter free thresholds / PPUs to the product catalog.
+ * Used after hybrid remount / plan webhooks — Dodo change-plan leaves stale meters.
+ * @param {Record<string, unknown>} subscription Live Dodo subscription
+ * @param {Record<string, unknown>} [product] Optional pre-fetched product
+ * @returns {Promise<{ ok: boolean; skipped?: boolean; productId: string; mismatches: Array<Record<string, unknown>> }>}
+ */
+export async function assertHybridMetersMatchProduct(subscription, product = null) {
+  const productId = String(subscription?.product_id || "").trim();
+  if (!productId) {
+    return { ok: false, productId: "", mismatches: [{ reason: "missing_product_id" }] };
+  }
+  if (!isDodoUsageHybridEnabled() && !KNOWN_USAGE_HYBRID_PRODUCTS[productId]) {
+    return { ok: true, skipped: true, productId, mismatches: [] };
+  }
+  const catalog = product || (await getDodoProduct(productId));
+  const price = catalog?.price && typeof catalog.price === "object" ? catalog.price : {};
+  const expected = Array.isArray(price.meters) ? price.meters : [];
+  const actual = Array.isArray(subscription?.meters) ? subscription.meters : [];
+  if (expected.length === 0) {
+    return { ok: true, skipped: true, productId, mismatches: [] };
+  }
+  const mismatches = [];
+  for (const exp of expected) {
+    const meterId = String(exp?.meter_id || "").trim();
+    if (!meterId) continue;
+    const act = actual.find((row) => String(row?.meter_id || "") === meterId);
+    if (!act) {
+      mismatches.push({
+        meter_id: meterId,
+        name: exp?.name || null,
+        reason: "missing_on_subscription",
+        expectedFree: exp?.free_threshold ?? null,
+        expectedPpu: exp?.price_per_unit ?? null,
+      });
+      continue;
+    }
+    const freeOk = Number(act.free_threshold) === Number(exp.free_threshold);
+    const ppuOk = String(act.price_per_unit ?? "") === String(exp.price_per_unit ?? "");
+    if (!freeOk || !ppuOk) {
+      mismatches.push({
+        meter_id: meterId,
+        name: act?.name || exp?.name || null,
+        reason: "threshold_or_ppu_mismatch",
+        expectedFree: exp?.free_threshold ?? null,
+        actualFree: act?.free_threshold ?? null,
+        expectedPpu: exp?.price_per_unit ?? null,
+        actualPpu: act?.price_per_unit ?? null,
+      });
+    }
+  }
+  return { ok: mismatches.length === 0, productId, mismatches };
 }
 
 export async function createDodoPortalSession(customerId) {

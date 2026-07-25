@@ -2,8 +2,38 @@ import { jsonResponse, optionsResponse } from "../lib/http.mjs";
 import { requireWorkspaceAdmin } from "../lib/authz.mjs";
 import { billingEntitlementTier } from "../lib/billing-state.mjs";
 import { getBillingSubscription } from "../lib/billing-store.mjs";
-import { scheduledPlanChangeFromDodoSubscription, getDodoSubscription } from "../lib/billing-provider-dodo.mjs";
+import {
+  assertHybridMetersMatchProduct,
+  getDodoSubscription,
+  scheduledPlanChangeFromDodoSubscription,
+} from "../lib/billing-provider-dodo.mjs";
 import { reconcileDodoSubscriptionIfDrifted } from "../lib/billing-reconcile-dodo.mjs";
+import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import { DynamoDBDocumentClient, GetCommand } from "@aws-sdk/lib-dynamodb";
+
+const doc = DynamoDBDocumentClient.from(new DynamoDBClient({}));
+
+async function workspaceMeterMismatchFlag(workspaceId) {
+  try {
+    const row = await doc.send(
+      new GetCommand({
+        TableName: process.env.ATLAS_WORKSPACES_TABLE || "atlas-workspaces",
+        Key: { pk: `WORKSPACE#${workspaceId}`, sk: "META" },
+        ConsistentRead: true,
+      })
+    );
+    const at = row.Item?.billingMeterMismatchAt;
+    if (!at) return null;
+    return {
+      flaggedAt: String(at),
+      detail: row.Item?.billingMeterMismatchDetail
+        ? String(row.Item.billingMeterMismatchDetail)
+        : null,
+    };
+  } catch {
+    return null;
+  }
+}
 
 /**
  * GET /v2/workspaces/{id}/billing/status — authoritative provider subscription state.
@@ -50,10 +80,52 @@ export async function handleBillingStatus(event, workspaceId) {
       }
     }
 
+    let meterSync = { ok: true, checked: false };
+    if (
+      process.env.ATLAS_BILLING_ENABLED === "true" &&
+      subscription?.provider === "dodo" &&
+      subscription.providerSubscriptionId &&
+      !["expired", "canceled"].includes(String(subscription.status || ""))
+    ) {
+      try {
+        const live = await getDodoSubscription(subscription.providerSubscriptionId);
+        const assert = await assertHybridMetersMatchProduct(live);
+        meterSync = {
+          ok: assert.ok === true || assert.skipped === true,
+          checked: true,
+          productId: assert.productId || null,
+          mismatches: assert.ok || assert.skipped ? [] : assert.mismatches,
+          message:
+            assert.ok || assert.skipped
+              ? null
+              : "Overage limits on your subscription do not match your current plan. Upgrade or Downgrade again (checkout) so the next cycle uses the correct plan math, or contact support.",
+        };
+        if (!scheduledPlanChange) {
+          scheduledPlanChange = scheduledPlanChangeFromDodoSubscription(live);
+        }
+      } catch (meterErr) {
+        console.error("billing/status meter sync check failed", {
+          workspaceId,
+          error: meterErr instanceof Error ? meterErr.message : "Unknown error",
+        });
+        const flagged = await workspaceMeterMismatchFlag(workspaceId);
+        if (flagged) {
+          meterSync = {
+            ok: false,
+            checked: false,
+            flaggedAt: flagged.flaggedAt,
+            message:
+              "Overage meter sync could not be verified. Contact support if plan limits look wrong after an upgrade.",
+          };
+        }
+      }
+    }
+
     return jsonResponse(200, {
       subscription,
       entitlementTier: billingEntitlementTier(subscription),
       scheduledPlanChange,
+      meterSync,
     });
   } catch (e) {
     const status = /** @type {{ statusCode?: number }} */ (e).statusCode || 500;

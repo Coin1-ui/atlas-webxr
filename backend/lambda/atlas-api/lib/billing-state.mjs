@@ -133,15 +133,29 @@ export function providerTimestampSequence(timestampMilliseconds, currentSequence
  * @param {Record<string, unknown>} input
  */
 export function applyBillingEvent(current, input) {
+  const remountFrom =
+    typeof input?.allowRemountFromSubscriptionId === "string"
+      ? input.allowRemountFromSubscriptionId.trim()
+      : "";
   const event = normalizeBillingEvent(input);
   if (current) {
     const sameSubscription =
       current.provider === event.provider &&
       current.providerSubscriptionId === event.providerSubscriptionId;
     if (!sameSubscription) {
+      // BILL-METER-SYNC: hybrid plan remount checkout may bind a new sub while the
+      // prior entitlement is still live; only when checkout metadata names the old id.
+      const remountAllowed =
+        Boolean(remountFrom) &&
+        remountFrom === String(current.providerSubscriptionId || "") &&
+        current.provider === event.provider &&
+        ["pending", "active"].includes(event.status);
       const terminal = ["canceled", "expired"].includes(String(current.status));
       const ended = billingEntitlementTier(current, event.occurredAt) === null;
-      if (!terminal || !ended || !["pending", "active"].includes(event.status)) {
+      if (
+        !remountAllowed &&
+        (!terminal || !ended || !["pending", "active"].includes(event.status))
+      ) {
         throw new Error("Billing provider can change only after the prior subscription has ended");
       }
     }

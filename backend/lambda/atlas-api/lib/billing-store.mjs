@@ -214,6 +214,11 @@ export async function createBillingCheckoutOperation(input, options = {}) {
     tier,
     billingCountry,
     couponCode: input.couponCode ? String(input.couponCode).trim().toUpperCase() : null,
+    purpose:
+      input.purpose === "hybrid_plan_remount" ? "hybrid_plan_remount" : null,
+    replacesProviderSubscriptionId: input.replacesProviderSubscriptionId
+      ? mappingId(input.replacesProviderSubscriptionId, "replacesProviderSubscriptionId")
+      : null,
     status: "pending_provider",
     createdAt: now,
     updatedAt: now,
@@ -1114,6 +1119,57 @@ export function buildBillingTransactionItems(event, transition, receivedAt) {
  * The immutable ledger, subscription projection, and workspace entitlement update
  * are committed atomically.
  */
+/**
+ * Persist / clear BILL-METER-SYNC mismatch flag on workspace META for Account UI.
+ * @param {string} workspaceId
+ * @param {{ ok: boolean; productId?: string; mismatches?: unknown[] } | null} assertResult
+ */
+export async function setWorkspaceBillingMeterSync(workspaceId, assertResult) {
+  const id = mappingId(workspaceId, "workspaceId");
+  const now = new Date().toISOString();
+  try {
+    if (!assertResult || assertResult.ok === true || assertResult.skipped === true) {
+      await client.send(
+        new UpdateCommand({
+          TableName: workspacesTable(),
+          Key: { pk: `WORKSPACE#${id}`, sk: "META" },
+          UpdateExpression:
+            "REMOVE billingMeterMismatchAt, billingMeterMismatchDetail SET updatedAt = :now",
+          ConditionExpression: "attribute_exists(pk)",
+          ExpressionAttributeValues: { ":now": now },
+        })
+      );
+      return { cleared: true };
+    }
+    const detail = JSON.stringify({
+      productId: assertResult.productId || null,
+      mismatches: Array.isArray(assertResult.mismatches)
+        ? assertResult.mismatches.slice(0, 12)
+        : [],
+    }).slice(0, 3500);
+    await client.send(
+      new UpdateCommand({
+        TableName: workspacesTable(),
+        Key: { pk: `WORKSPACE#${id}`, sk: "META" },
+        UpdateExpression:
+          "SET billingMeterMismatchAt = :at, billingMeterMismatchDetail = :detail, updatedAt = :now",
+        ConditionExpression: "attribute_exists(pk)",
+        ExpressionAttributeValues: {
+          ":at": now,
+          ":detail": detail,
+          ":now": now,
+        },
+      })
+    );
+    return { cleared: false, flagged: true };
+  } catch (error) {
+    if (error?.name === "ConditionalCheckFailedException") {
+      return { cleared: false, skipped: true };
+    }
+    throw error;
+  }
+}
+
 export async function applyVerifiedBillingEvent(input) {
   const unboundEvent = normalizeBillingEvent({ ...input, workspaceId: "unresolved" });
   const workspaceId = await resolveBillingWorkspace({
@@ -1128,7 +1184,10 @@ export async function applyVerifiedBillingEvent(input) {
 
   for (let attempt = 0; attempt < 2; attempt += 1) {
     const current = await getBillingSubscription(event.workspaceId);
-    const transition = applyBillingEvent(current, event);
+    const transition = applyBillingEvent(current, {
+      ...event,
+      allowRemountFromSubscriptionId: input.allowRemountFromSubscriptionId,
+    });
     const receivedAt = new Date().toISOString();
     try {
       await client.send(

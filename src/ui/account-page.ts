@@ -1,7 +1,7 @@
 import type { Workspace } from "../shared/tenant";
 import { brandedHeaderHtml, mountWorkspaceLogo } from "../branding/workspace-theme";
 import type { WorkspaceUsageResponse } from "../data/usage-api";
-import type { BillingScheduledPlanChange } from "../data/workspace-api";
+import type { BillingMeterSync, BillingScheduledPlanChange } from "../data/workspace-api";
 import { formatStorageBytes, formatSessionsLimit, isUnlimitedSessionsLimit } from "../shared/plan-limits";
 import { estimateOverageUsd, planDisplayName, upgradeOptions, type PlanTier } from "../shared/plan-display";
 import { effectiveBillingTier, trialProfilePlanLine, accountTrialBannerHtml, trialSuspendedBannerHtml, mountTrialCountdown, planActionVerbForTier, hasLiveBillingSubscription, isOverageBillable, isServicePaused, subscribedBillingTier, planChangeMatrix, isTrialActive, billingPlanDisplayStatus, billingPlanStatusLabel } from "../shared/trial";
@@ -55,6 +55,7 @@ export function renderAccountPage(
     usageUnrestricted?: boolean;
     sandboxSeedEnabled?: boolean;
     scheduledPlanChange?: BillingScheduledPlanChange | null;
+    meterSync?: BillingMeterSync | null;
   },
   handlers: {
     onChangePassword: (current: string, next: string) => void | Promise<void>;
@@ -200,6 +201,7 @@ export function renderAccountPage(
   const billingCanceled = billingDisplayStatus === "canceled";
   const paidBillingTier = subscribedBillingTier(workspace);
   const scheduledPlanChange = data.scheduledPlanChange ?? null;
+  const meterSync = data.meterSync ?? null;
   const scheduledPlanName = scheduledPlanChange
     ? planDisplayName(workspace.plan, scheduledPlanChange.tier)
     : "";
@@ -220,19 +222,24 @@ export function renderAccountPage(
           ${upgrades
             .map((tier) => {
               const verb = planActionVerbForTier(workspace, tier.id);
+              const remountCurrent =
+                verb === "Current" && meterSync && meterSync.ok === false && billingIsLive;
               // Paid: Plan name is in Plan & billing — hide redundant Current card.
               // Trial (no paid entitlement): keep Current so the trial plan is visible in the grid.
+              // Meter mismatch: keep Current enabled so user can remount checkout (BILL-METER-SYNC).
               if (
                 verb === "Current" &&
+                !remountCurrent &&
                 !(isTrialActive(workspace) && !subscribedBillingTier(workspace))
               ) {
                 return "";
               }
+              const cta = remountCurrent ? "Refresh overage limits" : verb;
               return `
-            <button type="button" class="account-plan-card${verb === "Current" ? " account-plan-card--current" : ""}" data-action="upgrade" data-tier="${escapeHtml(tier.id)}"${verb === "Current" ? " disabled aria-current=\"true\"" : ""}>
+            <button type="button" class="account-plan-card${verb === "Current" ? " account-plan-card--current" : ""}" data-action="upgrade" data-tier="${escapeHtml(tier.id)}"${verb === "Current" && !remountCurrent ? " disabled aria-current=\"true\"" : ""}${remountCurrent ? ' aria-current="true"' : ""}>
               <span class="account-plan-name">${escapeHtml(tier.name)}</span>
               <span class="account-plan-price">${escapeHtml(tier.price)}</span>
-              <span class="account-plan-cta">${escapeHtml(verb)}</span>
+              <span class="account-plan-cta">${escapeHtml(cta)}</span>
             </button>`;
             })
             .join("")}
@@ -313,6 +320,11 @@ export function renderAccountPage(
             ${data.billingError ? `<div class="camera-warning" role="alert">${escapeHtml(data.billingError)}</div>` : ""}
             ${data.billingSuccess ? `<div class="camera-success" role="status">${escapeHtml(data.billingSuccess)}</div>` : ""}
             ${
+              meterSync && meterSync.ok === false && meterSync.message
+                ? `<div class="camera-warning" role="alert">${escapeHtml(meterSync.message)}</div>`
+                : ""
+            }
+            ${
               workspace.billingSubscriptionId
                 ? `<dl class="account-dl">
                     <div><dt>Plan</dt><dd><strong>${escapeHtml(billingPlanName)}</strong></dd></div>
@@ -341,6 +353,11 @@ export function renderAccountPage(
                             ? ` on ${escapeHtml(formatDate(scheduledPlanChange.effectiveAt))}`
                             : " at the next billing date"
                         }. You keep your current plan until then.</p>`
+                      : ""
+                  }
+                  ${
+                    billingIsLive && !cancelScheduled
+                      ? `<p class="auth-hint">Upgrade or Downgrade opens a short checkout so overage limits refresh to the new plan. Past invoices stay as billed.</p>`
                       : ""
                   }`
                 : ""

@@ -1,5 +1,7 @@
 import { jsonResponse, rawRequestBody } from "../lib/http.mjs";
 import {
+  assertHybridMetersMatchProduct,
+  cancelDodoSubscription,
   getDodoSubscription,
   normalizeDodoSubscriptionSnapshot,
   verifyDodoWebhook,
@@ -12,14 +14,23 @@ import {
 import {
   applyVerifiedBillingEvent,
   ensureProviderSubscriptionBinding,
+  getBillingCheckoutOperation,
   getBillingSubscription,
-  markWorkspaceOveragePaidFromWebhook,
   resolveBillingWorkspace,
+  setWorkspaceBillingMeterSync,
   workspaceRecordExists,
   withBillingReconciliationLock,
 } from "../lib/billing-store.mjs";
 import { providerTimestampSequence } from "../lib/billing-state.mjs";
 import { assertProviderPaymentCurrency } from "../lib/billing-policy.mjs";
+import { clearAtlasSandboxUsageIfPresent } from "../lib/sandbox-usage-clear.mjs";
+
+const DODO_METER_ASSERT_EVENTS = new Set([
+  "subscription.active",
+  "subscription.renewed",
+  "subscription.updated",
+  "subscription.plan_changed",
+]);
 
 const DODO_SUBSCRIPTION_EVENTS = new Set([
   "payment.succeeded",
@@ -142,6 +153,28 @@ export async function handleDodoWebhook(event) {
       checkoutOperationId: operationId,
       providerCustomerId: customerId,
     });
+
+    let allowRemountFromSubscriptionId;
+    let replacesProviderSubscriptionId;
+    if (operationId) {
+      try {
+        const operation = await getBillingCheckoutOperation(String(operationId));
+        if (
+          operation?.purpose === "hybrid_plan_remount" &&
+          operation.replacesProviderSubscriptionId
+        ) {
+          replacesProviderSubscriptionId = String(operation.replacesProviderSubscriptionId);
+          allowRemountFromSubscriptionId = replacesProviderSubscriptionId;
+        }
+      } catch (opErr) {
+        console.warn("Dodo webhook: remount checkout lookup failed", {
+          eventId,
+          operationId,
+          error: opErr instanceof Error ? opErr.message : "unknown",
+        });
+      }
+    }
+
     const result = await withBillingReconciliationLock(
       "dodo",
       subscriptionId,
@@ -167,19 +200,6 @@ export async function handleDodoWebhook(event) {
         );
         if (String(webhook.type) === "payment.succeeded") {
           assertProviderPaymentCurrency("dodo", webhook.data?.currency);
-          const overageMonth = webhook.data?.metadata?.atlas_overage_month;
-          const overageWorkspaceId = webhook.data?.metadata?.atlas_workspace_id;
-          if (
-            typeof overageMonth === "string" &&
-            typeof overageWorkspaceId === "string" &&
-            webhook.data?.payment_id
-          ) {
-            await markWorkspaceOveragePaidFromWebhook(
-              String(overageWorkspaceId),
-              String(overageMonth),
-              String(webhook.data.payment_id)
-            );
-          }
         }
         const normalized = normalizeDodoSubscriptionSnapshot({
           subscription,
@@ -198,9 +218,84 @@ export async function handleDodoWebhook(event) {
               ? webhook.data?.currency
               : null,
         });
-        return applyVerifiedBillingEvent(normalized);
+        return applyVerifiedBillingEvent({
+          ...normalized,
+          checkoutOperationId: operationId,
+          allowRemountFromSubscriptionId,
+        });
       }
     );
+
+    // After hybrid remount activates, schedule-cancel the prior sub so it does not renew.
+    if (
+      result?.applied === true &&
+      replacesProviderSubscriptionId &&
+      replacesProviderSubscriptionId !== subscriptionId &&
+      ["subscription.active", "payment.succeeded"].includes(String(webhook.type))
+    ) {
+      try {
+        await cancelDodoSubscription(replacesProviderSubscriptionId);
+        console.info("Dodo remount: prior subscription set to cancel at next billing", {
+          eventId,
+          workspaceId,
+          priorSubscriptionId: replacesProviderSubscriptionId,
+          newSubscriptionId: subscriptionId,
+        });
+      } catch (cancelErr) {
+        console.warn("Dodo remount: failed to cancel prior subscription", {
+          eventId,
+          workspaceId,
+          priorSubscriptionId: replacesProviderSubscriptionId,
+          error: cancelErr instanceof Error ? cancelErr.message : "unknown",
+        });
+      }
+    }
+
+    // BILL-METER-SYNC: assert live meters match product catalog after plan lifecycle events.
+    if (DODO_METER_ASSERT_EVENTS.has(String(webhook.type))) {
+      try {
+        const live = await getDodoSubscription(subscriptionId);
+        const meterAssert = await assertHybridMetersMatchProduct(live);
+        if (!meterAssert.ok) {
+          console.error("BILL-METER-SYNC mismatch", {
+            eventId,
+            workspaceId,
+            subscriptionId,
+            productId: meterAssert.productId,
+            mismatches: meterAssert.mismatches,
+          });
+        }
+        await setWorkspaceBillingMeterSync(workspaceId, meterAssert);
+      } catch (meterErr) {
+        console.warn("BILL-METER-SYNC assert failed", {
+          eventId,
+          workspaceId,
+          subscriptionId,
+          error: meterErr instanceof Error ? meterErr.message : "unknown",
+        });
+      }
+    }
+
+    // Atlas-only: drop sandbox seed counters after bill cycle so Account shows real usage.
+    // Never calls Dodo — meter events / invoices stay. Best-effort; never fail the webhook.
+    if (String(webhook.type) === "subscription.renewed") {
+      try {
+        const sandboxClear = await clearAtlasSandboxUsageIfPresent(workspaceId);
+        if (sandboxClear.cleared) {
+          console.info("Dodo renew: Atlas sandbox usage cleared", {
+            eventId,
+            workspaceId,
+            month: sandboxClear.month,
+          });
+        }
+      } catch (clearErr) {
+        console.warn("Dodo renew: Atlas sandbox clear failed", {
+          eventId,
+          workspaceId,
+          error: clearErr instanceof Error ? clearErr.message : "unknown",
+        });
+      }
+    }
     return jsonResponse(200, {
       received: true,
       duplicate: result?.duplicate === true,

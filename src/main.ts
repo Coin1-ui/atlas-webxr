@@ -165,6 +165,7 @@ import {
   createBillingPortal,
   fetchPublicWorkspaceConfig,
   getBillingStatus,
+  type BillingMeterSync,
   PublicShowroomBlockedError,
   undoCancelBillingSubscription,
   updateWorkspaceSettings,
@@ -174,7 +175,11 @@ import {
 import { clearSandboxUsage, fetchWorkspaceUsage, seedSandboxOverage } from "./data/usage-api";
 import { acceptOverageCharge, isOveragePaidLocally } from "./data/billing-api";
 import type { PlanTier } from "./shared/plan-display";
-import { planChangeScheduledMessage, planDisplayName } from "./shared/plan-display";
+import {
+  planChangeRemountCheckoutMessage,
+  planChangeScheduledMessage,
+  planDisplayName,
+} from "./shared/plan-display";
 import {
   hasLiveBillingSubscription,
   planActionVerb,
@@ -1193,10 +1198,12 @@ async function showAccountScreen(opts?: {
     const workspaceBase = applyPlatformOverrides(next);
     let workspace = workspaceBase;
     let scheduledPlanChange: BillingStatus["scheduledPlanChange"] = null;
+    let meterSync: BillingMeterSync | null = null;
     try {
       const billing = await getBillingStatus(workspaceBase.id);
       workspace = mergeBillingStatus(workspaceBase, billing);
       scheduledPlanChange = billing.scheduledPlanChange ?? null;
+      meterSync = billing.meterSync ?? null;
     } catch {
       /* billing status API optional until deployed */
     }
@@ -1236,6 +1243,7 @@ async function showAccountScreen(opts?: {
         usageUnrestricted: isPlatformOwner,
         overagePaid: usage ? isOveragePaidLocally(workspace.id, usage.usage.month) : false,
         scheduledPlanChange,
+        meterSync,
         ...opts,
       },
       {
@@ -1265,14 +1273,27 @@ async function showAccountScreen(opts?: {
               activeWorkspace!.billingProvider,
             );
             if (hasLiveBillingSubscription(activeWorkspace!)) {
-              if (subscribedBillingTier(activeWorkspace!) === tier.id) {
+              const alreadyOnTier = subscribedBillingTier(activeWorkspace!) === tier.id;
+              // Same-tier click is a no-op unless meters are out of sync (BILL-METER-SYNC remount).
+              if (alreadyOnTier && meterSync?.ok !== false) {
                 void showAccountScreen({ billingSuccess: `You are already on ${tier.name}.` });
                 return;
               }
               const verb = planActionVerbForTier(activeWorkspace!, tier.id);
-              await changeBillingPlan(activeWorkspace!.id, tier.id, billingCountry);
+              const planResult = await changeBillingPlan(
+                activeWorkspace!.id,
+                tier.id,
+                billingCountry,
+                { email: user.email, couponCode: checkout.couponCode },
+              );
+              if (planResult.checkoutUrl) {
+                window.location.assign(planResult.checkoutUrl);
+                return;
+              }
               void showAccountScreen({
-                billingSuccess: planChangeScheduledMessage(verb, tier.name),
+                billingSuccess: planResult.remount
+                  ? planChangeRemountCheckoutMessage(verb, tier.name)
+                  : planChangeScheduledMessage(verb, tier.name),
               });
               return;
             }

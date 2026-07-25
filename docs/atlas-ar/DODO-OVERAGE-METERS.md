@@ -43,7 +43,7 @@ Account **Seed overage** writes Atlas Dynamo usage for UI. To also ingest **real
 3. Workspace must have an active Dodo subscription + customer mapping
 4. FE shows a confirm warning before Seed when ingest is on
 
-Sessions are batched (100/event request) with ids `atlas_sandbox_session_{workspaceId}_{seedRunId}_{i}`. Models/storage are single gauge events. **Clear test overage does not reverse Dodo meters** — turn `ATLAS_SANDBOX_DODO_INGEST=false` after readiness tests.
+Sessions are batched (100/event request) with ids `atlas_sandbox_session_{workspaceId}_{seedRunId}_{i}`. Models/storage are single gauge events. **Clear test overage does not reverse Dodo meters** — turn `ATLAS_SANDBOX_DODO_INGEST=false` after readiness tests. On Dodo `subscription.renewed`, Atlas auto-clears Dynamo sandbox seed counters (`sandboxSeededAt`) so Account usage returns to real catalog/S3 counts; invoice/meter history is unchanged.
 
 `GET /health` exposes `sandboxDodoIngest` for verification.
 
@@ -93,4 +93,5 @@ node scripts/setup-dodo-overage-meters.mjs
 1. No `on_demand` — plan changes stay available; meter overage still bills without it.  
 2. Storage meter remains `max(storage_bytes)`; free threshold in bytes; PPU rounded to ≤12 decimal places.  
 3. Month/Year SKUs can be added later as parallel products without replacing Day/Month test SKUs.  
-4. Sandbox QA: confirm ingest + renewal invoice — do **not** treat Accept & pay → `accepted` as proof of card charge.
+4. Sandbox QA: confirm ingest + renewal invoice — do **not** treat Accept & pay → `accepted` as proof of card charge.  
+5. **BILL-METER-SYNC (2026-07-25):** Dodo `change-plan` updates `product_id` but **does not refresh** subscription meter free thresholds / PPUs. With `ATLAS_DODO_USAGE_HYBRID=true`, Atlas **Upgrade/Downgrade** opens a **new checkout** to the target `DODO_PRODUCT_*_USAGE` (reuse `customer_id`). On `subscription.active`, Atlas cancels the prior sub at next billing and asserts meters match the product catalog (`billing/status.meterSync`). Classic monthly SKUs still use `change-plan`.

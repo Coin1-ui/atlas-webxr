@@ -1,8 +1,10 @@
 # Atlas AR — Product backlog
 
-**Last updated:** 2026-07-25 (BILL-2 limit enforcement · hybrid renewal verified)
+**Last updated:** 2026-07-25 (BILL-METER-SYNC · hybrid plan remount checkout)
 
-**Latest orchestration batch (2026-07-25):** BILL-2 — session SoT 500/3k/10k · storage upload hard-block · sessions soft-allow under hybrid meters
+**Latest orchestration batch (2026-07-25):** BILL-METER-SYNC — hybrid Upgrade/Downgrade → checkout remount + meter assert (Dodo change-plan leaves stale meters)
+
+**Previous orchestration batch (2026-07-25):** BILL-2 — session SoT 500/3k/10k · storage upload hard-block · sessions soft-allow under hybrid meters
 
 **Previous orchestration batch (2026-07-20):** BILL-1 account UX bugs + owner refund UI · Lambda zip ready · Amplify push pending
 
@@ -228,6 +230,7 @@ Full matrix: [PRICING-FEATURE-READINESS.md](./PRICING-FEATURE-READINESS.md)
 |----|------|----------|-------|--------|
 | BILL-1 | Dodo international + Zoho India checkout (Starter/Launch/Growth) | **P1** ↑ | Backend | **in_progress** · Dodo sandbox automated gate **PASSED** (22/22, 2026-07-20) · Zoho India sandbox next · optional period-end clock E2E |
 | BILL-2 | Hard enforce plan limits (upload + session + storage) | **P1** ↑ | Backend | **done** (2026-07-25) · models+storage hard-block; sessions soft-allow + meter warnings · `npm run test:bill2` |
+| BILL-METER-SYNC | Hybrid plan change remounts meters via checkout (not change-plan alone) | **P0** ↑ | Backend | **done** (code 2026-07-25) · `npm run test:bill-meter-sync` · **deploy:** Lambda zip + Amplify; ops remount `testing-ops` |
 | SEC-2 | External pen test | P2 | Security | todo |
 | ENG-20 | Custom domain per workspace (Scale) | P2 | DevOps | todo · do not promise in SAL-3 |
 | ENG-21 | SAML SSO (Scale) | P2 | Backend | todo · do not promise in SAL-3 |

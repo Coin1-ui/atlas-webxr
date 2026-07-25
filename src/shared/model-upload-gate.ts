@@ -1,7 +1,7 @@
 import { formatStorageBytes, limitsForWorkspace } from "./plan-limits";
 import type { TrialWorkspace } from "./trial";
 import { planDisplayName } from "./plan-display";
-import { trialFallbackTier } from "./trial";
+import { effectiveBillingTier } from "./trial";
 
 export type ModelUploadGate = {
   blocked: boolean;
@@ -19,7 +19,7 @@ export function modelUploadGate(
 ): ModelUploadGate {
   const limits = limitsForWorkspace(workspace);
   const used = Math.max(0, modelCount);
-  const plan = planDisplayName(workspace.plan, trialFallbackTier(workspace.trialPlan ?? "growth"));
+  const plan = planDisplayName(workspace.plan, effectiveBillingTier(workspace));
 
   if (used >= limits.models) {
     return {

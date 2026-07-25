@@ -280,6 +280,15 @@ export type BillingScheduledPlanChange = {
   effectiveAt: string | null;
 };
 
+export type BillingMeterSync = {
+  ok: boolean;
+  checked?: boolean;
+  productId?: string | null;
+  mismatches?: unknown[];
+  message?: string | null;
+  flaggedAt?: string;
+};
+
 export type BillingStatus = {
   entitlementTier: string | null;
   subscription: {
@@ -292,6 +301,17 @@ export type BillingStatus = {
     cancelAtPeriodEnd: boolean;
   } | null;
   scheduledPlanChange?: BillingScheduledPlanChange | null;
+  meterSync?: BillingMeterSync | null;
+};
+
+export type ChangeBillingPlanResult = {
+  ok?: boolean;
+  pending?: boolean;
+  remount?: boolean;
+  checkoutUrl?: string;
+  tier?: string;
+  currentTier?: string;
+  message?: string;
 };
 
 export function getBillingStatus(workspaceId: string): Promise<BillingStatus> {
@@ -344,10 +364,16 @@ export async function changeBillingPlan(
   workspaceId: string,
   tier: "starter" | "launch" | "growth",
   billingCountry: string,
-): Promise<void> {
-  await billingRequest(workspaceId, "plan", {
+  options?: { email?: string; couponCode?: string },
+): Promise<ChangeBillingPlanResult> {
+  return billingRequest<ChangeBillingPlanResult>(workspaceId, "plan", {
     method: "POST",
-    body: JSON.stringify({ tier, billingCountry }),
+    body: JSON.stringify({
+      tier,
+      billingCountry,
+      ...(options?.email ? { email: options.email } : {}),
+      ...(options?.couponCode ? { couponCode: options.couponCode } : {}),
+    }),
   });
 }
 
