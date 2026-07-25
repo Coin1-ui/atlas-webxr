@@ -132,16 +132,23 @@ export async function recordQualifiedSession(workspaceId, sessionId, placementCo
 }
 
 /**
- * Absolute write of monthly session counter (sandbox overage testing).
- * Does not invent models/storage — those come from manifest/S3 in usage API.
+ * Absolute write of monthly usage counters for sandbox overage testing.
+ * Prefer this over inventing fake S3/manifest rows — GET /usage reads these
+ * when `sandboxSeededAt` is set.
  *
  * @param {string} workspaceId
- * @param {number} sessionCount
- * @param {{ month?: string }} [opts]
+ * @param {{
+ *   sessionCount: number;
+ *   modelCount?: number;
+ *   storageBytes?: number;
+ *   month?: string;
+ * }} input
  */
-export async function setMonthlySessionCount(workspaceId, sessionCount, opts = {}) {
-  const month = opts.month || monthKey();
-  const count = Math.max(0, Math.floor(Number(sessionCount) || 0));
+export async function setSandboxOverageUsage(workspaceId, input) {
+  const month = input.month || monthKey();
+  const sessionCount = Math.max(0, Math.floor(Number(input.sessionCount) || 0));
+  const modelCount = Math.max(0, Math.floor(Number(input.modelCount) || 0));
+  const storageBytes = Math.max(0, Math.floor(Number(input.storageBytes) || 0));
   const now = new Date().toISOString();
   await client.send(
     new PutCommand({
@@ -151,15 +158,31 @@ export async function setMonthlySessionCount(workspaceId, sessionCount, opts = {
         sk: `MONTH#${month}`,
         workspaceId,
         month,
-        sessionCount: count,
-        modelCount: 0,
-        storageBytes: 0,
+        sessionCount,
+        modelCount,
+        storageBytes,
         sandboxSeededAt: now,
         sandboxNote: "api-sandbox-seed",
+        updatedAt: now,
       },
     })
   );
-  return { month, sessionCount: count };
+  return { month, sessionCount, modelCount, storageBytes };
+}
+
+/**
+ * @deprecated Prefer setSandboxOverageUsage — kept for older callers.
+ * @param {string} workspaceId
+ * @param {number} sessionCount
+ * @param {{ month?: string; modelCount?: number; storageBytes?: number }} [opts]
+ */
+export async function setMonthlySessionCount(workspaceId, sessionCount, opts = {}) {
+  return setSandboxOverageUsage(workspaceId, {
+    sessionCount,
+    modelCount: opts.modelCount,
+    storageBytes: opts.storageBytes,
+    month: opts.month,
+  });
 }
 
 /**

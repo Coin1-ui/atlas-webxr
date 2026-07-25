@@ -5,6 +5,10 @@ import { readManifest, sumWorkspaceStorageBytes } from "../lib/models-store.mjs"
 import { getMonthlyUsage } from "../lib/usage.mjs";
 import { buildUsageWarnings, limitsForWorkspace } from "../lib/plan-limits.mjs";
 import { effectiveBillingTier, hasPurchasedTrialFallback, isTrialActive, isTrialSuspended, isServicePaused, servicePauseReason } from "../lib/trial.mjs";
+import {
+  isSandboxDodoIngestEnabled,
+  isSandboxUsageSeedEnabled,
+} from "../lib/sandbox-seed-flag.mjs";
 
 /**
  * @param {import("aws-lambda").APIGatewayProxyEventV2} event
@@ -28,12 +32,18 @@ export async function handleWorkspaceUsage(event, workspaceId) {
       readManifest(workspaceId),
       sumWorkspaceStorageBytes(workspaceId),
     ]);
-    const modelCount = Array.isArray(manifest.models) ? manifest.models.length : monthly.modelCount;
+    const sandboxSeeded = Boolean(monthly.sandboxSeededAt);
+    // While sandbox seed is active, prefer Dynamo counters (includes fake models/storage).
+    const modelCount = sandboxSeeded
+      ? monthly.modelCount
+      : Array.isArray(manifest.models)
+        ? manifest.models.length
+        : monthly.modelCount;
     const usage = {
       month: monthly.month,
       modelCount,
       sessionCount: monthly.sessionCount,
-      storageBytes,
+      storageBytes: sandboxSeeded ? monthly.storageBytes : storageBytes,
     };
     const limits = limitsForWorkspace(workspace);
     const warnings = buildUsageWarnings(workspace, usage);
@@ -52,6 +62,11 @@ export async function handleWorkspaceUsage(event, workspaceId) {
       limits,
       usage,
       warnings,
+      // FE Seed overage button reads this — env alone is not enough.
+      sandboxSeedEnabled: isSandboxUsageSeedEnabled(),
+      sandboxDodoIngest: isSandboxDodoIngestEnabled(),
+      sandboxSeededAt: monthly.sandboxSeededAt ?? null,
+      usageIsSandboxSeeded: Boolean(monthly.sandboxSeededAt),
     });
   } catch (e) {
     const status = /** @type {{ statusCode?: number }} */ (e).statusCode || 500;

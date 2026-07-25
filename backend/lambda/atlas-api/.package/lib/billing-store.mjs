@@ -1192,7 +1192,58 @@ export async function getWorkspaceOverage(workspaceId, month) {
       ConsistentRead: true,
     })
   );
-  return row.Item ?? null;
+  const item = row.Item ?? null;
+  // Soft-cleared sandbox rows stay in Dynamo (no DeleteItem on shared tables).
+  if (item?.status === "cleared") return null;
+  return item;
+}
+
+/**
+ * Soft-clear monthly overage (sandbox / test). Prefer Put over DeleteItem on shared tables.
+ * @param {string} workspaceId
+ * @param {string} month YYYY-MM
+ */
+export async function deleteWorkspaceOverage(workspaceId, month) {
+  const existing = await client.send(
+    new GetCommand({
+      TableName: billingTable(),
+      Key: overageRecordKey(workspaceId, month),
+      ConsistentRead: true,
+    })
+  );
+  const prev = existing.Item ?? null;
+  if (!prev || prev.status === "cleared") {
+    return { ok: true, month, cleared: false };
+  }
+  if (prev.status === "paid" && prev.providerPaymentId) {
+    throw Object.assign(
+      new Error("Paid overage with a provider payment id cannot be cleared here"),
+      { statusCode: 403 },
+    );
+  }
+  const now = new Date().toISOString();
+  await client.send(
+    new PutCommand({
+      TableName: billingTable(),
+      Item: {
+        ...overageRecordKey(workspaceId, month),
+        entityType: "OVERAGE",
+        workspaceId,
+        month,
+        amountUsd: prev.amountUsd ?? null,
+        status: "cleared",
+        provider: prev.provider ?? null,
+        providerPaymentId: null,
+        operationId: prev.operationId ?? null,
+        paidAt: null,
+        note: "sandbox-soft-clear",
+        createdAt: prev.createdAt ?? now,
+        updatedAt: now,
+        clearedAt: now,
+      },
+    })
+  );
+  return { ok: true, month, cleared: true };
 }
 
 /**

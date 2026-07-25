@@ -1,8 +1,10 @@
 # Atlas AR — Product backlog
 
-**Last updated:** 2026-07-20 (billing UX: cancel sync · Growth upgrade visibility · renewal-only plan change · country gate)
+**Last updated:** 2026-07-25 (BILL-2 limit enforcement · hybrid renewal verified)
 
-**Latest orchestration batch (2026-07-20):** BILL-1 account UX bugs + owner refund UI · Lambda zip ready · Amplify push pending
+**Latest orchestration batch (2026-07-25):** BILL-2 — session SoT 500/3k/10k · storage upload hard-block · sessions soft-allow under hybrid meters
+
+**Previous orchestration batch (2026-07-20):** BILL-1 account UX bugs + owner refund UI · Lambda zip ready · Amplify push pending
 
 **Sprint cadence:** 2-week sprints  
 **Phase 0:** Complete → **Phase 1:** COMPLETE ✅ (QA-3b/4b signed · ENG-19 verified 4/4 · DES-1/DES-2 shipped) → **Post-28: DEPLOYED + verified live** → **Phase 2:** ENG-23–31 + MF-1 MiroFish conversion (2026-06-18)
@@ -208,7 +210,7 @@ Full matrix: [PRICING-FEATURE-READINESS.md](./PRICING-FEATURE-READINESS.md)
 | Batch | Theme | Scope | Unblocks |
 |-------|-------|-------|----------|
 | **28** | **LEG-1 + trial automation** | Privacy/Terms + **ENG-36** auto Growth trial | **confirmed** ✅ [BATCH-28-CONFIRMED.md](./BATCH-28-CONFIRMED.md) |
-| **29** | **Billing MVP** ▶ | **BILL-1** Dodo international + Zoho India checkout · **BILL-3** overage meters · **ENG-37** plan-gated JSON log | **in progress** — Dodo hybrid meters + ingest coded; Account UX synced to auto-bill (2026-07-23) |
+| **29** | **Billing MVP** ▶ | **BILL-1** Dodo · **BILL-3** hybrid meters · **BILL-2** limits | **in progress** — hybrid renewal verified 2026-07-25; BILL-2 done; Zoho India + Month SKU cutover remain |
 | **30** | ~~Limits & copy truth~~ → **33** | See Batch 33 below | Merged into Batch 33 |
 | **31** | **MKT-3 production** | Record A1/B1 · **MKT-3b** landing embed | Marketing hero · SAL-3 “watch demo” follow-up |
 | **32** | **SAL-4 ops** | Design partner tracker · owner checklist UI · CRM export optional | Scale SAL-2 outbound without founder bottlenecks |
@@ -225,7 +227,7 @@ Full matrix: [PRICING-FEATURE-READINESS.md](./PRICING-FEATURE-READINESS.md)
 | ID | Task | Priority | Owner | Status |
 |----|------|----------|-------|--------|
 | BILL-1 | Dodo international + Zoho India checkout (Starter/Launch/Growth) | **P1** ↑ | Backend | **in_progress** · Dodo sandbox automated gate **PASSED** (22/22, 2026-07-20) · Zoho India sandbox next · optional period-end clock E2E |
-| BILL-2 | Hard enforce plan limits (upload + session + storage) | **P1** ↑ | Backend | todo · pairs with **ENG-38** (Batch 33) |
+| **BILL-2** | Hard enforce plan limits (upload + session + storage) | **P1** ↑ | Backend | **done** (2026-07-25) · models+storage hard-block; sessions soft-allow + meter warnings (hybrid) · `test:bill2` |
 | SEC-2 | External pen test | P2 | Security | todo |
 | ENG-20 | Custom domain per workspace (Scale) | P2 | DevOps | todo · do not promise in SAL-3 |
 | ENG-21 | SAML SSO (Scale) | P2 | Backend | todo · do not promise in SAL-3 |
