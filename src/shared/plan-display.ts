@@ -92,14 +92,25 @@ export function planChangeScheduledMessage(
   return `Your ${tierName} plan change is scheduled for your next billing date.`;
 }
 
-/** BILL-METER-SYNC: hybrid plan change opens checkout so overage meters remount. */
+/** Overage-gated remount — cancel at renewal + resubscribe so meters match the new plan. */
 export function planChangeRemountCheckoutMessage(
   verb: "Upgrade" | "Downgrade" | "Subscribe" | "Current",
   tierName: string,
 ): string {
-  const action =
-    verb === "Downgrade" ? "downgrade" : verb === "Upgrade" ? "upgrade" : "switch";
-  return `Complete checkout to ${action} to ${tierName}. This updates overage limits to the new plan so the next billing cycle uses the correct math.`;
+  if (verb === "Current") {
+    return `Your current subscription will be canceled after you resubscribe. Complete checkout so overage meters match this plan for the next bill.`;
+  }
+  const action = verb === "Downgrade" ? "downgrade" : "upgrade";
+  return `You are in overage. To ${action} to ${tierName}, your current plan will be canceled at renewal after you resubscribe via checkout. If you skip checkout, this plan continues and overage keeps billing as usual.`;
+}
+
+/** Confirm before opening overage remount checkout. */
+export function planChangeRemountConfirmMessage(tierName: string): string {
+  return (
+    `You are currently in overage. Upgrade/Downgrade requires cancel at renewal and a new subscription so meters match ${tierName}.\n\n` +
+    `Complete checkout to resubscribe. If you cancel or skip checkout, your current plan continues and overage keeps billing as usual.\n\n` +
+    `Continue to checkout?`
+  );
 }
 
 /** Rough overage estimate when usage exceeds included limits (USD). */

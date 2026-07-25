@@ -302,6 +302,12 @@ export type BillingStatus = {
   } | null;
   scheduledPlanChange?: BillingScheduledPlanChange | null;
   meterSync?: BillingMeterSync | null;
+  /** True when the live Dodo sub has usage-overage meters (hybrid). */
+  usageHybrid?: boolean;
+  /** True when current-month usage exceeds included plan limits. */
+  inOverage?: boolean;
+  /** remount_checkout = in overage (cancel+resubscribe); scheduled = automatic change-plan. */
+  planChangeMode?: "remount_checkout" | "scheduled";
 };
 
 export type ChangeBillingPlanResult = {

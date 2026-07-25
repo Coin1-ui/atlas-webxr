@@ -81,6 +81,8 @@ export async function getMonthlyUsage(workspaceId) {
     sessionCount: Number(row.Item?.sessionCount ?? 0),
     storageBytes: Number(row.Item?.storageBytes ?? 0),
     sandboxSeededAt: row.Item?.sandboxSeededAt ?? null,
+    sandboxNote: row.Item?.sandboxNote ?? null,
+    sandboxDodoSeedRunId: row.Item?.sandboxDodoSeedRunId ?? null,
   };
 }
 
@@ -142,6 +144,7 @@ export async function recordQualifiedSession(workspaceId, sessionId, placementCo
  *   modelCount?: number;
  *   storageBytes?: number;
  *   month?: string;
+ *   sandboxDodoSeedRunId?: string | null;
  * }} input
  */
 export async function setSandboxOverageUsage(workspaceId, input) {
@@ -150,24 +153,30 @@ export async function setSandboxOverageUsage(workspaceId, input) {
   const modelCount = Math.max(0, Math.floor(Number(input.modelCount) || 0));
   const storageBytes = Math.max(0, Math.floor(Number(input.storageBytes) || 0));
   const now = new Date().toISOString();
+  const seedRunId =
+    typeof input.sandboxDodoSeedRunId === "string" && input.sandboxDodoSeedRunId.trim()
+      ? input.sandboxDodoSeedRunId.trim()
+      : null;
+  const item = {
+    pk: `WORKSPACE#${workspaceId}`,
+    sk: `MONTH#${month}`,
+    workspaceId,
+    month,
+    sessionCount,
+    modelCount,
+    storageBytes,
+    sandboxSeededAt: now,
+    sandboxNote: "api-sandbox-seed",
+    updatedAt: now,
+  };
+  if (seedRunId) item.sandboxDodoSeedRunId = seedRunId;
   await client.send(
     new PutCommand({
       TableName: usageTable(),
-      Item: {
-        pk: `WORKSPACE#${workspaceId}`,
-        sk: `MONTH#${month}`,
-        workspaceId,
-        month,
-        sessionCount,
-        modelCount,
-        storageBytes,
-        sandboxSeededAt: now,
-        sandboxNote: "api-sandbox-seed",
-        updatedAt: now,
-      },
+      Item: item,
     })
   );
-  return { month, sessionCount, modelCount, storageBytes };
+  return { month, sessionCount, modelCount, storageBytes, sandboxDodoSeedRunId: seedRunId };
 }
 
 /**
@@ -183,6 +192,40 @@ export async function setMonthlySessionCount(workspaceId, sessionCount, opts = {
     storageBytes: opts.storageBytes,
     month: opts.month,
   });
+}
+
+/**
+ * Billing-period reset: zero AR sessions only. Models/storage stay (live catalog/S3).
+ * Called on Dodo subscription.renewed and hybrid remount/resubscribe.
+ *
+ * @param {string} workspaceId
+ * @param {string} [month]
+ * @param {string} [nowIso]
+ */
+export function buildMonthlySessionResetUpdate(workspaceId, month = monthKey(), nowIso = new Date().toISOString()) {
+  return {
+    TableName: usageTable(),
+    Key: { pk: `WORKSPACE#${workspaceId}`, sk: `MONTH#${month}` },
+    UpdateExpression:
+      "SET workspaceId = :wsId, #month = :monthVal, sessionCount = :zero, sessionsResetAt = :now",
+    ExpressionAttributeNames: { "#month": "month" },
+    ExpressionAttributeValues: {
+      ":wsId": workspaceId,
+      ":monthVal": month,
+      ":zero": 0,
+      ":now": nowIso,
+    },
+  };
+}
+
+/**
+ * @param {string} workspaceId
+ * @param {string} [month]
+ * @returns {Promise<{ month: string; reset: true }>}
+ */
+export async function resetMonthlySessionCount(workspaceId, month = monthKey()) {
+  await client.send(new UpdateCommand(buildMonthlySessionResetUpdate(workspaceId, month)));
+  return { month, reset: true };
 }
 
 /**

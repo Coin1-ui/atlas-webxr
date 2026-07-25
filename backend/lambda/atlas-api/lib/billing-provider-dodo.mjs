@@ -30,8 +30,8 @@ const KNOWN_USAGE_HYBRID_PRODUCTS = Object.freeze({
 });
 
 /**
- * True when Atlas checkouts prefer usage-hybrid SKUs (meters bill at cycle).
- * Hybrid plan changes must remount via checkout — Dodo change-plan does not refresh meters.
+ * True when Atlas checkouts use usage-hybrid SKUs (meters bill at cycle).
+ * Classic MONTHLY products are not used for new checkouts / plan changes.
  */
 export function isDodoUsageHybridEnabled() {
   if (process.env.ATLAS_DODO_USAGE_HYBRID === "true") return true;
@@ -40,23 +40,46 @@ export function isDodoUsageHybridEnabled() {
   );
 }
 
+/** True when this Dodo product id is an Atlas usage-hybrid (metered overage) SKU. */
+export function isUsageHybridProductId(productId) {
+  const id = String(productId || "").trim();
+  if (!id) return false;
+  if (KNOWN_USAGE_HYBRID_PRODUCTS[id]) return true;
+  for (const tier of ["starter", "launch", "growth"]) {
+    const usage = process.env[`DODO_PRODUCT_${tier.toUpperCase()}_USAGE`]?.trim();
+    if (usage && usage === id) return true;
+  }
+  return false;
+}
+
+/**
+ * Live subscription uses metered overage (hybrid).
+ * @param {Record<string, unknown> | null | undefined} subscription
+ */
+export function dodoSubscriptionIsUsageHybrid(subscription) {
+  if (!subscription || typeof subscription !== "object") return false;
+  if (isUsageHybridProductId(subscription.product_id)) return true;
+  return Array.isArray(subscription.meters) && subscription.meters.length > 0;
+}
+
+/**
+ * Atlas only sells usage-hybrid SKUs. No classic MONTHLY fallback.
+ */
 export function productIdForTier(tier) {
   if (!["starter", "launch", "growth"].includes(tier)) {
     throw new Error("Dodo checkout tier is not self-service");
   }
-  // Prefer usage-hybrid catalog when configured (session meters at renewal).
   const usage = process.env[`DODO_PRODUCT_${tier.toUpperCase()}_USAGE`]?.trim();
   if (usage) return usage;
-  if (process.env.ATLAS_DODO_USAGE_HYBRID === "true") {
-    const hybridId = Object.entries(KNOWN_USAGE_HYBRID_PRODUCTS).find(([, t]) => t === tier)?.[0];
-    if (hybridId) return hybridId;
-  }
-  return requiredEnv(`DODO_PRODUCT_${tier.toUpperCase()}_MONTHLY`);
+  const hybridId = Object.entries(KNOWN_USAGE_HYBRID_PRODUCTS).find(([, t]) => t === tier)?.[0];
+  if (hybridId) return hybridId;
+  throw new Error(`DODO_PRODUCT_${tier.toUpperCase()}_USAGE is not configured`);
 }
 
 function tierForProductId(productId) {
   const id = String(productId || "");
   for (const tier of ["starter", "launch", "growth"]) {
+    // MONTHLY still mapped for legacy webhook rows; new checkouts never select them.
     const monthly = process.env[`DODO_PRODUCT_${tier.toUpperCase()}_MONTHLY`]?.trim();
     const usage = process.env[`DODO_PRODUCT_${tier.toUpperCase()}_USAGE`]?.trim();
     if (monthly === id || usage === id) return tier;

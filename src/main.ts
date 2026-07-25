@@ -177,6 +177,7 @@ import { acceptOverageCharge, isOveragePaidLocally } from "./data/billing-api";
 import type { PlanTier } from "./shared/plan-display";
 import {
   planChangeRemountCheckoutMessage,
+  planChangeRemountConfirmMessage,
   planChangeScheduledMessage,
   planDisplayName,
 } from "./shared/plan-display";
@@ -1199,11 +1200,17 @@ async function showAccountScreen(opts?: {
     let workspace = workspaceBase;
     let scheduledPlanChange: BillingStatus["scheduledPlanChange"] = null;
     let meterSync: BillingMeterSync | null = null;
+    let usageHybrid = false;
+    let inOverage = false;
+    let planChangeMode: BillingStatus["planChangeMode"] = undefined;
     try {
       const billing = await getBillingStatus(workspaceBase.id);
       workspace = mergeBillingStatus(workspaceBase, billing);
       scheduledPlanChange = billing.scheduledPlanChange ?? null;
       meterSync = billing.meterSync ?? null;
+      usageHybrid = billing.usageHybrid === true;
+      inOverage = billing.inOverage === true;
+      planChangeMode = billing.planChangeMode;
     } catch {
       /* billing status API optional until deployed */
     }
@@ -1244,6 +1251,9 @@ async function showAccountScreen(opts?: {
         overagePaid: usage ? isOveragePaidLocally(workspace.id, usage.usage.month) : false,
         scheduledPlanChange,
         meterSync,
+        usageHybrid,
+        inOverage,
+        planChangeMode,
         ...opts,
       },
       {
@@ -1280,6 +1290,13 @@ async function showAccountScreen(opts?: {
                 return;
               }
               const verb = planActionVerbForTier(activeWorkspace!, tier.id);
+              const expectRemount =
+                inOverage ||
+                planChangeMode === "remount_checkout" ||
+                (alreadyOnTier && meterSync?.ok === false);
+              if (expectRemount && !window.confirm(planChangeRemountConfirmMessage(tier.name))) {
+                return;
+              }
               const planResult = await changeBillingPlan(
                 activeWorkspace!.id,
                 tier.id,
@@ -1287,6 +1304,12 @@ async function showAccountScreen(opts?: {
                 { email: user.email, couponCode: checkout.couponCode },
               );
               if (planResult.checkoutUrl) {
+                if (
+                  !expectRemount &&
+                  !window.confirm(planChangeRemountConfirmMessage(tier.name))
+                ) {
+                  return;
+                }
                 window.location.assign(planResult.checkoutUrl);
                 return;
               }

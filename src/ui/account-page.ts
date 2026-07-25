@@ -56,6 +56,11 @@ export function renderAccountPage(
     sandboxSeedEnabled?: boolean;
     scheduledPlanChange?: BillingScheduledPlanChange | null;
     meterSync?: BillingMeterSync | null;
+    /** Hybrid overage meters on the live subscription. */
+    usageHybrid?: boolean;
+    /** Current-month usage exceeds included limits — Upgrade/Downgrade remounts. */
+    inOverage?: boolean;
+    planChangeMode?: "remount_checkout" | "scheduled";
   },
   handlers: {
     onChangePassword: (current: string, next: string) => void | Promise<void>;
@@ -202,6 +207,9 @@ export function renderAccountPage(
   const paidBillingTier = subscribedBillingTier(workspace);
   const scheduledPlanChange = data.scheduledPlanChange ?? null;
   const meterSync = data.meterSync ?? null;
+  const usageHybrid = data.usageHybrid === true;
+  const inOverage =
+    data.inOverage === true || data.planChangeMode === "remount_checkout";
   const scheduledPlanName = scheduledPlanChange
     ? planDisplayName(workspace.plan, scheduledPlanChange.tier)
     : "";
@@ -234,7 +242,7 @@ export function renderAccountPage(
               ) {
                 return "";
               }
-              const cta = remountCurrent ? "Refresh overage limits" : verb;
+              const cta = remountCurrent ? "Resubscribe to refresh meters" : verb;
               return `
             <button type="button" class="account-plan-card${verb === "Current" ? " account-plan-card--current" : ""}" data-action="upgrade" data-tier="${escapeHtml(tier.id)}"${verb === "Current" && !remountCurrent ? " disabled aria-current=\"true\"" : ""}${remountCurrent ? ' aria-current="true"' : ""}>
               <span class="account-plan-name">${escapeHtml(tier.name)}</span>
@@ -259,9 +267,13 @@ export function renderAccountPage(
                     `downgrade to ${matrix.downgrades.map((id) => planDisplayName(workspace.plan, id)).join(" or ")}`,
                   );
                 }
-                return bits.length
-                  ? `<p class="auth-hint">Plan changes apply on your next billing date — ${escapeHtml(bits.join("; "))}. You keep your current plan until then.</p>`
-                  : `<p class="auth-hint">You are on our highest self-serve tier. Plan changes apply on your next billing date.</p>`;
+                if (!bits.length) {
+                  return `<p class="auth-hint">You are on our highest self-serve tier.</p>`;
+                }
+                if (inOverage) {
+                  return `<p class="auth-hint">You are in overage — ${escapeHtml(bits.join("; "))} requires cancel at renewal and checkout to resubscribe. Skip checkout and this plan continues with overage.</p>`;
+                }
+                return `<p class="auth-hint">Plan changes apply on your next billing date — ${escapeHtml(bits.join("; "))}. You keep your current plan until then.</p>`;
               })()
             : ""
         }`
@@ -356,9 +368,15 @@ export function renderAccountPage(
                       : ""
                   }
                   ${
-                    billingIsLive && !cancelScheduled
-                      ? `<p class="auth-hint">Upgrade or Downgrade opens a short checkout so overage limits refresh to the new plan. Past invoices stay as billed.</p>`
-                      : ""
+                    billingIsLive && !cancelScheduled && inOverage
+                      ? `<p class="auth-hint">You are currently in overage. Upgrade or Downgrade <strong>cancels at renewal</strong> and opens checkout to resubscribe so the new plan’s meters apply. If you do not complete checkout, this plan continues and overage keeps billing. Peak model/storage this cycle still bills even if you delete assets before renewal. Past invoices stay as billed.</p>`
+                      : billingIsLive && !cancelScheduled
+                        ? `<p class="auth-hint">Upgrade or Downgrade is scheduled for your next billing date. You keep your current plan until then.${
+                            usageHybrid
+                              ? " Usage within included limits renews normally; overage meters bill only when you exceed them. On renewal, AR session count resets to zero — models and storage stay as they are. Peak model/storage overage in a cycle still bills even if you delete assets before renewal."
+                              : ""
+                          }</p>`
+                        : ""
                   }`
                 : ""
             }

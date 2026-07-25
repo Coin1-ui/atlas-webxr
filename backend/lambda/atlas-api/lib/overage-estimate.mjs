@@ -1,6 +1,27 @@
 /** @typedef {"starter" | "launch" | "growth" | "scale"} BillingTierId */
 
 /**
+ * True when current-month usage exceeds included plan limits (any dimension).
+ * @param {BillingTierId} tier
+ * @param {{ modelCount: number; sessionCount: number; storageBytes: number }} usage
+ * @param {{ models: number; sessionsPerMonth: number; storageBytes: number }} limits
+ */
+export function workspaceIsInOverage(tier, usage, limits) {
+  return estimateOverageUsd(tier, usage, limits) > 0;
+}
+
+/**
+ * Overage-gated plan change: remount (cancel-at-renewal + resubscribe) only when
+ * the workspace is currently in overage. Within limits → scheduled change-plan.
+ * @param {BillingTierId} currentTier
+ * @param {{ modelCount: number; sessionCount: number; storageBytes: number }} usage
+ * @param {{ models: number; sessionsPerMonth: number; storageBytes: number }} limits
+ */
+export function needsOveragePlanRemount(currentTier, usage, limits) {
+  return workspaceIsInOverage(currentTier, usage, limits);
+}
+
+/**
  * Rough overage estimate when usage exceeds included limits (USD).
  * Mirrors `src/shared/plan-display.ts` estimateOverageUsd.
  *
@@ -9,16 +30,6 @@
  * @param {{ models: number; sessionsPerMonth: number; storageBytes: number }} limits
  */
 export function estimateOverageUsd(tier, usage, limits) {
-  // Suspended / inactive plans use zero caps — never treat retained models as payable overage.
-  if (
-    !limits ||
-    (Number(limits.models) <= 0 &&
-      Number(limits.sessionsPerMonth) <= 0 &&
-      Number(limits.storageBytes) <= 0)
-  ) {
-    return 0;
-  }
-
   let total = 0;
   const sessionOver =
     limits.sessionsPerMonth <= 0

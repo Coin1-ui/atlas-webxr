@@ -3,6 +3,7 @@ import {
   DynamoDBDocumentClient,
   GetCommand,
   PutCommand,
+  QueryCommand,
   TransactWriteCommand,
   UpdateCommand,
 } from "@aws-sdk/lib-dynamodb";
@@ -799,6 +800,26 @@ export async function resolveBillingWorkspace(input) {
       operationRow.Item?.workspaceId
     ) {
       candidates.push(String(operationRow.Item.workspaceId));
+    }
+  }
+
+  // BILL-METER-SYNC ops remount: new subscription may only carry customer_id until bound.
+  if (input.providerCustomerId && candidates.length === 0) {
+    const customerId = mappingId(input.providerCustomerId, "providerCustomerId");
+    const provider = String(input.provider || "").toLowerCase();
+    const customerRows = await client.send(
+      new QueryCommand({
+        TableName: billingTable(),
+        KeyConditionExpression: "pk = :pk AND begins_with(sk, :sk)",
+        ExpressionAttributeValues: {
+          ":pk": `PROVIDER#${provider}#CUSTOMER#${customerId}`,
+          ":sk": "WORKSPACE#",
+        },
+        ConsistentRead: true,
+      })
+    );
+    for (const item of customerRows.Items || []) {
+      if (item.workspaceId) candidates.push(String(item.workspaceId));
     }
   }
 

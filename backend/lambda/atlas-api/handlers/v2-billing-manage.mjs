@@ -12,7 +12,6 @@ import {
   changeDodoPlan,
   createDodoPortalSession,
   getDodoSubscription,
-  isDodoUsageHybridEnabled,
   uncancelDodoSubscription,
 } from "../lib/billing-provider-dodo.mjs";
 import {
@@ -23,6 +22,9 @@ import {
 import { createHybridPlanRemountCheckout } from "../lib/billing-hybrid-remount.mjs";
 import { planChangeEffectiveAt } from "../lib/billing-policy.mjs";
 import { billingEntitlementTier } from "../lib/billing-state.mjs";
+import { needsOveragePlanRemount } from "../lib/overage-estimate.mjs";
+import { limitsForBillingTier } from "../lib/plan-limits.mjs";
+import { loadWorkspaceUsageSnapshot } from "../lib/workspace-usage-snapshot.mjs";
 
 async function activeSubscription(event, workspaceId) {
   if (process.env.ATLAS_BILLING_ENABLED !== "true") {
@@ -176,15 +178,22 @@ export async function handleBillingChangePlan(event, workspaceId) {
           code: "ON_DEMAND_PLAN_CHANGE_NOT_SUPPORTED",
         });
       }
-      // BILL-METER-SYNC: usage hybrids must remount via checkout so meters match the new product.
-      // Same-tier remount is allowed when live meters do not match the product catalog.
-      if (isDodoUsageHybridEnabled()) {
-        if (sameTier) {
-          const meterAssert = await assertHybridMetersMatchProduct(dodoSub);
-          if (meterAssert.ok || meterAssert.skipped) {
-            return jsonResponse(200, { ok: true, pending: false, tier: targetTier });
-          }
+
+      const usage = await loadWorkspaceUsageSnapshot(workspaceId);
+      const limits = limitsForBillingTier(subscription.tier);
+      const inOverage = needsOveragePlanRemount(subscription.tier, usage, limits);
+      let meterMismatchRemount = false;
+      if (sameTier) {
+        const meterAssert = await assertHybridMetersMatchProduct(dodoSub);
+        if (meterAssert.ok || meterAssert.skipped) {
+          return jsonResponse(200, { ok: true, pending: false, tier: targetTier });
         }
+        meterMismatchRemount = true;
+      }
+
+      // In overage (or same-tier meter repair): cancel-at-renewal via remount checkout.
+      // Within limits: scheduled change-plan (no cancel/resubscribe).
+      if (inOverage || meterMismatchRemount) {
         const email =
           typeof body?.email === "string" ? body.email.trim().toLowerCase() : "";
         const couponCode =
@@ -208,17 +217,17 @@ export async function handleBillingChangePlan(event, workspaceId) {
           ok: true,
           pending: true,
           remount: true,
+          inOverage,
           checkoutUrl: remount.checkoutUrl,
           operationId: remount.operationId,
           provider: remount.provider,
           tier: targetTier,
           currentTier: subscription.tier,
           replacesProviderSubscriptionId: remount.replacesProviderSubscriptionId,
-          // Entitlement switches when the new checkout subscription becomes active.
           activatesOnAtlas: "when_remount_checkout_completes",
-          message: sameTier
-            ? "Complete checkout to refresh overage meters for your current plan."
-            : "Complete checkout to switch plans. Overage limits update from the new plan meters after payment.",
+          message: meterMismatchRemount
+            ? "Your current subscription will be canceled after you resubscribe. Complete checkout to refresh overage meters for this plan."
+            : "You are currently in overage. Your current plan will be canceled at renewal after you resubscribe. Complete checkout to upgrade/downgrade so the new plan’s overage meters apply. If you skip checkout, your current plan continues and overage keeps billing as usual.",
         });
       }
       if (sameTier) {
@@ -238,6 +247,8 @@ export async function handleBillingChangePlan(event, workspaceId) {
     return jsonResponse(202, {
       ok: true,
       pending: true,
+      remount: false,
+      inOverage: false,
       tier: targetTier,
       currentTier: subscription.tier,
       effectiveAt,

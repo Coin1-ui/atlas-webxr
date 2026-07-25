@@ -4,10 +4,14 @@ import { billingEntitlementTier } from "../lib/billing-state.mjs";
 import { getBillingSubscription } from "../lib/billing-store.mjs";
 import {
   assertHybridMetersMatchProduct,
+  dodoSubscriptionIsUsageHybrid,
   getDodoSubscription,
   scheduledPlanChangeFromDodoSubscription,
 } from "../lib/billing-provider-dodo.mjs";
 import { reconcileDodoSubscriptionIfDrifted } from "../lib/billing-reconcile-dodo.mjs";
+import { needsOveragePlanRemount } from "../lib/overage-estimate.mjs";
+import { limitsForBillingTier } from "../lib/plan-limits.mjs";
+import { loadWorkspaceUsageSnapshot } from "../lib/workspace-usage-snapshot.mjs";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, GetCommand } from "@aws-sdk/lib-dynamodb";
 
@@ -81,6 +85,8 @@ export async function handleBillingStatus(event, workspaceId) {
     }
 
     let meterSync = { ok: true, checked: false };
+    let usageHybrid = false;
+    let inOverage = false;
     if (
       process.env.ATLAS_BILLING_ENABLED === "true" &&
       subscription?.provider === "dodo" &&
@@ -89,6 +95,7 @@ export async function handleBillingStatus(event, workspaceId) {
     ) {
       try {
         const live = await getDodoSubscription(subscription.providerSubscriptionId);
+        usageHybrid = dodoSubscriptionIsUsageHybrid(live);
         const assert = await assertHybridMetersMatchProduct(live);
         meterSync = {
           ok: assert.ok === true || assert.skipped === true,
@@ -98,7 +105,7 @@ export async function handleBillingStatus(event, workspaceId) {
           message:
             assert.ok || assert.skipped
               ? null
-              : "Overage limits on your subscription do not match your current plan. Upgrade or Downgrade again (checkout) so the next cycle uses the correct plan math, or contact support.",
+              : "Overage meters on your subscription do not match your plan. Resubscribe via checkout (Upgrade/Downgrade or Refresh overage limits) — your current plan will be canceled after the new subscription is active — so the next bill uses the correct plan limits.",
         };
         if (!scheduledPlanChange) {
           scheduledPlanChange = scheduledPlanChangeFromDodoSubscription(live);
@@ -119,6 +126,16 @@ export async function handleBillingStatus(event, workspaceId) {
           };
         }
       }
+      try {
+        const usage = await loadWorkspaceUsageSnapshot(workspaceId);
+        const limits = limitsForBillingTier(subscription.tier);
+        inOverage = needsOveragePlanRemount(subscription.tier, usage, limits);
+      } catch (usageErr) {
+        console.error("billing/status overage check failed", {
+          workspaceId,
+          error: usageErr instanceof Error ? usageErr.message : "Unknown error",
+        });
+      }
     }
 
     return jsonResponse(200, {
@@ -126,6 +143,10 @@ export async function handleBillingStatus(event, workspaceId) {
       entitlementTier: billingEntitlementTier(subscription),
       scheduledPlanChange,
       meterSync,
+      usageHybrid,
+      inOverage,
+      // Remount only while in overage; within limits uses scheduled change-plan.
+      planChangeMode: inOverage ? "remount_checkout" : "scheduled",
     });
   } catch (e) {
     const status = /** @type {{ statusCode?: number }} */ (e).statusCode || 500;

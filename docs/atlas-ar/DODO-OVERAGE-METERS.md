@@ -68,7 +68,7 @@ ATLAS_DODO_USAGE_HYBRID=true
 ATLAS_DODO_USAGE_INGEST=true
 ```
 
-Keep classic `DODO_PRODUCT_*_MONTHLY` until hybrids are validated; with `ATLAS_DODO_USAGE_HYBRID=true`, checkout prefers USAGE IDs (see `billing-provider-dodo.mjs`).
+Keep classic `DODO_PRODUCT_*_MONTHLY` only for legacy webhook mapping if old subs remain — **Atlas checkout and plan-change always use `DODO_PRODUCT_*_USAGE`** (or known hybrid IDs). MONTHLY is not selected for new sales.
 
 Also ensure Lambda zip includes `dodo-usage-ingest.mjs` (session + model/storage ingest).
 
@@ -94,4 +94,6 @@ node scripts/setup-dodo-overage-meters.mjs
 2. Storage meter remains `max(storage_bytes)`; free threshold in bytes; PPU rounded to ≤12 decimal places.  
 3. Month/Year SKUs can be added later as parallel products without replacing Day/Month test SKUs.  
 4. Sandbox QA: confirm ingest + renewal invoice — do **not** treat Accept & pay → `accepted` as proof of card charge.  
-5. **BILL-METER-SYNC (2026-07-25):** Dodo `change-plan` updates `product_id` but **does not refresh** subscription meter free thresholds / PPUs. With `ATLAS_DODO_USAGE_HYBRID=true`, Atlas **Upgrade/Downgrade** opens a **new checkout** to the target `DODO_PRODUCT_*_USAGE` (reuse `customer_id`). On `subscription.active`, Atlas cancels the prior sub at next billing and asserts meters match the product catalog (`billing/status.meterSync`). Classic monthly SKUs still use `change-plan`.
+5. **Overage-gated plan change (2026-07-25):** Usage-hybrid only. **In overage + Upgrade/Downgrade** → remount checkout (cancel at renewal + resubscribe) so meters match the new plan. **Not changing plan** → renews as usual; meters keep billing overage. **Within limits + Upgrade/Downgrade** → scheduled `change-plan` (no cancel/resubscribe). `billing/status.inOverage` / `planChangeMode`.
+6. **Mid-cycle reduce vs invoice:** Models/storage meters use **max** — peaking above free then deleting assets before renewal still bills that period’s peak overage. The **next** period starts fresh; no overage if you stay within free. Sessions are **count** for the period.
+7. **Session-only Atlas reset:** On `subscription.renewed` and remount/resubscribe activate, Atlas zeros **AR sessionCount only** (models/storage stay live catalog/S3). Dodo meters for the new period are independent.

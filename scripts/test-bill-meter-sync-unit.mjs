@@ -1,12 +1,17 @@
 #!/usr/bin/env node
 /**
- * BILL-METER-SYNC unit tests — remount allowlist + meter assert helpers.
+ * BILL-METER-SYNC / overage-gated remount unit tests.
  */
 import assert from "node:assert/strict";
 import {
   applyBillingEvent,
   billingEntitlementTier,
 } from "../backend/lambda/atlas-api/lib/billing-state.mjs";
+import {
+  needsOveragePlanRemount,
+  workspaceIsInOverage,
+} from "../backend/lambda/atlas-api/lib/overage-estimate.mjs";
+import { limitsForBillingTier } from "../backend/lambda/atlas-api/lib/plan-limits.mjs";
 
 process.env.ATLAS_DODO_USAGE_HYBRID = "true";
 process.env.DODO_PAYMENTS_ENV = "test_mode";
@@ -22,9 +27,69 @@ const {
   assertHybridMetersMatchProduct,
   isDodoUsageHybridEnabled,
   createDodoCheckout,
+  dodoSubscriptionIsUsageHybrid,
+  isUsageHybridProductId,
+  productIdForTier,
 } = await import("../backend/lambda/atlas-api/lib/billing-provider-dodo.mjs");
 
 assert.equal(isDodoUsageHybridEnabled(), true);
+assert.equal(isUsageHybridProductId("pdt_launch_usage"), true);
+assert.equal(isUsageHybridProductId("pdt_classic_monthly"), false);
+assert.equal(productIdForTier("launch"), "pdt_launch_usage");
+assert.equal(
+  dodoSubscriptionIsUsageHybrid({ product_id: "pdt_classic", meters: [] }),
+  false
+);
+assert.equal(
+  dodoSubscriptionIsUsageHybrid({
+    product_id: "pdt_classic",
+    meters: [{ meter_id: "m1", free_threshold: 500 }],
+  }),
+  true
+);
+
+const launchLimits = limitsForBillingTier("launch");
+assert.equal(
+  needsOveragePlanRemount(
+    "launch",
+    { modelCount: 10, sessionCount: 100, storageBytes: 1_000_000 },
+    launchLimits
+  ),
+  false,
+  "within limits → scheduled change-plan (no remount)"
+);
+assert.equal(
+  workspaceIsInOverage(
+    "launch",
+    { modelCount: 10, sessionCount: 100, storageBytes: 1_000_000 },
+    launchLimits
+  ),
+  false
+);
+assert.equal(
+  needsOveragePlanRemount(
+    "launch",
+    {
+      modelCount: launchLimits.models + 1,
+      sessionCount: launchLimits.sessionsPerMonth + 1,
+      storageBytes: launchLimits.storageBytes + 1,
+    },
+    launchLimits
+  ),
+  true,
+  "in overage → remount (cancel + resubscribe)"
+);
+
+// Hybrid-only: no MONTHLY fallback — known hybrid id when USAGE unset
+delete process.env.DODO_PRODUCT_STARTER_USAGE;
+delete process.env.DODO_PRODUCT_LAUNCH_USAGE;
+delete process.env.DODO_PRODUCT_GROWTH_USAGE;
+process.env.DODO_PRODUCT_LAUNCH_MONTHLY = "pdt_launch_monthly";
+assert.equal(productIdForTier("launch"), "pdt_0Njk5QMJ8uCwSvseuHeo0", "known hybrid id when USAGE unset");
+assert.notEqual(productIdForTier("launch"), "pdt_launch_monthly", "classic MONTHLY must not be selected");
+process.env.DODO_PRODUCT_STARTER_USAGE = "pdt_starter_usage";
+process.env.DODO_PRODUCT_LAUNCH_USAGE = "pdt_launch_usage";
+process.env.DODO_PRODUCT_GROWTH_USAGE = "pdt_growth_usage";
 
 const baseEvent = {
   provider: "dodo",

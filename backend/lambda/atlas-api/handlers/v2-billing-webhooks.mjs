@@ -24,6 +24,7 @@ import {
 import { providerTimestampSequence } from "../lib/billing-state.mjs";
 import { assertProviderPaymentCurrency } from "../lib/billing-policy.mjs";
 import { clearAtlasSandboxUsageIfPresent } from "../lib/sandbox-usage-clear.mjs";
+import { resetMonthlySessionCount } from "../lib/usage.mjs";
 
 const DODO_METER_ASSERT_EVENTS = new Set([
   "subscription.active",
@@ -120,6 +121,7 @@ export async function handleDodoWebhook(event) {
         provider: "dodo",
         providerSubscriptionId: subscriptionId,
         checkoutOperationId: operationId,
+        providerCustomerId: customerId,
       });
     } catch (mappingError) {
       const message = mappingError instanceof Error ? mappingError.message : "";
@@ -185,6 +187,20 @@ export async function handleDodoWebhook(event) {
         }
         const current = await getBillingSubscription(workspaceId);
         const subscription = await getDodoSubscription(subscriptionId);
+        // Ops / hosted remount: Dodo subscription metadata carries the prior sub id
+        // even when Atlas has no checkout_operation Dynamo row.
+        if (!allowRemountFromSubscriptionId) {
+          const metaReplaces = subscription?.metadata?.atlas_replaces_subscription_id;
+          const metaPurpose = subscription?.metadata?.atlas_checkout_purpose;
+          if (
+            metaPurpose === "hybrid_plan_remount" &&
+            typeof metaReplaces === "string" &&
+            metaReplaces.trim()
+          ) {
+            replacesProviderSubscriptionId = metaReplaces.trim();
+            allowRemountFromSubscriptionId = replacesProviderSubscriptionId;
+          }
+        }
         const authoritativeTimestamp = subscription.updated_at
           ? Date.parse(String(subscription.updated_at))
           : providerTimestamp;
@@ -227,6 +243,7 @@ export async function handleDodoWebhook(event) {
     );
 
     // After hybrid remount activates, schedule-cancel the prior sub so it does not renew.
+    // Also reset Atlas AR session counters only (models/storage stay live).
     if (
       result?.applied === true &&
       replacesProviderSubscriptionId &&
@@ -247,6 +264,20 @@ export async function handleDodoWebhook(event) {
           workspaceId,
           priorSubscriptionId: replacesProviderSubscriptionId,
           error: cancelErr instanceof Error ? cancelErr.message : "unknown",
+        });
+      }
+      try {
+        const sessionReset = await resetMonthlySessionCount(workspaceId);
+        console.info("Dodo remount: Atlas AR sessions reset", {
+          eventId,
+          workspaceId,
+          month: sessionReset.month,
+        });
+      } catch (sessionErr) {
+        console.warn("Dodo remount: Atlas session reset failed", {
+          eventId,
+          workspaceId,
+          error: sessionErr instanceof Error ? sessionErr.message : "unknown",
         });
       }
     }
@@ -276,7 +307,7 @@ export async function handleDodoWebhook(event) {
       }
     }
 
-    // Atlas-only: drop sandbox seed counters after bill cycle so Account shows real usage.
+    // Atlas-only: sandbox seed clear + session-only reset after bill cycle.
     // Never calls Dodo — meter events / invoices stay. Best-effort; never fail the webhook.
     if (String(webhook.type) === "subscription.renewed") {
       try {
@@ -293,6 +324,20 @@ export async function handleDodoWebhook(event) {
           eventId,
           workspaceId,
           error: clearErr instanceof Error ? clearErr.message : "unknown",
+        });
+      }
+      try {
+        const sessionReset = await resetMonthlySessionCount(workspaceId);
+        console.info("Dodo renew: Atlas AR sessions reset", {
+          eventId,
+          workspaceId,
+          month: sessionReset.month,
+        });
+      } catch (sessionErr) {
+        console.warn("Dodo renew: Atlas session reset failed", {
+          eventId,
+          workspaceId,
+          error: sessionErr instanceof Error ? sessionErr.message : "unknown",
         });
       }
     }
