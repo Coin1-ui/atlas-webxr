@@ -10,6 +10,7 @@ import {
 } from "../lib/billing-provider-dodo.mjs";
 import { reconcileDodoSubscriptionIfDrifted } from "../lib/billing-reconcile-dodo.mjs";
 import {
+  clearWorkspaceStuckPaymentCancel,
   enforceStuckPaymentsForSubscription,
   workspaceStuckPaymentCancelInfo,
 } from "../lib/billing-stuck-payment.mjs";
@@ -102,6 +103,14 @@ export async function handleBillingStatus(event, workspaceId) {
       }
     }
 
+    // Healthy live entitlement → drop stale stuck-payment Account hint (post-resubscribe).
+    if (billingEntitlementTier(subscription)) {
+      try {
+        await clearWorkspaceStuckPaymentCancel(workspaceId);
+      } catch {
+        /* best-effort */
+      }
+    }
     const stuckCancelInfo = await workspaceStuckPaymentCancelInfo(workspaceId);
 
     let meterSync = { ok: true, checked: false };

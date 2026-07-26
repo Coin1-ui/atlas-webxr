@@ -114,6 +114,41 @@ async function flagWorkspaceStuckPaymentCancel(workspaceId, paymentId) {
 }
 
 /**
+ * Clear stale stuck-payment Account hint after a healthy resubscribe / live entitlement.
+ * @param {string} workspaceId
+ */
+export async function clearWorkspaceStuckPaymentCancel(workspaceId) {
+  const id = String(workspaceId || "").trim();
+  if (!id) return { cleared: false };
+  const now = new Date().toISOString();
+  try {
+    await doc.send(
+      new UpdateCommand({
+        TableName: workspacesTable(),
+        Key: { pk: `WORKSPACE#${id}`, sk: "META" },
+        UpdateExpression:
+          "REMOVE billingCancelReason, billingStuckPaymentId, billingStuckPaymentCancelAt SET updatedAt = :now",
+        ConditionExpression: "attribute_exists(pk) AND billingCancelReason = :reason",
+        ExpressionAttributeValues: {
+          ":now": now,
+          ":reason": "stuck_payment",
+        },
+      })
+    );
+    return { cleared: true };
+  } catch (error) {
+    if (error?.name === "ConditionalCheckFailedException") {
+      return { cleared: false, reason: "not_flagged" };
+    }
+    console.warn("stuck payment: clear workspace flag failed", {
+      workspaceId: id,
+      error: error instanceof Error ? error.message : "unknown",
+    });
+    return { cleared: false, reason: "error" };
+  }
+}
+
+/**
  * Read workspace stuck-payment cancel reason (Account UX).
  * @param {string} workspaceId
  */

@@ -76,5 +76,19 @@ const billingSrc = readFileSync(
 );
 assert.match(billingSrc, /enforceStuckPaymentsForSubscription/);
 assert.match(billingSrc, /cancelReason/);
+assert.match(billingSrc, /clearWorkspaceStuckPaymentCancel/);
+
+const stuckLib = readFileSync(
+  resolve(__dirname, "../backend/lambda/atlas-api/lib/billing-stuck-payment.mjs"),
+  "utf8"
+);
+assert.match(stuckLib, /export async function clearWorkspaceStuckPaymentCancel/);
+assert.match(stuckLib, /REMOVE billingCancelReason/);
+
+const webhookSrc = readFileSync(
+  resolve(__dirname, "../backend/lambda/atlas-api/handlers/v2-billing-webhooks.mjs"),
+  "utf8"
+);
+assert.match(webhookSrc, /clearWorkspaceStuckPaymentCancel/);
 
 console.log("test-stuck-payment-cancel-unit: OK");

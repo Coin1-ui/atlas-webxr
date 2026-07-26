@@ -25,6 +25,7 @@ process.env.ATLAS_BILLING_CANCEL_URL = "https://app.example.com/billing/cancel";
 
 const {
   assertHybridMetersMatchProduct,
+  freeThresholdsMatch,
   isDodoUsageHybridEnabled,
   createDodoCheckout,
   dodoSubscriptionIsUsageHybrid,
@@ -180,6 +181,32 @@ const mismatch = await assertHybridMetersMatchProduct(
 assert.equal(mismatch.ok, false);
 assert.equal(mismatch.mismatches.length, 2);
 assert.equal(mismatch.mismatches[0].reason, "threshold_or_ppu_mismatch");
+
+// Signed int32 overflow: Launch storage free bytes (3932160000) as -362807296
+assert.equal(freeThresholdsMatch(-362807296, 3932160000), true);
+assert.equal(freeThresholdsMatch(3932160000, 3932160000), true);
+assert.equal(freeThresholdsMatch(500, 3000), false);
+const overflowMatch = await assertHybridMetersMatchProduct(
+  {
+    product_id: "pdt_launch_usage",
+    meters: [
+      { meter_id: "mtr_storage", free_threshold: -362807296, price_per_unit: "0.0000001" },
+    ],
+  },
+  {
+    price: {
+      meters: [
+        {
+          meter_id: "mtr_storage",
+          name: "storage",
+          free_threshold: 3932160000,
+          price_per_unit: "0.0000001",
+        },
+      ],
+    },
+  }
+);
+assert.equal(overflowMatch.ok, true, "int32 overflow storage free should match catalog");
 
 const originalFetch = globalThis.fetch;
 let capturedBody;

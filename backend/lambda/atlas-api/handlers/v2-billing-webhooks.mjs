@@ -24,6 +24,7 @@ import {
 import { providerTimestampSequence } from "../lib/billing-state.mjs";
 import { assertProviderPaymentCurrency } from "../lib/billing-policy.mjs";
 import { clearAtlasSandboxUsageIfPresent } from "../lib/sandbox-usage-clear.mjs";
+import { clearWorkspaceStuckPaymentCancel } from "../lib/billing-stuck-payment.mjs";
 import { resetMonthlySessionCount } from "../lib/usage.mjs";
 
 const DODO_METER_ASSERT_EVENTS = new Set([
@@ -278,6 +279,31 @@ export async function handleDodoWebhook(event) {
           eventId,
           workspaceId,
           error: sessionErr instanceof Error ? sessionErr.message : "unknown",
+        });
+      }
+    }
+
+    // Clear stale stuck-payment Account hint once a healthy sub is applied again.
+    if (
+      result?.applied === true &&
+      workspaceId &&
+      ["subscription.active", "payment.succeeded"].includes(String(webhook.type))
+    ) {
+      try {
+        const cleared = await clearWorkspaceStuckPaymentCancel(workspaceId);
+        if (cleared.cleared) {
+          console.info("Dodo: cleared stuck-payment cancel hint after healthy apply", {
+            eventId,
+            workspaceId,
+            subscriptionId,
+            eventType: webhook.type,
+          });
+        }
+      } catch (clearStuckErr) {
+        console.warn("Dodo: failed to clear stuck-payment cancel hint", {
+          eventId,
+          workspaceId,
+          error: clearStuckErr instanceof Error ? clearStuckErr.message : "unknown",
         });
       }
     }

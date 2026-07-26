@@ -201,6 +201,23 @@ export async function getDodoProduct(productId) {
 }
 
 /**
+ * Compare meter free thresholds, tolerating signed-int32 overflow on large byte values
+ * (e.g. Launch storage free 3932160000 shown as -362807296).
+ * @param {unknown} actual
+ * @param {unknown} expected
+ */
+export function freeThresholdsMatch(actual, expected) {
+  const a = Number(actual);
+  const e = Number(expected);
+  if (!Number.isFinite(a) || !Number.isFinite(e)) return false;
+  if (a === e) return true;
+  // uint32 reinterpret of negative signed int32
+  if (a < 0 && a === (e | 0) && e > 0x7fffffff) return true;
+  if (a < 0 && a + 2 ** 32 === e) return true;
+  return false;
+}
+
+/**
  * Compare live subscription meter free thresholds / PPUs to the product catalog.
  * Used after hybrid remount / plan webhooks — Dodo change-plan leaves stale meters.
  * @param {Record<string, unknown>} subscription Live Dodo subscription
@@ -237,7 +254,7 @@ export async function assertHybridMetersMatchProduct(subscription, product = nul
       });
       continue;
     }
-    const freeOk = Number(act.free_threshold) === Number(exp.free_threshold);
+    const freeOk = freeThresholdsMatch(act.free_threshold, exp.free_threshold);
     const ppuOk = String(act.price_per_unit ?? "") === String(exp.price_per_unit ?? "");
     if (!freeOk || !ppuOk) {
       mismatches.push({
