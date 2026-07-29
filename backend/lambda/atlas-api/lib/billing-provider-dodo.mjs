@@ -219,7 +219,7 @@ export function freeThresholdsMatch(actual, expected) {
 
 /**
  * Compare meter PPUs across Dodo number vs decimal-string forms
- * (e.g. catalog 5.5879e-8 vs subscription "0.000000055879").
+ * (e.g. catalog 5.5879354477e-10 vs subscription "0.000000000559").
  * @param {unknown} actual
  * @param {unknown} expected
  */

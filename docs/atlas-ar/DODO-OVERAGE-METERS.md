@@ -1,6 +1,6 @@
 # Dodo meters + add-ons for Atlas overage (test mode)
 
-**Last setup:** 2026-07-23 — existing hybrids patched to **1 Day payment / 1 Month period** + **3 meters** (sessions, models, storage_bytes) + `tax_inclusive: true`.  
+**Last setup:** 2026-07-29 — hybrid **PPUs corrected to USD major units** (was ~100× high). Prior: 2026-07-23 Day/Month + 3 meters + `tax_inclusive: true`.  
 **Result JSON (local):** `DODO-HYBRID-SETUP-RESULT.json` (gitignored).  
 **API key:** local `D:\AI\atlas-webxr\DOdo_api.txt` only — never commit. Chat-pasted candidate key returned **401**; setup used the prior working test key.
 
@@ -49,11 +49,13 @@ Sessions are batched (100/event request) with ids `atlas_sandbox_session_{worksp
 
 ## Live hybrid product IDs (test)
 
-| Tier | Product ID | Fixed | Session free / PPU | Model free / PPU | Storage free (bytes) |
-|------|------------|-------|--------------------|------------------|----------------------|
-| Starter | `pdt_0Njk5Xz9AdIoBNmgRoIEK` | $5 | 500 / 5¢ | 5 / $3 | 655,360,000 |
-| Launch | `pdt_0Njk5QMJ8uCwSvseuHeo0` | $59 | 3,000 / 0.8¢ | 30 / $1.20 | 3,932,160,000 |
-| Growth | `pdt_0Njk5Y261cDq9TWLto4dR` | $179 | 10,000 / 0.5¢ | 100 / $0.80 | 13,107,200,000 |
+| Tier | Product ID | Fixed | Session free / PPU | Model free / PPU | Storage free (bytes) / PPU |
+|------|------------|-------|--------------------|------------------|----------------------------|
+| Starter | `pdt_0Njk5Xz9AdIoBNmgRoIEK` | $5 | 500 / **$0.05** ($5/100) | 5 / **$3** | 655,360,000 / **$8÷5GB** |
+| Launch | `pdt_0Njk5QMJ8uCwSvseuHeo0` | $59 | 3,000 / **$0.008** ($8/1k) | 30 / **$1.20** | 3,932,160,000 / **$6÷10GB** |
+| Growth | `pdt_0Njk5Y261cDq9TWLto4dR` | $179 | 10,000 / **$0.005** ($5/1k) | 100 / **$0.80** | 13,107,200,000 / **$4÷10GB** |
+
+Dodo `price_per_unit` is **USD major units** (dollars), not cents. Catalog was corrected 2026-07-29 (prior values were ~100× high). Existing subs keep old meter snapshots until **remount checkout**.
 
 **Meters:** `mtr_0Njk5Q0tl…` sessions · `mtr_0Njk5Q5c…` models · `mtr_0Njk5QA3…` storage  
 **Add-on:** `adn_0Njk5E8xaOBpo1PAT1pOv` Session Pack 1k ($8) on classic Launch

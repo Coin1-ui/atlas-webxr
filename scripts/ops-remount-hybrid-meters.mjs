@@ -60,13 +60,20 @@ async function req(method, path, body, extraHeaders = {}) {
   return json;
 }
 
-const OLD_SUB = process.env.ATLAS_REMOUNT_OLD_SUB?.trim() || "sub_0NjnjsB8DN4nw0FhngBky";
-const CUSTOMER = process.env.ATLAS_REMOUNT_CUSTOMER?.trim() || "cus_0Nji48EKb26WfJztNrPj3";
+/** Defaults: test-admin / barua57 Launch hybrid (wrong 100× PPUs until remount). */
+const OLD_SUB = process.env.ATLAS_REMOUNT_OLD_SUB?.trim() || "sub_0NkD4aI1ZQ6wd6MqsZBp6";
+const CUSTOMER = process.env.ATLAS_REMOUNT_CUSTOMER?.trim() || "cus_0NjUvFmQSrwEVxMsaLu15";
 const LAUNCH = process.env.DODO_PRODUCT_LAUNCH_USAGE?.trim() || "pdt_0Njk5QMJ8uCwSvseuHeo0";
+const RETURN =
+  process.env.ATLAS_BILLING_RETURN_URL?.trim() ||
+  "https://main.d7vfdpujdozkj.amplifyapp.com/account?billing=return";
+const CANCEL =
+  process.env.ATLAS_BILLING_CANCEL_URL?.trim() ||
+  "https://main.d7vfdpujdozkj.amplifyapp.com/account?billing=cancel";
 const opId = randomUUID();
 
 const old = await req("GET", `/subscriptions/${encodeURIComponent(OLD_SUB)}`);
-const billing = old.billing || { country: "AT" };
+const billing = old.billing || { country: "US" };
 
 const checkout = await req(
   "POST",
@@ -75,22 +82,22 @@ const checkout = await req(
     product_cart: [{ product_id: LAUNCH, quantity: 1 }],
     customer: { customer_id: CUSTOMER },
     billing_address: {
-      country: String(billing.country || "AT").toUpperCase(),
+      country: String(billing.country || "US").toUpperCase(),
       ...(billing.state ? { state: billing.state } : {}),
       ...(billing.city ? { city: billing.city } : {}),
       ...(billing.street ? { street: billing.street } : {}),
       ...(billing.zipcode ? { zipcode: billing.zipcode } : {}),
     },
-    return_url: "https://main.d7vfdpujdozkj.amplifyapp.com/account",
-    cancel_url: "https://main.d7vfdpujdozkj.amplifyapp.com/account",
+    return_url: RETURN,
+    cancel_url: CANCEL,
     metadata: {
       atlas_billing_operation_id: opId,
       atlas_checkout_purpose: "hybrid_plan_remount",
       atlas_replaces_subscription_id: OLD_SUB,
-      atlas_ops: "bill_meter_sync_fix",
+      atlas_ops: "meter_ppu_fix_2026_07_29",
     },
   },
-  { "Idempotency-Key": `ops-remount-${opId}` }
+  { "Idempotency-Key": `ops-remount-ppu-${opId}` }
 );
 
 console.log(
@@ -103,10 +110,10 @@ console.log(
       sessionId: checkout.session_id,
       checkoutUrl: checkout.checkout_url,
       next: [
-        "1. Upload Lambda zip with customer-resolve + metadata remount webhook fixes",
-        "2. Open checkoutUrl and pay (EUR Launch) — meters snapshot from Launch catalog",
-        "3. Confirm GET /subscriptions/{new} meters free 3000/30/3.66GB",
-        "4. Atlas entitlement switches via webhook; old sub schedule-cancels",
+        "1. Open checkoutUrl and pay Launch — meters snapshot from corrected catalog PPUs",
+        "2. Confirm GET /subscriptions/{new} price_per_unit ≈ 0.008 / 1.2 / 5.59e-10",
+        "3. Atlas entitlement switches via webhook; old sub schedule-cancels",
+        "4. Pay before old next_billing_date to avoid wrong-PPU renewal on the old sub",
       ],
     },
     null,

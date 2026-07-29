@@ -1,8 +1,12 @@
 # Atlas AR — Product backlog
 
-**Last updated:** 2026-07-29 (hybrid always-remount · clearTestOverage env)
+**Last updated:** 2026-07-29 (Get started cross-browser onboarding — workspace META persist)
 
-**Latest orchestration batch (2026-07-29):** Hybrid plan change always remounts (Dodo change-plan 500 workaround); `/health` clearTestOverage follows `ATLAS_CLEAR_TEST_OVERAGE` (default false)
+**Parked (billing):** Natural renewal check on test-admin `sub_0NkDIEC…` ~2026-07-30T05:21Z — corrected PPUs · meterSync · no old-sub charge. Live cutover / Zoho on hold.
+
+**Latest orchestration batch (2026-07-29):** Get started progress persisted on workspace META; skip forced wizard when catalog has models
+
+**Previous orchestration batch (2026-07-29):** Hybrid plan change always remounts (Dodo change-plan 500 workaround); `/health` clearTestOverage follows `ATLAS_CLEAR_TEST_OVERAGE` (default false)
 
 **Previous orchestration batch (2026-07-25):** BILL-METER-SYNC — hybrid Upgrade/Downgrade → checkout remount + meter assert (Dodo change-plan leaves stale meters)
 

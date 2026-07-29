@@ -187,39 +187,15 @@ assert.equal(mismatch.mismatches[0].reason, "threshold_or_ppu_mismatch");
 assert.equal(freeThresholdsMatch(-362807296, 3932160000), true);
 assert.equal(freeThresholdsMatch(3932160000, 3932160000), true);
 assert.equal(freeThresholdsMatch(500, 3000), false);
+const launchStoragePpu = Number((6 / (10 * 1024 ** 3)).toFixed(12)); // ~5.59e-10 USD/byte
 const overflowMatch = await assertHybridMetersMatchProduct(
-  {
-    product_id: "pdt_launch_usage",
-    meters: [
-      { meter_id: "mtr_storage", free_threshold: -362807296, price_per_unit: "0.0000001" },
-    ],
-  },
-  {
-    price: {
-      meters: [
-        {
-          meter_id: "mtr_storage",
-          name: "storage",
-          free_threshold: 3932160000,
-          price_per_unit: "0.0000001",
-        },
-      ],
-    },
-  }
-);
-assert.equal(overflowMatch.ok, true, "int32 overflow storage free should match catalog");
-
-// Live CT202 pattern: scientific-notation catalog PPU vs decimal-string sub PPU
-assert.equal(meterPricePerUnitsMatch("0.000000055879", 5.5879e-8), true);
-assert.equal(meterPricePerUnitsMatch("0.05", "0.008"), false);
-const ppuFormatMatch = await assertHybridMetersMatchProduct(
   {
     product_id: "pdt_launch_usage",
     meters: [
       {
         meter_id: "mtr_storage",
         free_threshold: -362807296,
-        price_per_unit: "0.000000055879",
+        price_per_unit: String(launchStoragePpu),
       },
     ],
   },
@@ -230,7 +206,36 @@ const ppuFormatMatch = await assertHybridMetersMatchProduct(
           meter_id: "mtr_storage",
           name: "storage",
           free_threshold: 3932160000,
-          price_per_unit: 5.5879e-8,
+          price_per_unit: launchStoragePpu,
+        },
+      ],
+    },
+  }
+);
+assert.equal(overflowMatch.ok, true, "int32 overflow storage free should match catalog");
+
+// Scientific-notation catalog PPU vs decimal-string sub PPU (corrected USD major units)
+assert.equal(meterPricePerUnitsMatch(String(launchStoragePpu), launchStoragePpu), true);
+assert.equal(meterPricePerUnitsMatch("0.05", "0.008"), false);
+const ppuFormatMatch = await assertHybridMetersMatchProduct(
+  {
+    product_id: "pdt_launch_usage",
+    meters: [
+      {
+        meter_id: "mtr_storage",
+        free_threshold: -362807296,
+        price_per_unit: String(launchStoragePpu),
+      },
+    ],
+  },
+  {
+    price: {
+      meters: [
+        {
+          meter_id: "mtr_storage",
+          name: "storage",
+          free_threshold: 3932160000,
+          price_per_unit: launchStoragePpu,
         },
       ],
     },

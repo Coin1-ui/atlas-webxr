@@ -57,6 +57,8 @@ async function dodo(method, path, body) {
     headers: {
       Authorization: `Bearer ${key}`,
       "Content-Type": "application/json",
+      Accept: "application/json",
+      "User-Agent": "atlas-setup-dodo-meters/1.0",
     },
     body: body === undefined ? undefined : JSON.stringify(body),
   });
@@ -110,8 +112,12 @@ const KNOWN_HYBRID_IDS = {
 
 /**
  * Free thresholds = Atlas BILLING_TIER_LIMITS.
- * price_per_unit ≈ overage-estimate.mjs pack rates (USD cents / unit).
- * Storage: linear ¢/byte ≈ pack cents / (pack_gb × 2^30).
+ * price_per_unit = USD **major units** (dollars) per meter unit — Dodo bills this as currency,
+ * not cents. Derived from overage-estimate.mjs pack rates:
+ *   sessions: pack_$ / pack_sessions  (e.g. Launch $8 / 1000 = $0.008)
+ *   models:   pack_$ / pack_models    (e.g. Launch $12 / 10 = $1.20)
+ *   storage:  pack_$ / (pack_gb × 2^30 bytes)
+ * Bug 2026-07-29: earlier values were 100× too high (cent-like numbers treated as dollars).
  */
 const HYBRIDS = [
   {
@@ -119,33 +125,33 @@ const HYBRIDS = [
     tier: "starter",
     fixed: 500,
     sessionsFree: 500,
-    sessionsPpu: 5, // $5 / 100
+    sessionsPpu: 0.05, // $5 / 100 sessions
     modelsFree: 5,
-    modelsPpu: 300, // $3 each
+    modelsPpu: 3, // $3 each
     storageFree: storageBytesForModelCount(5),
-    storagePpu: Number((800 / (5 * 1024 ** 3)).toFixed(12)), // $8 / 5 GB, ≤12 dp
+    storagePpu: Number((8 / (5 * 1024 ** 3)).toFixed(12)), // $8 / 5 GB
   },
   {
     name: "Launch usage hybrid",
     tier: "launch",
     fixed: 5900,
     sessionsFree: 3000,
-    sessionsPpu: 0.8, // $8 / 1k
+    sessionsPpu: 0.008, // $8 / 1k sessions
     modelsFree: 30,
-    modelsPpu: 120, // $12 / 10
+    modelsPpu: 1.2, // $12 / 10 models
     storageFree: storageBytesForModelCount(30),
-    storagePpu: Number((600 / (10 * 1024 ** 3)).toFixed(12)), // $6 / 10 GB
+    storagePpu: Number((6 / (10 * 1024 ** 3)).toFixed(12)), // $6 / 10 GB
   },
   {
     name: "Growth (usage hybrid)",
     tier: "growth",
     fixed: 17900,
     sessionsFree: 10000,
-    sessionsPpu: 0.5, // $5 / 1k
+    sessionsPpu: 0.005, // $5 / 1k sessions
     modelsFree: 100,
-    modelsPpu: 80, // $8 / 10
+    modelsPpu: 0.8, // $8 / 10 models
     storageFree: storageBytesForModelCount(100),
-    storagePpu: Number((400 / (10 * 1024 ** 3)).toFixed(12)), // $4 / 10 GB
+    storagePpu: Number((4 / (10 * 1024 ** 3)).toFixed(12)), // $4 / 10 GB
   },
 ];
 
