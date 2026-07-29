@@ -4,6 +4,7 @@ import type { CatalogModel } from "../data/model-catalog";
 import { bindModelIconFallbacks, MODEL_ICON_FALLBACK, modelIconSrc } from "../shared/model-icon";
 import { modelUploadGate } from "../shared/model-upload-gate";
 import { modelArUrl } from "../shared/model-ar-url";
+import { markOnboardingStep } from "../shared/onboarding-progress";
 import { brandedHeaderHtml, mountWorkspaceLogo } from "../branding/workspace-theme";
 import { tenantAdminApiHint } from "../data/tenant-model-api";
 import {
@@ -329,6 +330,7 @@ export function renderAdminModels(
     btn.addEventListener("click", () => {
       const url = btn.getAttribute("data-copy-url");
       if (!url) return;
+      markOnboardingStep(workspace.id, "share");
       void navigator.clipboard.writeText(url).then(() => {
         statusEl.textContent = "AR link copied to clipboard.";
       }).catch(() => {

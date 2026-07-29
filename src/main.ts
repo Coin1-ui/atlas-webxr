@@ -1722,6 +1722,7 @@ async function showAdminScreen(): Promise<void> {
           navigateTo("/admin/models");
           return;
         }
+        markOnboardingStep(workspace.id, "preview");
         void openTenantShowroom(slug);
       },
       onSignOut: () => {

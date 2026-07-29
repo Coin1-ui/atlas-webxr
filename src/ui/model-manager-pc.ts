@@ -20,6 +20,7 @@ import {
   uploadModelToWorkspace,
 } from "../data/tenant-model-api";
 import { modelArUrl } from "../shared/model-ar-url";
+import { markOnboardingStep } from "../shared/onboarding-progress";
 import {
   convertGlbToUsdz,
   preloadGlbToUsdzModules,
@@ -294,6 +295,7 @@ export function renderPcModelManager(
     if (copyBtn) {
       const url = copyBtn.getAttribute("data-copy-url");
       if (!url) return;
+      if (workspace) markOnboardingStep(workspace.id, "share");
       void navigator.clipboard.writeText(url).then(() => {
         statusEl.textContent = "AR link copied to clipboard.";
       }).catch(() => {
