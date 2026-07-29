@@ -21,3 +21,15 @@ export function isSandboxDodoIngestEnabled(raw = process.env.ATLAS_SANDBOX_DODO_
     .toLowerCase();
   return v === "true" || v === "1" || v === "yes";
 }
+
+/**
+ * Feature flag: Account "Clear test overage" / soft-clear tooling.
+ * Default **off** (false) — must opt in with ATLAS_CLEAR_TEST_OVERAGE=true.
+ * @param {string | undefined} raw
+ */
+export function isClearTestOverageEnabled(raw = process.env.ATLAS_CLEAR_TEST_OVERAGE) {
+  const v = String(raw ?? "")
+    .trim()
+    .toLowerCase();
+  return v === "true" || v === "1" || v === "yes";
+}

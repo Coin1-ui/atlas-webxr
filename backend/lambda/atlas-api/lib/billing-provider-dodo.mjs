@@ -218,6 +218,22 @@ export function freeThresholdsMatch(actual, expected) {
 }
 
 /**
+ * Compare meter PPUs across Dodo number vs decimal-string forms
+ * (e.g. catalog 5.5879e-8 vs subscription "0.000000055879").
+ * @param {unknown} actual
+ * @param {unknown} expected
+ */
+export function meterPricePerUnitsMatch(actual, expected) {
+  if (String(actual ?? "") === String(expected ?? "")) return true;
+  const a = Number(actual);
+  const e = Number(expected);
+  if (!Number.isFinite(a) || !Number.isFinite(e)) return false;
+  if (a === e) return true;
+  const scale = Math.max(Math.abs(a), Math.abs(e), 1e-18);
+  return Math.abs(a - e) / scale < 1e-9;
+}
+
+/**
  * Compare live subscription meter free thresholds / PPUs to the product catalog.
  * Used after hybrid remount / plan webhooks — Dodo change-plan leaves stale meters.
  * @param {Record<string, unknown>} subscription Live Dodo subscription
@@ -255,7 +271,7 @@ export async function assertHybridMetersMatchProduct(subscription, product = nul
       continue;
     }
     const freeOk = freeThresholdsMatch(act.free_threshold, exp.free_threshold);
-    const ppuOk = String(act.price_per_unit ?? "") === String(exp.price_per_unit ?? "");
+    const ppuOk = meterPricePerUnitsMatch(act.price_per_unit, exp.price_per_unit);
     if (!freeOk || !ppuOk) {
       mismatches.push({
         meter_id: meterId,

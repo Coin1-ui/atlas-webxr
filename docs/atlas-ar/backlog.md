@@ -1,8 +1,8 @@
 # Atlas AR — Product backlog
 
-**Last updated:** 2026-07-26 (stuck-hint clear · meterSync int32)
+**Last updated:** 2026-07-29 (hybrid always-remount · clearTestOverage env)
 
-**Latest orchestration batch (2026-07-26):** Clear stale stuck-payment Account hint after healthy resubscribe; tolerate storage free-threshold int32 overflow in meterSync
+**Latest orchestration batch (2026-07-29):** Hybrid plan change always remounts (Dodo change-plan 500 workaround); `/health` clearTestOverage follows `ATLAS_CLEAR_TEST_OVERAGE` (default false)
 
 **Previous orchestration batch (2026-07-25):** BILL-METER-SYNC — hybrid Upgrade/Downgrade → checkout remount + meter assert (Dodo change-plan leaves stale meters)
 

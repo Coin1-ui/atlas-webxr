@@ -306,7 +306,7 @@ export type BillingStatus = {
   usageHybrid?: boolean;
   /** True when current-month usage exceeds included plan limits. */
   inOverage?: boolean;
-  /** remount_checkout = in overage (cancel+resubscribe); scheduled = automatic change-plan. */
+  /** remount_checkout = hybrid or in-overage (cancel+resubscribe); scheduled = classic change-plan. */
   planChangeMode?: "remount_checkout" | "scheduled";
   /** Set when Atlas hard-cancelled due to stuck renewal payment. */
   cancelReason?: "stuck_payment" | string | null;

@@ -174,8 +174,9 @@ export async function handleBillingStatus(event, workspaceId) {
       meterSync,
       usageHybrid,
       inOverage,
-      // Remount only while in overage; within limits uses scheduled change-plan.
-      planChangeMode: inOverage ? "remount_checkout" : "scheduled",
+      // Usage hybrids always remount (Dodo change-plan 500s / stale meters).
+      // Classic: remount only while in overage; otherwise scheduled change-plan.
+      planChangeMode: usageHybrid || inOverage ? "remount_checkout" : "scheduled",
       cancelReason: stuckCancelInfo?.cancelReason || null,
       stuckPaymentCancel: stuckCancelInfo,
     });

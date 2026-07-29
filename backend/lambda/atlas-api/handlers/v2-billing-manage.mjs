@@ -11,6 +11,7 @@ import {
   cancelDodoScheduledPlanChange,
   changeDodoPlan,
   createDodoPortalSession,
+  dodoSubscriptionIsUsageHybrid,
   getDodoSubscription,
   uncancelDodoSubscription,
 } from "../lib/billing-provider-dodo.mjs";
@@ -182,6 +183,7 @@ export async function handleBillingChangePlan(event, workspaceId) {
       const usage = await loadWorkspaceUsageSnapshot(workspaceId);
       const limits = limitsForBillingTier(subscription.tier);
       const inOverage = needsOveragePlanRemount(subscription.tier, usage, limits);
+      const usageHybrid = dodoSubscriptionIsUsageHybrid(dodoSub);
       let meterMismatchRemount = false;
       if (sameTier) {
         const meterAssert = await assertHybridMetersMatchProduct(dodoSub);
@@ -191,9 +193,14 @@ export async function handleBillingChangePlan(event, workspaceId) {
         meterMismatchRemount = true;
       }
 
-      // In overage (or same-tier meter repair): cancel-at-renewal via remount checkout.
-      // Within limits: scheduled change-plan (no cancel/resubscribe).
-      if (inOverage || meterMismatchRemount) {
+      // Usage hybrids: always remount on Upgrade/Downgrade (Dodo change-plan returns
+      // 500 INTERNAL_SERVER_ERROR on these products and also leaves stale meters).
+      // Classic MONTHLY: remount only for overage/meter repair; else scheduled change-plan.
+      const remountPlanChange =
+        meterMismatchRemount ||
+        inOverage ||
+        (usageHybrid && !sameTier);
+      if (remountPlanChange) {
         const email =
           typeof body?.email === "string" ? body.email.trim().toLowerCase() : "";
         const couponCode =
@@ -213,11 +220,21 @@ export async function handleBillingChangePlan(event, workspaceId) {
           email,
           couponCode: couponCode || undefined,
         });
+        let message =
+          "Complete checkout to switch plans. Your current subscription will be canceled after the new one is active.";
+        if (meterMismatchRemount) {
+          message =
+            "Your current subscription will be canceled after you resubscribe. Complete checkout to refresh overage meters for this plan.";
+        } else if (inOverage) {
+          message =
+            "You are currently in overage. Your current plan will be canceled at renewal after you resubscribe. Complete checkout to upgrade/downgrade so the new plan’s overage meters apply. If you skip checkout, your current plan continues and overage keeps billing as usual.";
+        }
         return jsonResponse(200, {
           ok: true,
           pending: true,
           remount: true,
           inOverage,
+          usageHybrid,
           checkoutUrl: remount.checkoutUrl,
           operationId: remount.operationId,
           provider: remount.provider,
@@ -225,9 +242,7 @@ export async function handleBillingChangePlan(event, workspaceId) {
           currentTier: subscription.tier,
           replacesProviderSubscriptionId: remount.replacesProviderSubscriptionId,
           activatesOnAtlas: "when_remount_checkout_completes",
-          message: meterMismatchRemount
-            ? "Your current subscription will be canceled after you resubscribe. Complete checkout to refresh overage meters for this plan."
-            : "You are currently in overage. Your current plan will be canceled at renewal after you resubscribe. Complete checkout to upgrade/downgrade so the new plan’s overage meters apply. If you skip checkout, your current plan continues and overage keeps billing as usual.",
+          message,
         });
       }
       if (sameTier) {

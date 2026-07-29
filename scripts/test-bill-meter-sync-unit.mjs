@@ -26,6 +26,7 @@ process.env.ATLAS_BILLING_CANCEL_URL = "https://app.example.com/billing/cancel";
 const {
   assertHybridMetersMatchProduct,
   freeThresholdsMatch,
+  meterPricePerUnitsMatch,
   isDodoUsageHybridEnabled,
   createDodoCheckout,
   dodoSubscriptionIsUsageHybrid,
@@ -57,7 +58,7 @@ assert.equal(
     launchLimits
   ),
   false,
-  "within limits → scheduled change-plan (no remount)"
+  "within limits → not overage (hybrid still remounts via usageHybrid path)"
 );
 assert.equal(
   workspaceIsInOverage(
@@ -207,6 +208,35 @@ const overflowMatch = await assertHybridMetersMatchProduct(
   }
 );
 assert.equal(overflowMatch.ok, true, "int32 overflow storage free should match catalog");
+
+// Live CT202 pattern: scientific-notation catalog PPU vs decimal-string sub PPU
+assert.equal(meterPricePerUnitsMatch("0.000000055879", 5.5879e-8), true);
+assert.equal(meterPricePerUnitsMatch("0.05", "0.008"), false);
+const ppuFormatMatch = await assertHybridMetersMatchProduct(
+  {
+    product_id: "pdt_launch_usage",
+    meters: [
+      {
+        meter_id: "mtr_storage",
+        free_threshold: -362807296,
+        price_per_unit: "0.000000055879",
+      },
+    ],
+  },
+  {
+    price: {
+      meters: [
+        {
+          meter_id: "mtr_storage",
+          name: "storage",
+          free_threshold: 3932160000,
+          price_per_unit: 5.5879e-8,
+        },
+      ],
+    },
+  }
+);
+assert.equal(ppuFormatMatch.ok, true, "int32 free + PPU format should match");
 
 const originalFetch = globalThis.fetch;
 let capturedBody;

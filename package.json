@@ -33,6 +33,7 @@
     "test:bill-meter-sync": "node scripts/test-bill-meter-sync-unit.mjs",
     "test:session-renewal-reset": "node scripts/test-session-renewal-reset-unit.mjs",
     "test:stuck-payment-cancel": "node scripts/test-stuck-payment-cancel-unit.mjs",
+    "test:clear-test-overage-flag": "node scripts/test-clear-test-overage-flag-unit.mjs",
     "test:des4": "node scripts/test-des4-a11y.mjs",
     "test:design-audit": "node scripts/test-design-audit.mjs",
     "test:billing-state": "node scripts/test-billing-state-machine-unit.mjs",

@@ -77,6 +77,7 @@ const billingSrc = readFileSync(
 assert.match(billingSrc, /enforceStuckPaymentsForSubscription/);
 assert.match(billingSrc, /cancelReason/);
 assert.match(billingSrc, /clearWorkspaceStuckPaymentCancel/);
+assert.match(billingSrc, /usageHybrid \|\| inOverage/);
 
 const stuckLib = readFileSync(
   resolve(__dirname, "../backend/lambda/atlas-api/lib/billing-stuck-payment.mjs"),

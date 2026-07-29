@@ -209,8 +209,8 @@ export function renderAccountPage(
   const scheduledPlanChange = data.scheduledPlanChange ?? null;
   const meterSync = data.meterSync ?? null;
   const usageHybrid = data.usageHybrid === true;
-  const inOverage =
-    data.inOverage === true || data.planChangeMode === "remount_checkout";
+  const inOverage = data.inOverage === true;
+  const remountPlanChange = data.planChangeMode === "remount_checkout" || usageHybrid;
   const stuckPaymentCancel = data.cancelReason === "stuck_payment";
   const scheduledPlanName = scheduledPlanChange
     ? planDisplayName(workspace.plan, scheduledPlanChange.tier)
@@ -274,6 +274,9 @@ export function renderAccountPage(
                 }
                 if (inOverage) {
                   return `<p class="auth-hint">You are in overage — ${escapeHtml(bits.join("; "))} requires cancel at renewal and checkout to resubscribe. Skip checkout and this plan continues with overage.</p>`;
+                }
+                if (remountPlanChange) {
+                  return `<p class="auth-hint">${escapeHtml(bits.join("; "))} opens checkout to resubscribe. Your current plan is canceled after the new subscription is active.</p>`;
                 }
                 return `<p class="auth-hint">Plan changes apply on your next billing date — ${escapeHtml(bits.join("; "))}. You keep your current plan until then.</p>`;
               })()
@@ -377,12 +380,14 @@ export function renderAccountPage(
                   ${
                     billingIsLive && !cancelScheduled && inOverage
                       ? `<p class="auth-hint">You are currently in overage. Upgrade or Downgrade <strong>cancels at renewal</strong> and opens checkout to resubscribe so the new plan’s meters apply. If you do not complete checkout, this plan continues and overage keeps billing. Peak model/storage this cycle still bills even if you delete assets before renewal. Past invoices stay as billed.</p>`
-                      : billingIsLive && !cancelScheduled
-                        ? `<p class="auth-hint">Upgrade or Downgrade is scheduled for your next billing date. You keep your current plan until then.${
+                      : billingIsLive && !cancelScheduled && remountPlanChange
+                        ? `<p class="auth-hint">Upgrade or Downgrade opens checkout to resubscribe. Your current plan is canceled after the new subscription is active.${
                             usageHybrid
-                              ? " Usage within included limits renews normally; overage meters bill only when you exceed them. On renewal, AR session count resets to zero — models and storage stay as they are. Peak model/storage overage in a cycle still bills even if you delete assets before renewal."
+                              ? " Usage within included limits renews normally; overage meters bill only when you exceed them. On renewal, AR session count resets to zero — models and storage stay as they are."
                               : ""
                           }</p>`
+                      : billingIsLive && !cancelScheduled
+                        ? `<p class="auth-hint">Upgrade or Downgrade is scheduled for your next billing date. You keep your current plan until then.</p>`
                         : ""
                   }`
                 : ""
