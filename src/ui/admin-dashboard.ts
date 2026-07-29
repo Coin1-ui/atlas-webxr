@@ -59,6 +59,7 @@ export function renderAdminDashboard(
     onManageModels: () => void;
     onBranding: () => void;
     onOpenAr: () => void;
+    onCopyShareLink?: () => void;
     onAccount: () => void;
     onOwner?: () => void;
     onSignOut: () => void;
@@ -99,6 +100,7 @@ export function renderAdminDashboard(
           <div class="admin-card admin-card-highlight">
             <p class="admin-label">Customer AR link</p>
             <code class="admin-code">${escapeHtml(sharePath)}</code>
+            <button type="button" class="btn btn-ghost btn-sm" data-action="copy-share">Copy link</button>
             <p class="auth-hint">Plan: <strong>${escapeHtml(planLabel)}</strong> · Models isolated to this workspace</p>
           </div>
 
@@ -151,6 +153,19 @@ export function renderAdminDashboard(
   root.querySelector("[data-action=models]")?.addEventListener("click", handlers.onManageModels);
   root.querySelector("[data-action=branding]")?.addEventListener("click", handlers.onBranding);
   root.querySelector("[data-action=ar]")?.addEventListener("click", handlers.onOpenAr);
+  root.querySelector("[data-action=copy-share]")?.addEventListener("click", (e) => {
+    const btn = e.currentTarget as HTMLButtonElement;
+    const absUrl = `${location.origin}${sharePath}`;
+    void navigator.clipboard
+      .writeText(absUrl)
+      .then(() => {
+        btn.textContent = "Copied ✓";
+      })
+      .catch(() => {
+        btn.textContent = absUrl;
+      });
+    handlers.onCopyShareLink?.();
+  });
   root.querySelector("[data-action=back]")?.addEventListener("click", handlers.onBack);
   root.querySelector("[data-action=signout]")?.addEventListener("click", handlers.onSignOut);
   root.querySelector("[data-action=delete]")?.addEventListener("click", () => {

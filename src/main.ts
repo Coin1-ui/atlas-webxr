@@ -1709,6 +1709,9 @@ async function showAdminScreen(): Promise<void> {
       onManageModels: () => navigateTo("/admin/models"),
       onBranding: () => navigateTo("/admin/branding"),
       onHelp: () => navigateTo("/admin/help"),
+      onCopyShareLink: () => {
+        markOnboardingStep(workspace.id, "share");
+      },
       onOpenAr: () => {
         const slug = activeWorkspace?.slug;
         if (!slug) {
