@@ -136,9 +136,13 @@ import {
 } from "./ui/nav-loading";
 import {
   dismissOnboarding,
-  isOnboardingComplete,
+  hydrateOnboardingFromWorkspace,
   loadOnboarding,
   markOnboardingStep,
+  onboardingToServerPayload,
+  setOnboardingServerPersist,
+  shouldShowOnboardingBanner,
+  shouldSkipGetStartedWizard,
   syncOnboardingUpload,
 } from "./shared/onboarding-progress";
 import { renderAdminModels } from "./ui/admin-models";
@@ -1533,8 +1537,10 @@ async function countUserModels(workspaceId: string): Promise<number> {
 }
 
 async function navigateAdminEntry(workspace: Workspace): Promise<void> {
+  hydrateOnboardingFromWorkspace(workspace);
   const modelCount = await countUserModels(workspace.id);
-  if (isOnboardingComplete(workspace.id, modelCount)) {
+  syncOnboardingUpload(workspace.id, modelCount);
+  if (shouldSkipGetStartedWizard(workspace.id, modelCount)) {
     navigateTo("/admin", true);
     return;
   }
@@ -1578,6 +1584,7 @@ async function showOnboardingGetStartedScreen(): Promise<void> {
     activeWorkspace = workspace;
     if (blockWorkspaceAccess(workspace)) return;
     applyWorkspaceTheme(workspace);
+    hydrateOnboardingFromWorkspace(workspace);
     const modelCount = await countUserModels(workspace.id);
     syncOnboardingUpload(workspace.id, modelCount);
     const showroomUrl = showroomAbsoluteUrl(workspace.slug);
@@ -1684,10 +1691,11 @@ async function showAdminScreen(): Promise<void> {
       /* usage API optional until deployed */
     }
     const modelCount = usage?.usage.modelCount ?? (await countUserModels(workspace.id));
+    hydrateOnboardingFromWorkspace(workspace);
     syncOnboardingUpload(workspace.id, modelCount);
     const onboardingState = loadOnboarding(workspace.id);
     const showOnboarding =
-      !isPlatformOwner && !isOnboardingComplete(workspace.id, modelCount);
+      !isPlatformOwner && shouldShowOnboardingBanner(workspace.id, modelCount);
     renderAdminDashboard(app, workspace, {
       email: user.email,
       usage,
@@ -3711,6 +3719,15 @@ if (new URLSearchParams(location.search).get("selftest") === "glb") {
   location.replace(`${location.origin}/mkt-3-storyboard/index.html${location.search}${location.hash}`);
 } else {
   installDeployRecovery();
+  setOnboardingServerPersist((workspaceId, state) =>
+    updateWorkspaceSettings(workspaceId, { onboarding: onboardingToServerPayload(state) }).then(
+      (ws) => {
+        if (activeWorkspace?.id === workspaceId) {
+          activeWorkspace = { ...activeWorkspace, onboarding: ws.onboarding };
+        }
+      }
+    )
+  );
   installGlobalNavLoading(app);
   installNavLoadingAutoRelease(app, routePath);
   ensureSessionLog();

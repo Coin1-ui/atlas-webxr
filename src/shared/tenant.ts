@@ -9,6 +9,12 @@ export type WorkspaceBranding = {
   primaryColor?: string;
 };
 
+export type WorkspaceOnboarding = {
+  steps: { upload: boolean; share: boolean; preview: boolean };
+  dismissed?: boolean;
+  completedAt?: string;
+};
+
 export type Workspace = {
   id: string;
   slug: string;
@@ -29,10 +35,13 @@ export type Workspace = {
   billingProvider?: "dodo" | "zoho" | null;
   billingStatus?: "pending" | "active" | "past_due" | "canceled" | "expired" | null;
   billingSubscriptionId?: string | null;
+  billingCustomerId?: string | null;
   billingCurrentPeriodEnd?: string | null;
   billingGraceUntil?: string | null;
   billingCancelAtPeriodEnd?: boolean;
   branding: WorkspaceBranding;
+  /** Guided Get started checklist — server-backed so it follows the account. */
+  onboarding?: WorkspaceOnboarding;
   /** Optional URL/path opened when viewer taps Exit AR (https://… or /path). */
   arExitUrl?: string | null;
   createdAt: string;

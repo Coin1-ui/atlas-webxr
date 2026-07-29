@@ -1,7 +1,7 @@
 import { getApiBase } from "../config/api";
 import { authBearerToken, loadSession } from "../auth/session";
 import { apiErrorMessage } from "../shared/api-error-message";
-import type { PublicWorkspaceConfig, Workspace } from "../shared/tenant";
+import type { PublicWorkspaceConfig, Workspace, WorkspaceOnboarding } from "../shared/tenant";
 
 function saasApiUrl(path: string): string {
   const base = getApiBase();
@@ -131,6 +131,7 @@ export async function updateWorkspaceSettings(
     logoUrl?: string | null;
     primaryColor?: string;
     arExitUrl?: string | null;
+    onboarding?: WorkspaceOnboarding;
   }
 ): Promise<Workspace> {
   const res = await fetch(saasApiUrl(`/v2/workspaces/${encodeURIComponent(workspaceId)}/settings`), {
