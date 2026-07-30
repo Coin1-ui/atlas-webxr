@@ -201,8 +201,10 @@ export async function getDodoProduct(productId) {
 }
 
 /**
- * Compare meter free thresholds, tolerating signed-int32 overflow on large byte values
- * (e.g. Launch storage free 3932160000 shown as -362807296).
+ * Compare meter free thresholds, tolerating 32-bit truncation on large byte values.
+ * Dodo often stores free_threshold as int32/uint32:
+ * - Launch storage 3932160000 → signed -362807296
+ * - Growth storage 13107200000 → uint32 low bits 222298112 (wraps past 2×2^32)
  * @param {unknown} actual
  * @param {unknown} expected
  */
@@ -211,9 +213,13 @@ export function freeThresholdsMatch(actual, expected) {
   const e = Number(expected);
   if (!Number.isFinite(a) || !Number.isFinite(e)) return false;
   if (a === e) return true;
-  // uint32 reinterpret of negative signed int32
-  if (a < 0 && a === (e | 0) && e > 0x7fffffff) return true;
-  if (a < 0 && a + 2 ** 32 === e) return true;
+  if (e > 0x7fffffff) {
+    // signed int32 truncation
+    if (a === (e | 0)) return true;
+    // unsigned int32 / multi-wrap low bits (ToUint32)
+    if (a === (e >>> 0)) return true;
+    if (a < 0 && a + 2 ** 32 === e) return true;
+  }
   return false;
 }
 

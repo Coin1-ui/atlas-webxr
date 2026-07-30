@@ -187,6 +187,9 @@ assert.equal(mismatch.mismatches[0].reason, "threshold_or_ppu_mismatch");
 assert.equal(freeThresholdsMatch(-362807296, 3932160000), true);
 assert.equal(freeThresholdsMatch(3932160000, 3932160000), true);
 assert.equal(freeThresholdsMatch(500, 3000), false);
+// Growth storage free (13107200000) wraps past 2×2^32 → uint32 low bits 222298112
+assert.equal(freeThresholdsMatch(222298112, 13107200000), true);
+assert.equal(13107200000 >>> 0, 222298112);
 const launchStoragePpu = Number((6 / (10 * 1024 ** 3)).toFixed(12)); // ~5.59e-10 USD/byte
 const overflowMatch = await assertHybridMetersMatchProduct(
   {

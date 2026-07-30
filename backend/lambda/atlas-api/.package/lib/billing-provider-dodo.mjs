@@ -29,23 +29,57 @@ const KNOWN_USAGE_HYBRID_PRODUCTS = Object.freeze({
   pdt_0Njk5Y261cDq9TWLto4dR: "growth",
 });
 
-function productIdForTier(tier) {
+/**
+ * True when Atlas checkouts use usage-hybrid SKUs (meters bill at cycle).
+ * Classic MONTHLY products are not used for new checkouts / plan changes.
+ */
+export function isDodoUsageHybridEnabled() {
+  if (process.env.ATLAS_DODO_USAGE_HYBRID === "true") return true;
+  return ["starter", "launch", "growth"].some(
+    (tier) => Boolean(process.env[`DODO_PRODUCT_${tier.toUpperCase()}_USAGE`]?.trim())
+  );
+}
+
+/** True when this Dodo product id is an Atlas usage-hybrid (metered overage) SKU. */
+export function isUsageHybridProductId(productId) {
+  const id = String(productId || "").trim();
+  if (!id) return false;
+  if (KNOWN_USAGE_HYBRID_PRODUCTS[id]) return true;
+  for (const tier of ["starter", "launch", "growth"]) {
+    const usage = process.env[`DODO_PRODUCT_${tier.toUpperCase()}_USAGE`]?.trim();
+    if (usage && usage === id) return true;
+  }
+  return false;
+}
+
+/**
+ * Live subscription uses metered overage (hybrid).
+ * @param {Record<string, unknown> | null | undefined} subscription
+ */
+export function dodoSubscriptionIsUsageHybrid(subscription) {
+  if (!subscription || typeof subscription !== "object") return false;
+  if (isUsageHybridProductId(subscription.product_id)) return true;
+  return Array.isArray(subscription.meters) && subscription.meters.length > 0;
+}
+
+/**
+ * Atlas only sells usage-hybrid SKUs. No classic MONTHLY fallback.
+ */
+export function productIdForTier(tier) {
   if (!["starter", "launch", "growth"].includes(tier)) {
     throw new Error("Dodo checkout tier is not self-service");
   }
-  // Prefer usage-hybrid catalog when configured (session meters at renewal).
   const usage = process.env[`DODO_PRODUCT_${tier.toUpperCase()}_USAGE`]?.trim();
   if (usage) return usage;
-  if (process.env.ATLAS_DODO_USAGE_HYBRID === "true") {
-    const hybridId = Object.entries(KNOWN_USAGE_HYBRID_PRODUCTS).find(([, t]) => t === tier)?.[0];
-    if (hybridId) return hybridId;
-  }
-  return requiredEnv(`DODO_PRODUCT_${tier.toUpperCase()}_MONTHLY`);
+  const hybridId = Object.entries(KNOWN_USAGE_HYBRID_PRODUCTS).find(([, t]) => t === tier)?.[0];
+  if (hybridId) return hybridId;
+  throw new Error(`DODO_PRODUCT_${tier.toUpperCase()}_USAGE is not configured`);
 }
 
 function tierForProductId(productId) {
   const id = String(productId || "");
   for (const tier of ["starter", "launch", "growth"]) {
+    // MONTHLY still mapped for legacy webhook rows; new checkouts never select them.
     const monthly = process.env[`DODO_PRODUCT_${tier.toUpperCase()}_MONTHLY`]?.trim();
     const usage = process.env[`DODO_PRODUCT_${tier.toUpperCase()}_USAGE`]?.trim();
     if (monthly === id || usage === id) return tier;
@@ -71,14 +105,16 @@ async function dodoRequest(path, options = {}) {
     try {
       const parsed = text ? JSON.parse(text) : null;
       const message =
-        typeof parsed?.message === "string"
-          ? parsed.message
-          : typeof parsed?.error === "string"
-            ? parsed.error
-            : typeof parsed?.detail === "string"
-              ? parsed.detail
+        typeof parsed?.message === "string" && parsed.message.trim()
+          ? parsed.message.trim()
+          : typeof parsed?.error === "string" && parsed.error.trim()
+            ? parsed.error.trim()
+            : typeof parsed?.detail === "string" && parsed.detail.trim()
+              ? parsed.detail.trim()
               : null;
+      const code = typeof parsed?.code === "string" ? parsed.code.trim() : "";
       if (message) detail = message;
+      else if (code) detail = `Dodo Payments request failed (${code})`;
     } catch {
       if (text.trim()) detail = text.trim().slice(0, 240);
     }
@@ -110,24 +146,36 @@ export function preflightDodoCheckout(tier) {
 }
 
 export async function createDodoCheckout(operation, input) {
+  const customerId =
+    typeof input.customerId === "string" && input.customerId.trim()
+      ? input.customerId.trim()
+      : "";
+  const customer = customerId
+    ? { customer_id: customerId }
+    : {
+        email: String(input.email).trim().toLowerCase(),
+        ...(input.name ? { name: String(input.name).trim() } : {}),
+      };
+  const metadata = {
+    atlas_billing_operation_id: operation.operationId,
+  };
+  if (operation.purpose === "hybrid_plan_remount" && operation.replacesProviderSubscriptionId) {
+    metadata.atlas_checkout_purpose = "hybrid_plan_remount";
+    metadata.atlas_replaces_subscription_id = String(operation.replacesProviderSubscriptionId);
+  }
   const result = await dodoRequest("/checkouts", {
     method: "POST",
     headers: { "Idempotency-Key": String(operation.operationId) },
     body: {
       product_cart: [{ product_id: productIdForTier(operation.tier), quantity: 1 }],
-      customer: {
-        email: String(input.email).trim().toLowerCase(),
-        ...(input.name ? { name: String(input.name).trim() } : {}),
-      },
+      customer,
       billing_address: optionalAddress({
         ...input.billingAddress,
         billingCountry: operation.billingCountry,
       }),
       return_url: atlasBillingUrl("ATLAS_BILLING_RETURN_URL"),
       cancel_url: atlasBillingUrl("ATLAS_BILLING_CANCEL_URL"),
-      metadata: {
-        atlas_billing_operation_id: operation.operationId,
-      },
+      metadata,
       // Do NOT set subscription_data.on_demand — Dodo rejects change-plan on
       // on-demand subs (ON_DEMAND_PLAN_CHANGE_NOT_SUPPORTED). Hybrid overage
       // bills via usage meters at the payment cycle; POST …/charge is unsupported
@@ -146,6 +194,103 @@ export async function createDodoCheckout(operation, input) {
 
 export async function getDodoSubscription(subscriptionId) {
   return dodoRequest(`/subscriptions/${encodeURIComponent(subscriptionId)}`);
+}
+
+export async function getDodoProduct(productId) {
+  return dodoRequest(`/products/${encodeURIComponent(productId)}`);
+}
+
+/**
+ * Compare meter free thresholds, tolerating 32-bit truncation on large byte values.
+ * Dodo often stores free_threshold as int32/uint32:
+ * - Launch storage 3932160000 → signed -362807296
+ * - Growth storage 13107200000 → uint32 low bits 222298112 (wraps past 2×2^32)
+ * @param {unknown} actual
+ * @param {unknown} expected
+ */
+export function freeThresholdsMatch(actual, expected) {
+  const a = Number(actual);
+  const e = Number(expected);
+  if (!Number.isFinite(a) || !Number.isFinite(e)) return false;
+  if (a === e) return true;
+  if (e > 0x7fffffff) {
+    // signed int32 truncation
+    if (a === (e | 0)) return true;
+    // unsigned int32 / multi-wrap low bits (ToUint32)
+    if (a === (e >>> 0)) return true;
+    if (a < 0 && a + 2 ** 32 === e) return true;
+  }
+  return false;
+}
+
+/**
+ * Compare meter PPUs across Dodo number vs decimal-string forms
+ * (e.g. catalog 5.5879354477e-10 vs subscription "0.000000000559").
+ * @param {unknown} actual
+ * @param {unknown} expected
+ */
+export function meterPricePerUnitsMatch(actual, expected) {
+  if (String(actual ?? "") === String(expected ?? "")) return true;
+  const a = Number(actual);
+  const e = Number(expected);
+  if (!Number.isFinite(a) || !Number.isFinite(e)) return false;
+  if (a === e) return true;
+  const scale = Math.max(Math.abs(a), Math.abs(e), 1e-18);
+  return Math.abs(a - e) / scale < 1e-9;
+}
+
+/**
+ * Compare live subscription meter free thresholds / PPUs to the product catalog.
+ * Used after hybrid remount / plan webhooks — Dodo change-plan leaves stale meters.
+ * @param {Record<string, unknown>} subscription Live Dodo subscription
+ * @param {Record<string, unknown>} [product] Optional pre-fetched product
+ * @returns {Promise<{ ok: boolean; skipped?: boolean; productId: string; mismatches: Array<Record<string, unknown>> }>}
+ */
+export async function assertHybridMetersMatchProduct(subscription, product = null) {
+  const productId = String(subscription?.product_id || "").trim();
+  if (!productId) {
+    return { ok: false, productId: "", mismatches: [{ reason: "missing_product_id" }] };
+  }
+  if (!isDodoUsageHybridEnabled() && !KNOWN_USAGE_HYBRID_PRODUCTS[productId]) {
+    return { ok: true, skipped: true, productId, mismatches: [] };
+  }
+  const catalog = product || (await getDodoProduct(productId));
+  const price = catalog?.price && typeof catalog.price === "object" ? catalog.price : {};
+  const expected = Array.isArray(price.meters) ? price.meters : [];
+  const actual = Array.isArray(subscription?.meters) ? subscription.meters : [];
+  if (expected.length === 0) {
+    return { ok: true, skipped: true, productId, mismatches: [] };
+  }
+  const mismatches = [];
+  for (const exp of expected) {
+    const meterId = String(exp?.meter_id || "").trim();
+    if (!meterId) continue;
+    const act = actual.find((row) => String(row?.meter_id || "") === meterId);
+    if (!act) {
+      mismatches.push({
+        meter_id: meterId,
+        name: exp?.name || null,
+        reason: "missing_on_subscription",
+        expectedFree: exp?.free_threshold ?? null,
+        expectedPpu: exp?.price_per_unit ?? null,
+      });
+      continue;
+    }
+    const freeOk = freeThresholdsMatch(act.free_threshold, exp.free_threshold);
+    const ppuOk = meterPricePerUnitsMatch(act.price_per_unit, exp.price_per_unit);
+    if (!freeOk || !ppuOk) {
+      mismatches.push({
+        meter_id: meterId,
+        name: act?.name || exp?.name || null,
+        reason: "threshold_or_ppu_mismatch",
+        expectedFree: exp?.free_threshold ?? null,
+        actualFree: act?.free_threshold ?? null,
+        expectedPpu: exp?.price_per_unit ?? null,
+        actualPpu: act?.price_per_unit ?? null,
+      });
+    }
+  }
+  return { ok: mismatches.length === 0, productId, mismatches };
 }
 
 export async function createDodoPortalSession(customerId) {
@@ -175,12 +320,51 @@ export async function cancelDodoSubscription(subscriptionId) {
   });
 }
 
+/**
+ * Hard-cancel now (revoke mandate). Used when a renewal payment stays processing too long.
+ * Distinct from cancel-at-next (Account “Cancel at renewal”).
+ */
+export async function cancelDodoSubscriptionImmediately(subscriptionId) {
+  await dodoRequest(`/subscriptions/${encodeURIComponent(subscriptionId)}`, {
+    method: "PATCH",
+    body: { status: "cancelled" },
+  });
+}
+
 /** Clears cancel-at-next-billing-date so the subscription renews normally. */
 export async function uncancelDodoSubscription(subscriptionId) {
   await dodoRequest(`/subscriptions/${encodeURIComponent(subscriptionId)}`, {
     method: "PATCH",
     body: { cancel_at_next_billing_date: false },
   });
+}
+
+/**
+ * @param {string} paymentId
+ */
+export async function getDodoPayment(paymentId) {
+  return dodoRequest(`/payments/${encodeURIComponent(paymentId)}`);
+}
+
+/**
+ * List Dodo payments (paginated). Prefer customerId and/or status filters when set.
+ * @param {{
+ *   customerId?: string;
+ *   subscriptionId?: string;
+ *   status?: string;
+ *   pageSize?: number;
+ *   cursor?: string | null;
+ * }} [opts]
+ */
+export async function listDodoPayments(opts = {}) {
+  const params = new URLSearchParams({
+    page_size: String(opts.pageSize ?? 50),
+  });
+  if (opts.customerId) params.set("customer_id", String(opts.customerId));
+  if (opts.subscriptionId) params.set("subscription_id", String(opts.subscriptionId));
+  if (opts.status) params.set("status", String(opts.status));
+  if (opts.cursor) params.set("cursor", String(opts.cursor));
+  return dodoRequest(`/payments?${params}`);
 }
 
 /**
