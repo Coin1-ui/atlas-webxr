@@ -92,23 +92,47 @@ export function planChangeScheduledMessage(
   return `Your ${tierName} plan change is scheduled for your next billing date.`;
 }
 
-/** Overage-gated remount — cancel at renewal + resubscribe so meters match the new plan. */
+/** Why plan change must remount via checkout instead of scheduled change-plan. */
+export type PlanRemountReason = "overage" | "hybrid" | "meter_sync";
+
+/** Remount checkout success copy — reason-aware (hybrid is not overage). */
 export function planChangeRemountCheckoutMessage(
   verb: "Upgrade" | "Downgrade" | "Subscribe" | "Current",
   tierName: string,
+  reason: PlanRemountReason = "hybrid",
 ): string {
-  if (verb === "Current") {
+  if (verb === "Current" || reason === "meter_sync") {
     return `Your current subscription will be canceled after you resubscribe. Complete checkout so overage meters match this plan for the next bill.`;
   }
   const action = verb === "Downgrade" ? "downgrade" : "upgrade";
-  return `You are in overage. To ${action} to ${tierName}, your current plan will be canceled at renewal after you resubscribe via checkout. If you skip checkout, this plan continues and overage keeps billing as usual.`;
+  if (reason === "overage") {
+    return `You are in overage. To ${action} to ${tierName}, your current plan will be canceled at renewal after you resubscribe via checkout. If you skip checkout, this plan continues and overage keeps billing as usual.`;
+  }
+  return `To ${action} to ${tierName}, complete checkout to resubscribe. Your current plan is canceled after the new subscription is active. If you skip checkout, your current plan continues unchanged.`;
 }
 
-/** Confirm before opening overage remount checkout. */
-export function planChangeRemountConfirmMessage(tierName: string): string {
+/** Confirm before opening remount checkout. */
+export function planChangeRemountConfirmMessage(
+  tierName: string,
+  reason: PlanRemountReason = "hybrid",
+): string {
+  if (reason === "overage") {
+    return (
+      `You are currently in overage. Upgrade/Downgrade requires cancel at renewal and a new subscription so meters match ${tierName}.\n\n` +
+      `Complete checkout to resubscribe. If you cancel or skip checkout, your current plan continues and overage keeps billing as usual.\n\n` +
+      `Continue to checkout?`
+    );
+  }
+  if (reason === "meter_sync") {
+    return (
+      `Overage meters on your subscription do not match ${tierName}. Resubscribe via checkout so the next bill uses the correct plan limits.\n\n` +
+      `Your current plan will be canceled after the new subscription is active. If you skip checkout, your current plan continues unchanged.\n\n` +
+      `Continue to checkout?`
+    );
+  }
   return (
-    `You are currently in overage. Upgrade/Downgrade requires cancel at renewal and a new subscription so meters match ${tierName}.\n\n` +
-    `Complete checkout to resubscribe. If you cancel or skip checkout, your current plan continues and overage keeps billing as usual.\n\n` +
+    `Upgrade/Downgrade to ${tierName} opens checkout to resubscribe. Your current plan is canceled after the new subscription is active.\n\n` +
+    `If you cancel or skip checkout, your current plan continues unchanged.\n\n` +
     `Continue to checkout?`
   );
 }

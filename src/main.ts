@@ -187,7 +187,7 @@ import {
 } from "./data/workspace-api";
 import { clearSandboxUsage, fetchWorkspaceUsage, seedSandboxOverage } from "./data/usage-api";
 import { acceptOverageCharge, isOveragePaidLocally } from "./data/billing-api";
-import type { PlanTier } from "./shared/plan-display";
+import type { PlanRemountReason, PlanTier } from "./shared/plan-display";
 import {
   planChangeRemountCheckoutMessage,
   planChangeRemountConfirmMessage,
@@ -1304,11 +1304,20 @@ async function showAccountScreen(opts?: {
                 return;
               }
               const verb = planActionVerbForTier(activeWorkspace!, tier.id);
+              const meterRemount = alreadyOnTier && meterSync?.ok === false;
               const expectRemount =
                 inOverage ||
                 planChangeMode === "remount_checkout" ||
-                (alreadyOnTier && meterSync?.ok === false);
-              if (expectRemount && !window.confirm(planChangeRemountConfirmMessage(tier.name))) {
+                meterRemount;
+              const remountReason: PlanRemountReason = inOverage
+                ? "overage"
+                : meterRemount
+                  ? "meter_sync"
+                  : "hybrid";
+              if (
+                expectRemount &&
+                !window.confirm(planChangeRemountConfirmMessage(tier.name, remountReason))
+              ) {
                 return;
               }
               const planResult = await changeBillingPlan(
@@ -1317,10 +1326,13 @@ async function showAccountScreen(opts?: {
                 billingCountry,
                 { email: user.email, couponCode: checkout.couponCode },
               );
+              const resultReason: PlanRemountReason = planResult.inOverage
+                ? "overage"
+                : remountReason;
               if (planResult.checkoutUrl) {
                 if (
                   !expectRemount &&
-                  !window.confirm(planChangeRemountConfirmMessage(tier.name))
+                  !window.confirm(planChangeRemountConfirmMessage(tier.name, resultReason))
                 ) {
                   return;
                 }
@@ -1329,7 +1341,7 @@ async function showAccountScreen(opts?: {
               }
               void showAccountScreen({
                 billingSuccess: planResult.remount
-                  ? planChangeRemountCheckoutMessage(verb, tier.name)
+                  ? planChangeRemountCheckoutMessage(verb, tier.name, resultReason)
                   : planChangeScheduledMessage(verb, tier.name),
               });
               return;

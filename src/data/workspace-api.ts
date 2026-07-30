@@ -322,6 +322,8 @@ export type ChangeBillingPlanResult = {
   ok?: boolean;
   pending?: boolean;
   remount?: boolean;
+  inOverage?: boolean;
+  usageHybrid?: boolean;
   checkoutUrl?: string;
   tier?: string;
   currentTier?: string;
