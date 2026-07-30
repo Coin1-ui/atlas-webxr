@@ -1,0 +1,104 @@
+[
+  {
+    "source": "https://atlasar.in",
+    "status": "301",
+    "target": "https://www.atlasar.in",
+    "condition": null
+  },
+  {
+    "source": "https://atlasar.in/",
+    "status": "301",
+    "target": "https://www.atlasar.in/",
+    "condition": null
+  },
+  {
+    "source": "/pricing/",
+    "status": "301",
+    "target": "/pricing",
+    "condition": null
+  },
+  {
+    "source": "/about/",
+    "status": "301",
+    "target": "/about",
+    "condition": null
+  },
+  {
+    "source": "/legal/terms/",
+    "status": "301",
+    "target": "/legal/terms",
+    "condition": null
+  },
+  {
+    "source": "/legal/privacy/",
+    "status": "301",
+    "target": "/legal/privacy",
+    "condition": null
+  },
+  {
+    "source": "/legal/acceptable-use/",
+    "status": "301",
+    "target": "/legal/acceptable-use",
+    "condition": null
+  },
+  {
+    "source": "/sales-deck",
+    "status": "200",
+    "target": "/sales-deck/index.html",
+    "condition": null
+  },
+  {
+    "source": "/sales-deck/",
+    "status": "200",
+    "target": "/sales-deck/index.html",
+    "condition": null
+  },
+  {
+    "source": "/sales-deck.html",
+    "status": "200",
+    "target": "/sales-deck/index.html",
+    "condition": null
+  },
+  {
+    "source": "/sales-deck/training",
+    "status": "200",
+    "target": "/sales-deck/training.html",
+    "condition": null
+  },
+  {
+    "source": "/sales-deck/training/",
+    "status": "200",
+    "target": "/sales-deck/training.html",
+    "condition": null
+  },
+  {
+    "source": "/sales-deck/outreach",
+    "status": "200",
+    "target": "/sales-deck/outreach.html",
+    "condition": null
+  },
+  {
+    "source": "/sales-deck/outreach/",
+    "status": "200",
+    "target": "/sales-deck/outreach.html",
+    "condition": null
+  },
+  {
+    "source": "/mkt-3-storyboard",
+    "status": "200",
+    "target": "/mkt-3-storyboard/index.html",
+    "condition": null
+  },
+  {
+    "source": "/mkt-3-storyboard/",
+    "status": "200",
+    "target": "/mkt-3-storyboard/index.html",
+    "condition": null
+  },
+  {
+    "source": "</^[^.]+$|\\.(?!(css|gif|ico|jpg|jpeg|js|png|txt|svg|woff|woff2|ttf|map|json|webp|mp4|xml|webmanifest|html)$)([^.]+$)/>",
+    "status": "200",
+    "target": "/index.html",
+    "condition": null
+  }
+]

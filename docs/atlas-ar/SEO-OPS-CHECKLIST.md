@@ -8,7 +8,11 @@ Canonical host: **`https://www.atlasar.in`** (www wins). Code and sitemap assume
 - [ ] Apex `atlasar.in` **301** → `https://www.atlasar.in`
 - [ ] `http://` → `https://` (Amplify / certificate)
 - [ ] SSL valid for www + apex
-- [ ] Confirm trailing-slash 301s from `amplify.yml` (`/pricing/` → `/pricing`, etc.)
+- [ ] **Console redirects** match [`AMPLIFY-REDIRECTS.json`](./AMPLIFY-REDIRECTS.json) — see [`AMPLIFY-REDIRECTS.md`](./AMPLIFY-REDIRECTS.md)
+  - SPA rule must be status **`200`** (regex), **not** only `/<*>` `404-200`
+  - Slash-strip 301s for `/pricing/` `/about/` `/legal/*/`
+  - sales-deck / storyboard 200 rewrites present
+- [ ] Incognito check: `/pricing` stays **no** trailing slash and returns **200**
 
 ## Post-deploy verification
 

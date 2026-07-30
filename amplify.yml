@@ -22,6 +22,14 @@ frontend:
     paths:
       - node_modules/**/*
   customRedirects:
+    # Apex → www (also set in Amplify Console; Console edits override yml until re-saved)
+    - source: "https://atlasar.in"
+      target: "https://www.atlasar.in"
+      status: "301"
+    - source: "https://atlasar.in/"
+      target: "https://www.atlasar.in/"
+      status: "301"
+    # No trailing slash on marketing/legal (strip before SPA rewrite)
     - source: "/pricing/"
       target: "/pricing"
       status: "301"
@@ -37,6 +45,7 @@ frontend:
     - source: "/legal/acceptable-use/"
       target: "/legal/acceptable-use"
       status: "301"
+    # Static enablement pages (must be before SPA rewrite)
     - source: "/sales-deck"
       target: "/sales-deck/index.html"
       status: "200"
@@ -64,9 +73,10 @@ frontend:
     - source: "/mkt-3-storyboard/"
       target: "/mkt-3-storyboard/index.html"
       status: "200"
-    - source: "/<*>"
+    # SPA rewrite with 200 (not 404-200) so Amplify does not add trailing slash on miss
+    - source: '</^[^.]+$|\.(?!(css|gif|ico|jpg|jpeg|js|png|txt|svg|woff|woff2|ttf|map|json|webp|mp4|xml|webmanifest|html)$)([^.]+$)/>'
       target: "/index.html"
-      status: "404-200"
+      status: "200"
   customHeaders:
     - pattern: "**/*"
       headers:
