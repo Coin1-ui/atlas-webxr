@@ -194,6 +194,7 @@ import {
   planChangeScheduledMessage,
   planDisplayName,
 } from "./shared/plan-display";
+import { applyRouteMeta } from "./shared/seo";
 import {
   hasLiveBillingSubscription,
   planActionVerb,
@@ -2648,6 +2649,7 @@ function escapeHtml(s: string): string {
 function routeApp(): void {
   if (webxr) return;
   const path = routePath();
+  applyRouteMeta(path);
   if (isMobileExperience() && isDesktopOnlyRoute(path)) {
     void routeMobileAwayFromDesktopOnly(path);
     return;

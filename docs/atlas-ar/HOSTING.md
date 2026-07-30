@@ -7,7 +7,7 @@ You were unsure on hosting. **Recommendation: stay fully on AWS** — you alread
 ```
                     ┌─────────────────────────────────────┐
                     │  Route 53 (optional, Phase 2)      │
-                    │  *.atlasar.com → Amplify            │
+                    │  *.atlasar.in → Amplify             │
                     └─────────────────┬───────────────────┘
                                       │
 ┌─────────────────────────────────────▼─────────────────────────────────────┐
@@ -43,6 +43,8 @@ You were unsure on hosting. **Recommendation: stay fully on AWS** — you alread
 | C. CloudFront + S3 static only | Cheapest at scale | You rebuild CI; no benefit at MVP scale |
 
 **Decision for MVP: Option A.** Add route-based marketing (`/`, `/pricing`, `/login`) inside the existing Vite app. Split marketing site only if SEO/CM needs grow in Phase 2.
+
+**SEO Phase 1 (2026-07-30):** Canonical host `https://www.atlasar.in`. SPA head manager + `robots.txt` + `sitemap.xml` + JSON-LD shipped in-app. Prerender / content hub / marketing host split remain Phase 2 — see [SEO-OPS-CHECKLIST.md](./SEO-OPS-CHECKLIST.md) and backlog **SEO-1** / **SEO-2**.
 
 ## Environments
 

@@ -1,0 +1,26 @@
+# Atlas AR - https://www.atlasar.in
+User-agent: *
+Allow: /
+Allow: /pricing
+Allow: /about
+Allow: /legal/terms
+Allow: /legal/privacy
+Allow: /legal/acceptable-use
+
+Disallow: /admin
+Disallow: /admin/
+Disallow: /account
+Disallow: /owner
+Disallow: /onboard
+Disallow: /login
+Disallow: /signup
+Disallow: /forgot-password
+Disallow: /demo
+Disallow: /ar/
+Disallow: /w/
+Disallow: /sales-deck
+Disallow: /sales-deck/
+Disallow: /mkt-3-storyboard
+Disallow: /mkt-3-storyboard/
+
+Sitemap: https://www.atlasar.in/sitemap.xml

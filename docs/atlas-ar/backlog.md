@@ -1,10 +1,18 @@
 # Atlas AR — Product backlog
 
-**Last updated:** 2026-07-29 (Get started cross-browser onboarding — workspace META persist)
+**Last updated:** 2026-07-30 (UI refresh live on Amplify `67e05df`)
 
 **Parked (billing):** Natural renewal check on test-admin `sub_0NkDIEC…` ~2026-07-30T05:21Z — corrected PPUs · meterSync · no old-sub charge. Live cutover / Zoho on hold.
 
-**Latest orchestration batch (2026-07-29):** Get started progress persisted on workspace META; skip forced wizard when catalog has models
+**Latest orchestration batch (2026-07-30):** **Production UI refresh LIVE** on Amplify. Push repo commit `67e05df` → `origin/main`. Additive `src/styles/refresh/` layer; cinema hero; Account Danger zone; iOS showroom branch; Inter self-hosted for CSP. AR session frozen (`guard:ar`). Prod: `https://main.d7vfdpujdozkj.amplifyapp.com`.
+
+**Previous orchestration batch (2026-07-30):** **Production UI refresh port** from approved sandbox. Additive `src/styles/refresh/` layer (never edits `style.css`). Marketing (cinema hero), auth, admin, account (Danger zone), owner, showroom, device-test. **AR session frozen** (`npm run guard:ar`). Delete account only on Account. Showroom `iosSafariAr: isIOS()`. Inter + DM Sans self-hosted for Amplify CSP (`font-src 'self'`). Design audit 75/75. **Dev-repo code ready; Amplify push not done yet.**
+
+**Previous orchestration batch (2026-07-29):** Sandbox review round 1 signed off. **Atlas (teal) theme approved** — VisionOS palette + theme switch deleted, toolbar shows a lock chip. **AR session excluded from the refresh** — rewritten to replicate production (`dom-overlay` dock, Babylon cyan/red ring, iOS = "View in AR" page then native Quick Look with no Atlas UI); invented top bar / Cyan-Red toggle / Place-Reset-Exit buttons removed; production classes isolated in `.arprod`-scoped `ar-production.css`. **Animated landing hero** — 85 MB `Home_page_PS.gif` transcoded to H.264 (3.4 MB desktop / 1.1 MB phone / 124 KB poster; WebM rejected at 19 MB), replaces the now-redundant static `hero-ar-phone.png`; off-screen + hidden-tab pause, `prefers-reduced-motion` fallback, user Pause-motion control; hero text measured at worst case **5.94:1** against the clip's brightest frame. **Still no production port until the full design is approved.**
+
+**Previous orchestration batch (2026-07-29):** Get started cross-browser — closed FE deploy gap (Lambda was live but FE never copied to push repo); localStorage→server backfill on hydrate; credited share/preview from real actions (dashboard Preview AR, model-manager Copy link) + new one-click Copy link on dashboard. Live bundles `main-CSboLQ4q.js` → `179f6d4`.
+
+**Previous orchestration batch (2026-07-29):** Get started progress persisted on workspace META; skip forced wizard when catalog has models
 
 **Previous orchestration batch (2026-07-29):** Hybrid plan change always remounts (Dodo change-plan 500 workaround); `/health` clearTestOverage follows `ATLAS_CLEAR_TEST_OVERAGE` (default false)
 
@@ -152,6 +160,8 @@
 | **BILL-3** | **Overage via Dodo meters** (hybrid Usage-Based; auto-bill at payment cycle) | P1 | Backend | **done** (meters + ingest) · Account shows estimate/guide only — `/charge` unsupported on hybrids · see [DODO-OVERAGE-METERS.md](./DODO-OVERAGE-METERS.md) |
 | **BILL-4** | **Annual prepay SKUs** (20% off Launch/Growth) | P2 | Backend | **on_hold** · blocked by Batch 29 |
 | **MKT-7** | **Analytics story alignment** — “basic” vs “export” vs owner JSON toggle; per-model analytics deferred | P2 | Marketing | todo |
+| **SEO-1** | **Technical SEO Phase 1** — www.atlasar.in canonicals, robots/sitemap, SPA per-route meta + JSON-LD, noindex private tools | P0 | Marketing/Eng | **done** (2026-07-30) · [SEO-OPS-CHECKLIST.md](./SEO-OPS-CHECKLIST.md) |
+| **SEO-2** | **SEO Phase 2** — prerender shells for `/` `/pricing` `/about` legal; content hub; optional marketing host split; per-page OG | P2 | Marketing/Eng | todo · after GSC green on SEO-1 |
 | **SAL-4** | **Design partner ops runbook** — owner workflow for $59 Growth, coupons, session log, slot tracking | P2 | Sales/Ops | todo |
 | **ENG-39** | **Owner dashboard: customer owner emails in Customers table** | P1 | Full-stack | **done** ✅ (Batch 34) |
 | **QA-5** | **SAL-3 QA gate on prod:** sign-up → upload → floor placement ≤15 min (Android + iOS) | P1 | QA | **confirmed** ✅ (2026-07-17) · user: first placement smooth in under ~15 min |

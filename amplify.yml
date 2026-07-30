@@ -22,6 +22,21 @@ frontend:
     paths:
       - node_modules/**/*
   customRedirects:
+    - source: "/pricing/"
+      target: "/pricing"
+      status: "301"
+    - source: "/about/"
+      target: "/about"
+      status: "301"
+    - source: "/legal/terms/"
+      target: "/legal/terms"
+      status: "301"
+    - source: "/legal/privacy/"
+      target: "/legal/privacy"
+      status: "301"
+    - source: "/legal/acceptable-use/"
+      target: "/legal/acceptable-use"
+      status: "301"
     - source: "/sales-deck"
       target: "/sales-deck/index.html"
       status: "200"
