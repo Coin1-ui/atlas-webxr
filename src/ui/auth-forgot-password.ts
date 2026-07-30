@@ -27,7 +27,7 @@ export function renderAuthForgotPassword(
         <h1>Reset password</h1>
         <p class="auth-card-sub">Password reset requires Cognito (production build).</p>
       </header>
-      <button type="button" class="mkt-btn mkt-btn-ghost auth-submit" data-action="signin">Back to sign in</button>`;
+      <button type="button" class="a-btn a-btn--ghost a-btn--block auth-submit" data-action="signin">Back to sign in</button>`;
     root.innerHTML = authShellHtml("forgot", body);
     root.querySelector("[data-action=signin]")?.addEventListener("click", handlers.onSignIn);
     return;
@@ -45,7 +45,7 @@ export function renderAuthForgotPassword(
         <label class="auth-label">Email<input class="auth-input" type="email" name="email" autocomplete="username" required /></label>
         <label class="auth-label">Verification code<input class="auth-input" type="text" name="code" inputmode="numeric" required /></label>
         <label class="auth-label">New password<input class="auth-input" type="password" name="password" autocomplete="new-password" minlength="8" required /></label>
-        <button type="submit" class="mkt-btn mkt-btn-primary auth-submit">Update password</button>
+        <button type="submit" class="a-btn a-btn--primary a-btn--block auth-submit">Update password</button>
       </form>
       <p class="auth-card-footer">
         <button type="button" class="auth-inline-link" data-action="signin">Back to sign in</button>
@@ -72,7 +72,7 @@ export function renderAuthForgotPassword(
     ${handlers.info ? `<div class="camera-success" role="status">${escapeHtml(handlers.info)}</div>` : ""}
     <form class="auth-form" data-form="request">
       <label class="auth-label">Email<input class="auth-input" type="email" name="email" autocomplete="username" required placeholder="you@company.com" /></label>
-      <button type="submit" class="mkt-btn mkt-btn-primary auth-submit">Send reset code</button>
+      <button type="submit" class="a-btn a-btn--primary a-btn--block auth-submit">Send reset code</button>
     </form>
     <p class="auth-card-footer">
       <button type="button" class="auth-inline-link" data-action="signin">Back to sign in</button>

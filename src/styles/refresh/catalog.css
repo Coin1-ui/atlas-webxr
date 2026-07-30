@@ -1,0 +1,460 @@
+﻿/* Atlas AR — 2026-07 UI refresh.
+ * Customer-facing showroom catalog (.catalog-*).
+ * Additive only; never re-declares a style.css token. AR session is frozen.
+ *
+ * Ported from the approved sandbox Showroom (sr-head / sr-grid / sr-tile).
+ * Production keeps its own class names so tenant-catalog.ts wiring and the
+ * per-tenant --tenant-accent hook stay intact; this sheet repaints them in the
+ * glass + teal language. Sandbox @container page queries become plain @media at
+ * the same widths.
+ *
+ * The AR-session families (.model-tile*, .ar-*) are never selected here. The
+ * showroom's own button is .catalog-btn-ar, which the AR overlay does not use.
+ */
+
+/* ---------------------------------------------------------------
+   Page shell
+   --------------------------------------------------------------- */
+.catalog-page.catalog-page--v2 {
+  min-height: 100%;
+  color: var(--text);
+  padding-bottom: calc(var(--sp-6) + var(--safe-bottom));
+  background:
+    radial-gradient(
+      ellipse 70% 46% at 14% 0%,
+      color-mix(in srgb, var(--tenant-accent, var(--accent)) 16%, transparent),
+      transparent 62%
+    ),
+    var(--atmos-2),
+    var(--bg-deep);
+}
+
+.catalog-page--v2 .catalog-shell {
+  width: 100%;
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding-inline: var(--sp-5);
+}
+
+/* ---------------------------------------------------------------
+   Header — brand + workspace actions
+   --------------------------------------------------------------- */
+.catalog-page--v2 .catalog-header {
+  align-items: flex-start;
+  gap: var(--sp-4);
+  padding: var(--sp-6) 0 var(--sp-5);
+  border-bottom: 1px solid var(--line);
+}
+
+.catalog-page--v2 .catalog-brand {
+  gap: var(--sp-3);
+  min-width: 0;
+}
+
+.catalog-page--v2 .catalog-logo,
+.catalog-page--v2 .catalog-logo-placeholder {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--r-md);
+  flex: none;
+}
+
+.catalog-page--v2 .catalog-logo {
+  background: var(--surface-glass);
+  border: 1px solid var(--line);
+}
+
+.catalog-page--v2 .catalog-logo-placeholder {
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-semi);
+  background: linear-gradient(
+    150deg,
+    var(--tenant-accent, var(--accent)),
+    color-mix(in srgb, var(--tenant-accent, var(--accent)) 45%, #60a5fa)
+  );
+  color: var(--on-accent);
+}
+
+.catalog-page--v2 .catalog-eyebrow {
+  font-size: var(--fs-2xs);
+  letter-spacing: 0.14em;
+  color: var(--tenant-accent, var(--accent));
+}
+
+.catalog-page--v2 .catalog-header h1 {
+  margin: var(--sp-1) 0 0;
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-semi);
+  letter-spacing: -0.02em;
+  line-height: var(--lh-snug);
+}
+
+.catalog-page--v2 .catalog-header-actions {
+  gap: var(--sp-2);
+}
+
+.catalog-page--v2 .catalog-admin-link {
+  min-height: 34px;
+  padding: 0 var(--sp-4);
+  border-radius: var(--r-full);
+  border: 1px solid var(--line);
+  background: var(--surface-glass);
+  color: var(--text-dim);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  transition:
+    border-color var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
+}
+
+.catalog-page--v2 .catalog-admin-link:hover {
+  border-color: var(--line-strong);
+  background: var(--surface-glass-2);
+  color: var(--text);
+}
+
+.catalog-page--v2 .catalog-admin-link-secondary {
+  opacity: 1;
+  color: var(--muted);
+}
+
+/* Soft usage / overage notice. Scoped so the shared .camera-warning used by
+   other screens (and by AR) is untouched. */
+.catalog-page--v2 .catalog-usage-warning {
+  margin: var(--sp-4) 0 0;
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--r-md);
+  border: 1px solid rgba(251, 191, 36, 0.35);
+  background: rgba(251, 191, 36, 0.1);
+  color: var(--warm);
+  font-size: var(--fs-xs);
+  line-height: var(--lh-body);
+}
+
+/* ---------------------------------------------------------------
+   Hero — platform-correct placement copy
+   --------------------------------------------------------------- */
+.catalog-page--v2 .catalog-hero--v2 {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  padding: var(--sp-6) 0 var(--sp-5);
+  text-align: left;
+}
+
+.catalog-page--v2 .catalog-hero-copy {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-3);
+}
+
+.catalog-page--v2 .catalog-hero h2 {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--fs-2xl);
+  font-weight: var(--fw-semi);
+  letter-spacing: -0.02em;
+  line-height: var(--lh-tight);
+}
+
+.catalog-page--v2 .catalog-hero p {
+  margin: 0;
+  max-width: 48ch;
+  font-size: var(--fs-md);
+  line-height: var(--lh-body);
+  color: var(--text-dim);
+}
+
+.catalog-page--v2 .catalog-hero p strong {
+  color: var(--text);
+  font-weight: var(--fw-semi);
+}
+
+.catalog-page--v2 .catalog-hero-badges {
+  gap: var(--sp-2);
+}
+
+.catalog-page--v2 .catalog-hero-badges li {
+  padding: 0.25rem var(--sp-3);
+  border-radius: var(--r-full);
+  border: 1px solid var(--line);
+  background: var(--surface-glass);
+  color: var(--text-dim);
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-medium);
+  letter-spacing: 0.04em;
+}
+
+/* Trust badge picks up the tenant accent instead of the product teal. */
+.catalog-page--v2 .catalog-trust-badge {
+  border-color: color-mix(in srgb, var(--tenant-accent, var(--accent)) 45%, transparent);
+  background: color-mix(in srgb, var(--tenant-accent, var(--accent)) 14%, transparent);
+  color: var(--tenant-accent, var(--accent));
+}
+
+/* ---------------------------------------------------------------
+   Model grid (sandbox sr-grid / sr-tile)
+   --------------------------------------------------------------- */
+.catalog-page--v2 .catalog-grid--v2 {
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: var(--sp-4);
+  max-width: none;
+  padding: var(--sp-5) 0;
+  margin: 0;
+}
+
+.catalog-page--v2 .catalog-card--v2 {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--surface-glass);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  transition:
+    transform var(--dur-mid) var(--ease-out),
+    border-color var(--dur-mid) var(--ease-out),
+    background var(--dur-mid) var(--ease-out);
+}
+
+.catalog-page--v2 .catalog-card--v2:hover {
+  transform: translateY(-3px);
+  border-color: color-mix(in srgb, var(--tenant-accent, var(--accent)) 45%, transparent);
+  background: var(--surface-glass-2);
+}
+
+.catalog-page--v2 .catalog-card-media {
+  padding: var(--sp-5);
+  border-bottom: 1px solid var(--line);
+  background:
+    radial-gradient(
+      circle at 50% 60%,
+      color-mix(in srgb, var(--tenant-accent, var(--accent)) 18%, transparent),
+      transparent 62%
+    ),
+    linear-gradient(160deg, rgba(255, 255, 255, 0.06), rgba(0, 0, 0, 0.35));
+}
+
+.catalog-page--v2 .catalog-card-badge {
+  top: var(--sp-3);
+  right: var(--sp-3);
+  padding: 0.2rem var(--sp-2);
+  border-radius: var(--r-full);
+  border: 1px solid var(--accent-line);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-semi);
+  letter-spacing: 0.08em;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.catalog-page--v2 .catalog-card-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+}
+
+.catalog-page--v2 .catalog-card-body h3 {
+  margin: 0;
+  font-size: var(--fs-md);
+  font-weight: var(--fw-semi);
+  line-height: var(--lh-snug);
+}
+
+.catalog-page--v2 .catalog-card-meta {
+  margin: 0;
+  font-size: var(--fs-xs);
+  color: var(--muted);
+}
+
+.catalog-page--v2 .catalog-btn-ar--v2 {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  width: 100%;
+  min-height: 44px;
+  margin-top: auto;
+  padding: 0 var(--sp-4);
+  border: 1px solid transparent;
+  border-radius: var(--r-full);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semi);
+  color: var(--on-accent);
+  background: linear-gradient(
+    140deg,
+    var(--tenant-accent, var(--accent)),
+    color-mix(in srgb, var(--tenant-accent, var(--accent)) 55%, #38bdf8)
+  );
+  box-shadow: 0 10px 30px
+    color-mix(in srgb, var(--tenant-accent, var(--accent)) 28%, transparent);
+  transition:
+    transform var(--dur-fast) var(--ease-out),
+    filter var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out);
+}
+
+.catalog-page--v2 .catalog-btn-ar--v2:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.06);
+}
+
+.catalog-page--v2 .catalog-btn-ar--v2:active {
+  transform: translateY(0) scale(0.985);
+}
+
+/* ---------------------------------------------------------------
+   Empty showroom
+   --------------------------------------------------------------- */
+.catalog-page--v2 .catalog-empty--v2 {
+  margin: var(--sp-5) 0;
+  padding: var(--sp-7) var(--sp-5);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--surface-glass);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  color: var(--text-dim);
+}
+
+.catalog-page--v2 .catalog-empty-title {
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-semi);
+  letter-spacing: -0.01em;
+  margin: 0 0 var(--sp-2);
+}
+
+.catalog-page--v2 .catalog-empty-body {
+  max-width: 52ch;
+  margin: 0 auto var(--sp-5);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-body);
+  color: var(--muted);
+}
+
+.catalog-page--v2 .catalog-empty-body strong {
+  color: var(--text);
+  font-weight: var(--fw-semi);
+}
+
+.catalog-page--v2 .catalog-empty--v2 .catalog-btn-ar--v2 {
+  width: auto;
+  min-width: 240px;
+  padding: 0 var(--sp-6);
+}
+
+.catalog-page--v2 .catalog-empty-hint {
+  margin: 0;
+  font-size: var(--fs-xs);
+  color: var(--faint);
+}
+
+/* ---------------------------------------------------------------
+   Footer — trust row + platform-correct requirements line
+   --------------------------------------------------------------- */
+.catalog-page--v2 .catalog-footer--v2 {
+  margin-top: var(--sp-5);
+  padding: var(--sp-6) 0 0;
+  border-top: 1px solid var(--line);
+  text-align: left;
+}
+
+.catalog-page--v2 .catalog-trust {
+  justify-content: flex-start;
+  gap: var(--sp-2);
+  margin: 0 0 var(--sp-4);
+  font-size: var(--fs-2xs);
+}
+
+.catalog-page--v2 .catalog-trust li {
+  padding: 0.25rem var(--sp-3);
+  border-radius: var(--r-full);
+  border: 1px solid var(--line);
+  background: var(--surface-glass);
+  color: var(--text-dim);
+  font-weight: var(--fw-medium);
+  letter-spacing: 0.04em;
+}
+
+.catalog-page--v2 .catalog-footer-note {
+  margin: 0 0 var(--sp-2);
+  font-size: var(--fs-xs);
+  color: var(--muted);
+}
+
+.catalog-page--v2 .catalog-powered {
+  margin: 0;
+  font-size: var(--fs-xs);
+  color: var(--faint);
+}
+
+.catalog-page--v2 .catalog-powered strong {
+  color: var(--accent);
+  font-weight: var(--fw-semi);
+}
+
+/* ---------------------------------------------------------------
+   Responsive — sandbox @container page widths as plain media queries
+   --------------------------------------------------------------- */
+@media (max-width: 760px) {
+  .catalog-page--v2 .catalog-shell {
+    padding-inline: var(--sp-4);
+  }
+
+  .catalog-page--v2 .catalog-header {
+    flex-direction: column;
+    padding: var(--sp-5) 0 var(--sp-4);
+  }
+
+  .catalog-page--v2 .catalog-header-actions {
+    justify-content: flex-start;
+  }
+
+  .catalog-page--v2 .catalog-header h1 {
+    font-size: var(--fs-lg);
+  }
+
+  .catalog-page--v2 .catalog-hero--v2 {
+    padding: var(--sp-5) 0 var(--sp-4);
+  }
+
+  .catalog-page--v2 .catalog-hero h2 {
+    font-size: var(--fs-xl);
+  }
+
+  .catalog-page--v2 .catalog-hero p {
+    font-size: var(--fs-sm);
+  }
+
+  .catalog-page--v2 .catalog-grid--v2 {
+    grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+    gap: var(--sp-3);
+    padding: var(--sp-4) 0;
+  }
+
+  .catalog-page--v2 .catalog-card-media {
+    padding: var(--sp-4);
+  }
+
+  .catalog-page--v2 .catalog-card-body {
+    padding: var(--sp-3);
+  }
+
+  .catalog-page--v2 .catalog-empty--v2 {
+    padding: var(--sp-6) var(--sp-4);
+  }
+
+  .catalog-page--v2 .catalog-empty--v2 .catalog-btn-ar--v2 {
+    width: 100%;
+    min-width: 0;
+  }
+}

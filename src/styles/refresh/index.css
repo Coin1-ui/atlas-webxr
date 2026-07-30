@@ -1,0 +1,23 @@
+/*
+ * Atlas AR — 2026-07 UI refresh, entry point.
+ *
+ * Loaded from src/main.ts immediately after style.css, so these rules win ties
+ * against the legacy stylesheet without needing !important or inflated
+ * specificity.
+ *
+ * The AR session is excluded from the refresh by product decision. It is not
+ * merely "left alone" — style.css, which owns every AR rule, is never edited,
+ * and nothing in this layer selects a bare element, `*`, or any AR class.
+ * Run `npm run guard:ar` to prove it.
+ */
+
+@import "./tokens.css";
+@import "./primitives.css";
+
+@import "./marketing.css";
+@import "./auth.css";
+@import "./admin.css";
+@import "./account.css";
+@import "./owner.css";
+@import "./catalog.css";
+@import "./device-test.css";

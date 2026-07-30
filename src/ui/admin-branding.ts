@@ -43,17 +43,6 @@ export function renderAdminBranding(
           ${brandedHeaderHtml("Branding", `${workspace.name} · white-label your customer AR link`)}
           <p class="auth-hint admin-api-hint">${escapeHtml(workspaceApiHint())}</p>
 
-          <div class="branding-preview-card" style="--tenant-accent: ${escapeHtml(primaryColor)}">
-            <p class="admin-label">Live preview</p>
-            <div class="branding-preview-frame">
-              <div class="branding-preview-logo" data-workspace-logo></div>
-              <p class="branding-preview-title">${escapeHtml(workspace.name)}</p>
-              <p class="branding-preview-sub">Browse the collection · View in AR</p>
-              <span class="branding-preview-chip">Customer link: ${escapeHtml(sharePath)}</span>
-            </div>
-            <button type="button" class="btn btn-ghost btn-sm" data-action="preview">Open showroom preview</button>
-          </div>
-
           ${
             handlers.saved
               ? `<div class="camera-success" role="status">Branding saved. Open <code>${escapeHtml(sharePath)}</code> to preview on mobile.</div>`
@@ -65,31 +54,49 @@ export function renderAdminBranding(
               : ""
           }
 
-          <form class="auth-form branding-form" data-form="branding">
-            <label class="auth-label">Display name
-              <input class="auth-input" type="text" name="name" maxlength="80" required value="${escapeHtml(workspace.name)}" />
-            </label>
-            <label class="auth-label">Logo image
-              <div class="branding-logo-upload-row">
-                ${
-                  previewLogo
-                    ? `<img class="branding-logo-preview" src="${escapeHtml(previewLogo)}" alt="" width="72" height="72" />`
-                    : `<div class="branding-logo-preview branding-logo-preview--empty" aria-hidden="true">No logo</div>`
-                }
-                <input class="auth-input" type="file" name="logoFile" accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml" />
+          <div class="branding-layout">
+            <form class="auth-form branding-form" data-form="branding">
+              <label class="auth-label">Display name
+                <input class="auth-input" type="text" name="name" maxlength="80" required value="${escapeHtml(workspace.name)}" />
+              </label>
+              <label class="auth-label">Logo image
+                <div class="branding-logo-upload-row">
+                  ${
+                    previewLogo
+                      ? `<img class="branding-logo-preview" src="${escapeHtml(previewLogo)}" alt="" width="72" height="72" />`
+                      : `<div class="branding-logo-preview branding-logo-preview--empty" aria-hidden="true">No logo</div>`
+                  }
+                  <input class="auth-input" type="file" name="logoFile" accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml" />
+                </div>
+                <span class="auth-hint">Upload PNG, JPG, WebP, GIF, or SVG · max 5 MB · saved to your workspace on S3</span>
+              </label>
+              <label class="auth-label">Logo URL <span class="muted-id">(optional)</span>
+                <input class="auth-input" type="url" name="logoUrl" placeholder="https://yoursite.com/logo.png" value="${escapeHtml(logoUrl.startsWith("https://atlas-ar.app/") ? "" : logoUrl)}" />
+                <span class="auth-hint">Or paste an HTTPS image URL. File upload is preferred.</span>
+              </label>
+              <label class="auth-label">Primary color
+                <input class="auth-input branding-color-input" type="color" name="primaryColor" value="${escapeHtml(primaryColor)}" />
+                <span class="auth-hint">Buttons and accents on your customer AR landing page (admin UI stays Atlas teal)</span>
+              </label>
+              <button type="submit" class="btn btn-primary btn-block">Save branding</button>
+            </form>
+
+            <aside class="branding-preview-card" style="--tenant-accent: ${escapeHtml(primaryColor)}">
+              <p class="a-eyebrow">Live preview</p>
+              <div class="branding-preview-frame">
+                <div class="branding-preview-logo" data-workspace-logo></div>
+                <p class="branding-preview-title">${escapeHtml(workspace.name)}</p>
+                <p class="branding-preview-sub">Browse the collection · View in AR</p>
+                <span class="branding-preview-chip">Customer link: ${escapeHtml(sharePath)}</span>
               </div>
-              <span class="auth-hint">Upload PNG, JPG, WebP, GIF, or SVG · max 5 MB · saved to your workspace on S3</span>
-            </label>
-            <label class="auth-label">Logo URL <span class="muted-id">(optional)</span>
-              <input class="auth-input" type="url" name="logoUrl" placeholder="https://yoursite.com/logo.png" value="${escapeHtml(logoUrl.startsWith("https://atlas-ar.app/") ? "" : logoUrl)}" />
-              <span class="auth-hint">Or paste an HTTPS image URL. File upload is preferred.</span>
-            </label>
-            <label class="auth-label">Primary color
-              <input class="auth-input branding-color-input" type="color" name="primaryColor" value="${escapeHtml(primaryColor)}" />
-              <span class="auth-hint">Buttons and accents on your customer AR landing page (admin UI stays Atlas teal)</span>
-            </label>
-            <button type="submit" class="btn btn-primary btn-block">Save branding</button>
-          </form>
+              <button type="button" class="btn btn-ghost btn-sm" data-action="preview">Open showroom preview</button>
+              <p class="branding-preview-note">Saved branding publishes to your customer showroom.</p>
+            </aside>
+          </div>
+
+          <div class="a-notice a-notice--accent" role="note">
+            <span>Branding applies to your customer showroom only. It does not change the controls shown once an AR session has started.</span>
+          </div>
 
           <div class="admin-footer-actions">
             <button type="button" class="mkt-btn mkt-btn-ghost" data-action="back">← Back to admin</button>

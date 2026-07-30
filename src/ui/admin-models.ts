@@ -82,7 +82,7 @@ export function renderAdminModels(
         <details class="model-manage-exit-details">
           <summary>Back to catalog destination</summary>
           <p class="home-sub auth-hint">When a viewer taps <strong>Back to catalog</strong> on the Start AR page, open this URL. <strong>Exit AR</strong> returns to that Start AR page.</p>
-          <div class="model-exit-row">
+          <div class="model-exit-row admin-share-row">
             <input type="text" class="field-input" data-model-exit-input="${escapeHtml(m.id)}" placeholder="https://shop.example.com/product/${escapeHtml(m.id)}" value="${escapeHtml(m.arExitUrl ?? "")}" />
             <button type="button" class="btn btn-ghost btn-sm" data-save-model-exit="${escapeHtml(m.id)}">Save</button>
           </div>
@@ -103,9 +103,9 @@ export function renderAdminModels(
           <div class="admin-card admin-card-highlight model-admin-default-exit">
             <p class="admin-label">Default Back to catalog destination</p>
             <p class="home-sub auth-hint">Used when a model does not set its own product page below.</p>
-            <form class="model-exit-url-form" id="ar-exit-url-form">
+            <form class="model-exit-url-form admin-share-row" id="ar-exit-url-form">
               <input type="text" name="arExitUrl" class="field-input" placeholder="https://yoursite.com/catalog or /w/${escapeHtml(workspace.slug)}" value="${escapeHtml(workspace.arExitUrl ?? "")}" />
-              <button type="submit" class="btn btn-ghost btn-block">Save default catalog URL</button>
+              <button type="submit" class="btn btn-ghost btn-sm">Save default catalog URL</button>
             </form>
             <p class="upload-status" id="exit-url-status" aria-live="polite"></p>
           </div>
@@ -125,15 +125,23 @@ export function renderAdminModels(
             }
             <form class="model-upload-form model-upload-form-card${uploadGate.blocked ? " model-upload-form--disabled" : ""}" id="model-upload-form">
               <p class="home-sub auth-hint model-upload-size-note">${uploadSizeNoteHtml()}</p>
-              <label class="field-label">Name</label>
-              <input type="text" name="name" class="field-input" placeholder="Bar chair" required maxlength="40" ${uploadGate.blocked ? "disabled" : ""} />
-              <label class="field-label">Icon image</label>
-              <input type="file" name="icon" accept="image/png,image/jpeg,image/webp" required ${uploadGate.blocked ? "disabled" : ""} />
-              <label class="field-label">3D model (.glb)</label>
-              <input type="file" name="glb" accept=".glb,model/gltf-binary" required ${uploadGate.blocked ? "disabled" : ""} />
-              <label class="field-label">iOS AR model (.usdz) <span class="muted-id">optional — Safari Quick Look</span></label>
-              <input type="file" name="usdz" accept=".usdz,model/vnd.usdz+zip" ${uploadGate.blocked ? "disabled" : ""} />
-              <p class="home-sub">Auto-generate USDZ from GLB, or upload a Reality Converter USDZ for best iOS textures.</p>
+              <div class="model-upload-field">
+                <label class="field-label">Name</label>
+                <input type="text" name="name" class="field-input" placeholder="Bar chair" required maxlength="40" ${uploadGate.blocked ? "disabled" : ""} />
+              </div>
+              <div class="model-upload-field">
+                <label class="field-label">Icon image</label>
+                <input type="file" name="icon" class="field-input field-input--file" accept="image/png,image/jpeg,image/webp" required ${uploadGate.blocked ? "disabled" : ""} />
+              </div>
+              <div class="model-upload-field">
+                <label class="field-label">3D model (.glb)</label>
+                <input type="file" name="glb" class="field-input field-input--file" accept=".glb,model/gltf-binary" required ${uploadGate.blocked ? "disabled" : ""} />
+              </div>
+              <div class="model-upload-field">
+                <label class="field-label">iOS AR model (.usdz) <span class="muted-id">optional — Safari Quick Look</span></label>
+                <input type="file" name="usdz" class="field-input field-input--file" accept=".usdz,model/vnd.usdz+zip" ${uploadGate.blocked ? "disabled" : ""} />
+                <p class="home-sub model-upload-field-hint">Auto-generate USDZ from GLB, or upload a Reality Converter USDZ for best iOS textures.</p>
+              </div>
               <p class="upload-status camera-warning hidden" id="upload-size-warning" role="status" aria-live="polite"></p>
               <div class="upload-progress-wrap hidden" id="upload-progress-wrap">
                 <div class="upload-progress-bar"><div class="upload-progress-fill" id="upload-progress-fill"></div></div>

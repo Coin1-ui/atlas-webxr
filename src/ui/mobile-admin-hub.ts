@@ -44,8 +44,8 @@ export function renderMobileAdminHub(root: HTMLElement, handlers: MobileAdminHub
           <p class="auth-hint mobile-admin-hub-lead">${escapeHtml(MKT.adminMobileHubLead)}</p>
 
           <div class="admin-card admin-card-highlight mobile-admin-hub-link-card">
-            <p class="admin-label">Customer showroom</p>
-            <code class="admin-code">${escapeHtml(sharePath)}</code>
+            <p class="a-eyebrow">Customer showroom</p>
+            <code class="admin-code mobile-admin-hub-url">${escapeHtml(sharePath)}</code>
             <p class="auth-hint">${escapeHtml(modelLine)}</p>
             <button type="button" class="btn btn-primary btn-block" data-action="showroom">Browse collection</button>
           </div>
@@ -53,20 +53,29 @@ export function renderMobileAdminHub(root: HTMLElement, handlers: MobileAdminHub
           <div class="mobile-admin-hub-grid" role="list">
             <button type="button" class="mobile-admin-hub-tile" data-action="branding" role="listitem">
               <span class="mobile-admin-hub-tile-icon" aria-hidden="true">◇</span>
-              <span class="mobile-admin-hub-tile-title">Branding</span>
-              <span class="mobile-admin-hub-tile-meta">Logo &amp; accent color</span>
+              <span class="mobile-admin-hub-tile-copy">
+                <span class="mobile-admin-hub-tile-title">Branding</span>
+                <span class="mobile-admin-hub-tile-meta">Logo &amp; accent color</span>
+              </span>
+              <span class="mobile-admin-hub-tile-chevron" aria-hidden="true">→</span>
             </button>
             <button type="button" class="mobile-admin-hub-tile" data-action="account" role="listitem">
               <span class="mobile-admin-hub-tile-icon" aria-hidden="true">◎</span>
-              <span class="mobile-admin-hub-tile-title">Account</span>
-              <span class="mobile-admin-hub-tile-meta">Plan &amp; billing</span>
+              <span class="mobile-admin-hub-tile-copy">
+                <span class="mobile-admin-hub-tile-title">Account</span>
+                <span class="mobile-admin-hub-tile-meta">Plan &amp; billing</span>
+              </span>
+              <span class="mobile-admin-hub-tile-chevron" aria-hidden="true">→</span>
             </button>
             ${
               handlers.showOwnerLink && handlers.onOwner
                 ? `<button type="button" class="mobile-admin-hub-tile" data-action="owner" role="listitem">
               <span class="mobile-admin-hub-tile-icon" aria-hidden="true">⚙</span>
-              <span class="mobile-admin-hub-tile-title">Owner console</span>
-              <span class="mobile-admin-hub-tile-meta">Platform settings</span>
+              <span class="mobile-admin-hub-tile-copy">
+                <span class="mobile-admin-hub-tile-title">Owner console</span>
+                <span class="mobile-admin-hub-tile-meta">Platform settings</span>
+              </span>
+              <span class="mobile-admin-hub-tile-chevron" aria-hidden="true">→</span>
             </button>`
                 : ""
             }

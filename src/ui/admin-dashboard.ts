@@ -4,43 +4,81 @@ import { workspaceApiHint } from "../data/workspace-api";
 import type { WorkspaceUsageResponse } from "../data/usage-api";
 import { formatStorageBytes, formatSessionsLimit, isUnlimitedSessionsLimit } from "../shared/plan-limits";
 import { workspacePlanLabel, trialBannerHtml, mountTrialCountdown } from "../shared/trial";
-import { escapeHtml } from "../shared/escape-html";
 import { MKT_ASSETS } from "./marketing-assets";
 import type { OnboardingState } from "../shared/onboarding-progress";
 import { onboardingBannerHtml } from "./onboarding-get-started";
+
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function usagePct(used: number, limit: number): number {
+  if (limit <= 0) return 0;
+  return Math.min(100, Math.round((used / limit) * 100));
+}
+
+function meterTone(pct: number): string {
+  if (pct >= 90) return " a-meter--danger";
+  if (pct >= 75) return " a-meter--warn";
+  return "";
+}
 
 function usageStatHtml(
   usage: WorkspaceUsageResponse,
   unrestricted: boolean,
 ): string {
+  const modelPct = unrestricted ? 0 : usagePct(usage.usage.modelCount, usage.limits.models);
+  const sessionUnlimited = isUnlimitedSessionsLimit(usage.limits.sessionsPerMonth);
+  const sessionPct =
+    unrestricted || sessionUnlimited
+      ? 0
+      : usagePct(usage.usage.sessionCount, usage.limits.sessionsPerMonth);
+  const storagePct = unrestricted
+    ? 0
+    : usagePct(usage.usage.storageBytes, usage.limits.storageBytes);
+
   const limitSuffix = (val: number, formatter: (n: number) => string) =>
     unrestricted
       ? `<span class="admin-stat-unlimited"> · tracked · no limit</span>`
       : `<span> / ${formatter(val)}</span>`;
 
+  const meter = (pct: number, show: boolean) =>
+    show
+      ? `<div class="a-meter${meterTone(pct)}" aria-hidden="true"><span style="width:${pct}%"></span></div>`
+      : "";
+
   return `<div class="admin-usage-grid${unrestricted ? " admin-usage-grid--operator" : ""}">
         <div class="admin-stat">
           <span class="admin-stat-label">Models</span>
           <span class="admin-stat-val">${usage.usage.modelCount}${unrestricted ? "" : `<span> / ${usage.limits.models}</span>`}</span>
+          ${meter(modelPct, !unrestricted)}
         </div>
         <div class="admin-stat">
           <span class="admin-stat-label">AR sessions</span>
-          <span class="admin-stat-val">${usage.usage.sessionCount}${unrestricted ? "" : isUnlimitedSessionsLimit(usage.limits.sessionsPerMonth) ? `<span class="admin-stat-unlimited"> · unlimited</span>` : `<span> / ${formatSessionsLimit(usage.limits.sessionsPerMonth)}</span>`}</span>
+          <span class="admin-stat-val">${usage.usage.sessionCount}${unrestricted ? "" : sessionUnlimited ? `<span class="admin-stat-unlimited"> · unlimited</span>` : `<span> / ${formatSessionsLimit(usage.limits.sessionsPerMonth)}</span>`}</span>
+          ${meter(sessionPct, !unrestricted && !sessionUnlimited)}
         </div>
         <div class="admin-stat">
           <span class="admin-stat-label">Storage</span>
           <span class="admin-stat-val">${formatStorageBytes(usage.usage.storageBytes)}${limitSuffix(usage.limits.storageBytes, formatStorageBytes)}</span>
+          ${meter(storagePct, !unrestricted)}
         </div>
       </div>
       ${
         unrestricted
           ? `<p class="auth-hint admin-usage-operator-note">Platform operator account — usage is tracked for visibility; no plan limits apply.</p>`
-          : (usage.warnings ?? [])
-            .map(
-              (w) =>
-                `<div class="${w.level === "critical" ? "camera-warning" : "camera-success"}" role="status">${escapeHtml(w.message)}</div>`,
-            )
-            .join("")
+          : usage.warnings.length
+            ? usage.warnings
+                .map(
+                  (w) =>
+                    `<div class="${w.level === "critical" ? "camera-warning" : "camera-success"}" role="status">${escapeHtml(w.message)}</div>`,
+                )
+                .join("")
+            : ""
       }`;
 }
 
@@ -52,6 +90,7 @@ export function renderAdminDashboard(
     usage?: WorkspaceUsageResponse | null;
     usageUnrestricted?: boolean;
     showOwnerLink?: boolean;
+    /** @deprecated Delete moved to Account danger zone — kept optional so main.ts still typechecks. */
     canDeleteAccount?: boolean;
     onboarding?: { state: OnboardingState; modelCount: number } | null;
     onGetStarted?: () => void;
@@ -63,7 +102,8 @@ export function renderAdminDashboard(
     onAccount: () => void;
     onOwner?: () => void;
     onSignOut: () => void;
-    onDeleteAccount: () => void | Promise<void>;
+    /** @deprecated Delete moved to Account danger zone — kept optional so main.ts still typechecks. */
+    onDeleteAccount?: () => void | Promise<void>;
     onBack: () => void;
   },
 ): void {
@@ -72,10 +112,9 @@ export function renderAdminDashboard(
   const unrestricted = Boolean(handlers.usageUnrestricted);
   const planLabel = workspacePlanLabel(workspace);
   const trialBanner = unrestricted ? "" : trialBannerHtml(workspace);
-  const usageMonth = usage?.usage?.month || usage?.liveUsage?.month || "";
   const usageHtml =
-    usage != null && usage.usage
-      ? `<section class="admin-section"><h2 class="admin-section-title">Usage${usageMonth ? ` (${escapeHtml(usageMonth)})` : ""}</h2>${usageStatHtml(usage, unrestricted)}</section>`
+    usage != null
+      ? `<section class="admin-section"><h2 class="admin-section-title">Usage (${escapeHtml(usage.usage.month)})</h2>${usageStatHtml(usage, unrestricted)}</section>`
       : `<section class="admin-section"><p class="auth-hint">Usage data unavailable — check API connection or refresh after uploading models.</p></section>`;
   const modelCount = usage?.usage.modelCount ?? handlers.onboarding?.modelCount ?? 0;
   const onboardingBanner =
@@ -134,11 +173,6 @@ export function renderAdminDashboard(
             }
             <button type="button" class="mkt-btn mkt-btn-ghost" data-action="back">← Back to home</button>
             <button type="button" class="mkt-btn mkt-btn-ghost" data-action="signout">Sign out</button>
-            ${
-              handlers.canDeleteAccount !== false
-                ? `<button type="button" class="mkt-btn auth-danger" data-action="delete">Delete account</button>`
-                : ""
-            }
           </div>
         </div>
       </div>
@@ -168,8 +202,5 @@ export function renderAdminDashboard(
   });
   root.querySelector("[data-action=back]")?.addEventListener("click", handlers.onBack);
   root.querySelector("[data-action=signout]")?.addEventListener("click", handlers.onSignOut);
-  root.querySelector("[data-action=delete]")?.addEventListener("click", () => {
-    void handlers.onDeleteAccount();
-  });
   mountTrialCountdown(root, workspace);
 }

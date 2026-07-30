@@ -116,9 +116,9 @@ export function renderPcModelManager(
         <input type="file" name="icon" accept="image/png,image/jpeg,image/webp" required />
         <label class="field-label">3D model (.glb)</label>
         <input type="file" name="glb" accept=".glb,model/gltf-binary" required />
-        <label class="field-label">iOS AR model (.usdz) <span class="muted-id">optional — Safari AR</span></label>
+        <label class="field-label">iOS AR model (.usdz) <span class="muted-id">optional — Safari Quick Look</span></label>
         <input type="file" name="usdz" accept=".usdz,model/vnd.usdz+zip" />
-        <p class="home-sub">Leave USDZ empty to auto-generate from GLB, or upload a USDZ for best iPhone texture quality.</p>
+        <p class="home-sub">Leave USDZ empty to auto-generate from GLB, or upload one from Apple Reality Converter for best iOS texture quality.</p>
         <p class="upload-status camera-warning hidden" id="upload-size-warning" role="status" aria-live="polite"></p>
         ${workspace ? `<p class="home-sub auth-hint">Uploads save to your <strong>operator workspace</strong> catalog (powers Try live demo AR).</p>` : uploadDestinationHtml()}
         <div class="upload-progress-wrap hidden" id="upload-progress-wrap">
@@ -232,7 +232,7 @@ export function renderPcModelManager(
       let usdzFile: File | null = null;
       if (manualUsdz instanceof File && manualUsdz.size > 0) {
         usdzFile = manualUsdz;
-        onProgress(10, `Using your USDZ (${Math.round(manualUsdz.size / 1024)} KB) for Safari AR`);
+        onProgress(10, `Using your USDZ (${Math.round(manualUsdz.size / 1024)} KB) for iOS Quick Look`);
       } else {
         onProgress(2, "Generating iOS USDZ from GLB (optional)…");
         const usdzResult = await convertGlbToUsdz(glb, (phase) => {
@@ -256,7 +256,7 @@ export function renderPcModelManager(
           }
         } else {
           onProgress(10, `USDZ failed: ${usdzResult.error}`);
-          statusEl.textContent = `USDZ conversion failed: ${usdzResult.error}. Uploading GLB only — add a manual .usdz for iPhone, or retry in Chrome on desktop.`;
+          statusEl.textContent = `USDZ conversion failed: ${usdzResult.error}. Uploading GLB only — add a manual .usdz from Reality Converter for iOS, or retry in Chrome on desktop.`;
         }
       }
       try {
@@ -275,8 +275,8 @@ export function renderPcModelManager(
           progressLabel.textContent = "100%";
           const destLabel = workspace ? `workspace ${workspace.slug}` : target === "local" ? "local repo" : "AWS S3";
           statusEl.textContent = usdzFile
-            ? `Saved “${name}” to ${destLabel} with USDZ for Safari AR.`
-            : `Saved “${name}” to ${destLabel} (GLB only — Safari AR unavailable for this model).`;
+            ? `Saved “${name}” to ${destLabel} with USDZ for iOS Quick Look.`
+            : `Saved “${name}” to ${destLabel} (GLB only — iOS Quick Look unavailable for this model).`;
           form.reset();
           handlers.onChanged();
         } else {

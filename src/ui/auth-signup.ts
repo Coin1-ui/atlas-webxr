@@ -45,7 +45,7 @@ export function renderAuthSignup(
       <form class="auth-form" data-form="confirm">
         <label class="auth-label">Email<input class="auth-input" type="email" name="email" autocomplete="username" required placeholder="you@company.com" /></label>
         <label class="auth-label">Verification code<input class="auth-input" type="text" name="code" inputmode="numeric" required placeholder="123456" /></label>
-        <button type="submit" class="mkt-btn mkt-btn-primary auth-submit">Confirm account</button>
+        <button type="submit" class="a-btn a-btn--primary a-btn--block auth-submit">Confirm account</button>
       </form>
       <p class="auth-card-footer">
         <button type="button" class="auth-inline-link" data-action="signin">Back to sign in</button>
@@ -92,7 +92,7 @@ export function renderAuthSignup(
         <input type="checkbox" name="acceptTerms" required />
         <span>I agree to the <button type="button" class="auth-inline-link" data-action="legal-terms">Terms of Service</button> and <button type="button" class="auth-inline-link" data-action="legal-privacy">Privacy Policy</button>.</span>
       </label>
-      <button type="submit" class="mkt-btn mkt-btn-primary auth-submit">Create account</button>
+      <button type="submit" class="a-btn a-btn--primary a-btn--block auth-submit">Create account</button>
     </form>
     <p class="auth-card-footer">
       Already have an account?

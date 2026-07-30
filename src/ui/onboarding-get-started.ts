@@ -5,6 +5,8 @@ import {
   onboardingProgressPercent,
   type OnboardingState,
 } from "../shared/onboarding-progress";
+import { arCtaLabel } from "../shared/ar-cta";
+import { isIOS } from "../utils/platform";
 import { MKT } from "./marketing-copy";
 import { MKT_ASSETS } from "./marketing-assets";
 import { pcAdminDiagramIconHtml, phoneArDiagramIconHtml } from "./device-diagram-icons";
@@ -19,6 +21,7 @@ function escapeHtml(s: string): string {
 
 function stepRow(
   id: string,
+  index: number,
   done: boolean,
   title: string,
   body: string,
@@ -26,13 +29,27 @@ function stepRow(
 ): string {
   return `
     <li class="onboard-step ${done ? "onboard-step--done" : ""}" data-step="${escapeHtml(id)}">
-      <span class="onboard-step-check" aria-hidden="true">${done ? "✓" : ""}</span>
+      <span class="onboard-step-check" aria-hidden="true">${done ? "✓" : index}</span>
       <div class="onboard-step-body">
         <h3>${escapeHtml(title)}</h3>
         <p>${body}</p>
         ${actionHtml}
       </div>
     </li>`;
+}
+
+/**
+ * Step 3 walks the operator through the customer's first placement, so it has
+ * to name the button the customer will actually see. iOS hands off to Safari AR
+ * behind "View in AR"; Android runs WebXR behind "Start AR" and shows the floor
+ * scan ring. Labels come from `arCtaLabel` so this cannot drift from the
+ * catalog and landing screens.
+ */
+function placeOnFloorBody(): string {
+  if (isIOS()) {
+    return `Open the showroom in Safari, tap <strong>${escapeHtml(arCtaLabel("landing-ios"))}</strong> — Safari AR opens. Move the phone to find the floor, then tap to place. Tap <strong>3D</strong> anytime to rotate and zoom the same model.`;
+  }
+  return `Open the showroom on a phone, tap <strong>${escapeHtml(arCtaLabel("landing-android"))}</strong>, scan the floor for the cyan ring, and place at true scale. Tap <strong>3D</strong> anytime to rotate and zoom the same model.`;
 }
 
 export function renderOnboardingGetStarted(
@@ -96,6 +113,7 @@ export function renderOnboardingGetStarted(
           <ol class="onboard-steps">
             ${stepRow(
               "upload",
+              1,
               uploadDone,
               "1. Upload your first 3D model",
               "Desktop admin only — drag a GLB and icon. USDZ for iOS is generated automatically.",
@@ -103,6 +121,7 @@ export function renderOnboardingGetStarted(
             )}
             ${stepRow(
               "share",
+              2,
               shareDone,
               "2. Copy your showroom link",
               `Share <code>${escapeHtml(`/w/${workspace.slug}`)}</code> with associates or shoppers — no login required.`,
@@ -113,9 +132,10 @@ export function renderOnboardingGetStarted(
             )}
             ${stepRow(
               "preview",
+              3,
               previewDone,
               "3. Place on a real floor",
-              "Open the showroom on a phone, tap <strong>Start AR</strong>, scan the floor, and place at true scale. Tap <strong>3D</strong> anytime to rotate and zoom the same model.",
+              placeOnFloorBody(),
               `<div class="onboard-preview-actions">
                  <button type="button" class="btn btn-primary btn-sm" data-action="showroom">Open showroom</button>
                  <button type="button" class="btn btn-ghost btn-sm" data-action="preview-ar">Preview AR (this device)</button>

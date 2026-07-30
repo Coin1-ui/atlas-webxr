@@ -44,7 +44,7 @@ export function renderAuthLogin(
           ? `<button type="button" class="btn-link auth-forgot" data-action="forgot">Forgot password?</button>`
           : ""
       }
-      <button type="submit" class="mkt-btn mkt-btn-primary auth-submit">Sign in</button>
+      <button type="submit" class="a-btn a-btn--primary a-btn--block auth-submit">Sign in</button>
     </form>
     <p class="auth-card-footer">
       New to Atlas AR?

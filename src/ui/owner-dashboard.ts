@@ -148,10 +148,10 @@ export function renderOwnerDashboard(
            <label class="auth-label">Plan (pricing page tier)
              <select class="auth-input" name="billingTier">${tierOptions}</select>
            </label>
-           <button type="submit" class="btn btn-primary">Apply plan</button>
+           <button type="submit" class="a-btn a-btn--primary">Apply plan</button>
          </form>`
       : `<div class="owner-table-wrap">
-           <table class="owner-table">
+           <table class="owner-table a-table">
              <thead>
                <tr><th>Workspace</th><th>Owner email</th><th>Plan</th><th>Viewer controls</th><th>Status</th><th>Actions</th></tr>
              </thead>
@@ -200,21 +200,21 @@ export function renderOwnerDashboard(
                      }
                    </td>
                    <td class="owner-row-actions">
-                     <button type="button" class="btn btn-ghost btn-sm" data-save-plan="${escapeHtml(w.id)}">Save plan</button>
+                     <button type="button" class="a-btn a-btn--ghost a-btn--sm" data-save-plan="${escapeHtml(w.id)}">Save plan</button>
                      ${
                        w.billingProvider
-                         ? `<button type="button" class="btn btn-ghost btn-sm owner-btn-danger" data-refund="${escapeHtml(w.id)}" data-provider="${escapeHtml(w.billingProvider)}">Issue refund</button>`
+                         ? `<button type="button" class="a-btn a-btn--ghost a-btn--sm a-btn--danger-ghost" data-refund="${escapeHtml(w.id)}" data-provider="${escapeHtml(w.billingProvider)}">Issue refund</button>`
                          : ""
                      }
                      ${
                        w.restricted
-                         ? `<button type="button" class="btn btn-ghost btn-sm" data-unrestrict="${escapeHtml(w.id)}">Lift restriction</button>`
-                         : `<button type="button" class="btn btn-ghost btn-sm owner-btn-danger" data-restrict="${escapeHtml(w.id)}" data-slug="${escapeHtml(w.slug)}">Restrict account</button>`
+                         ? `<button type="button" class="a-btn a-btn--ghost a-btn--sm" data-unrestrict="${escapeHtml(w.id)}">Lift restriction</button>`
+                         : `<button type="button" class="a-btn a-btn--ghost a-btn--sm a-btn--danger-ghost" data-restrict="${escapeHtml(w.id)}" data-slug="${escapeHtml(w.slug)}">Restrict account</button>`
                      }
                      ${
                        w.protectedFromDeletion
                          ? ""
-                         : `<button type="button" class="btn btn-ghost btn-sm owner-btn-danger" data-delete-customer="${escapeHtml(w.id)}" data-name="${escapeHtml(w.name)}" data-slug="${escapeHtml(w.slug)}">Delete account</button>`
+                         : `<button type="button" class="a-btn a-btn--ghost a-btn--sm a-btn--danger-ghost" data-delete-customer="${escapeHtml(w.id)}" data-name="${escapeHtml(w.name)}" data-slug="${escapeHtml(w.slug)}">Delete account</button>`
                      }
                    </td>
                  </tr>`,
@@ -239,7 +239,7 @@ export function renderOwnerDashboard(
                  <p class="owner-meta owner-coupon-uses">${escapeHtml(couponUsesLine(c))}</p>
                  ${c.expiresAt ? `<p class="owner-meta">Expires ${escapeHtml(c.expiresAt.slice(0, 10))}</p>` : ""}
                </div>
-               <button type="button" class="btn btn-ghost btn-sm owner-btn-danger" data-delete-coupon="${escapeHtml(c.code)}">Delete</button>
+               <button type="button" class="a-btn a-btn--ghost a-btn--sm a-btn--danger-ghost" data-delete-coupon="${escapeHtml(c.code)}">Delete</button>
              </li>`,
              )
              .join("")}
@@ -330,7 +330,7 @@ export function renderOwnerDashboard(
             <div class="owner-panel-head">
               <h2 class="admin-section-title">Customer accounts</h2>
               <p class="auth-hint owner-panel-meta">${customerCount} workspace${customerCount === 1 ? "" : "s"} · ${deletableCount} can be deleted · platform owner accounts are protected</p>
-              <button type="button" class="btn btn-ghost btn-sm" data-action="refresh-workspaces">Refresh</button>
+              <button type="button" class="a-btn a-btn--ghost a-btn--sm" data-action="refresh-workspaces">Refresh</button>
             </div>
             ${emailLookupHint}
             ${workspaceRows}
@@ -343,7 +343,7 @@ export function renderOwnerDashboard(
                 <label class="auth-label">Reason
                   <input class="auth-input" name="reason" required placeholder="Acceptable use violation — spam uploads" />
                 </label>
-                <button type="submit" class="btn btn-primary owner-btn-danger">Restrict account</button>
+                <button type="submit" class="a-btn a-btn--danger">Restrict account</button>
               </form>
             </details>
           </section>
@@ -351,7 +351,7 @@ export function renderOwnerDashboard(
           <section class="owner-panel ${tab === "coupons" ? "" : "hidden"}" data-panel="coupons">
             <div class="owner-panel-head">
               <h2 class="admin-section-title">Discount coupons</h2>
-              <button type="button" class="btn btn-ghost btn-sm" data-action="refresh-coupons">Sync from Dodo</button>
+              <button type="button" class="a-btn a-btn--ghost a-btn--sm" data-action="refresh-coupons">Sync from Dodo</button>
             </div>
             <p class="auth-hint owner-coupon-sync-hint">Use counts sync from Dodo Payments when you open or refresh this panel.</p>
             <form class="owner-coupon-form" data-form="create-coupon" novalidate>
@@ -417,7 +417,7 @@ export function renderOwnerDashboard(
               </label>
               <p class="auth-hint" data-offer-hint="fixed">Fixed promo: set plan tier + promo price. Max uses drives the banner countdown (e.g. “7 of 10 spots left”). No discount % or expiry date.</p>
               <p class="auth-hint hidden" data-offer-hint="percent" hidden>Percent off: set discount % and optional tier/expiry/max uses. No promo price or duration.</p>
-              <button type="submit" class="btn btn-primary">Create coupon</button>
+              <button type="submit" class="a-btn a-btn--primary">Create coupon</button>
             </form>
             ${couponRows}
           </section>

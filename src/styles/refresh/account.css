@@ -1,0 +1,551 @@
+﻿/* Atlas AR — 2026-07 UI refresh.
+ * Account and billing, including the relocated delete-account danger zone.
+ * Additive only; never re-declares a style.css token. AR session is frozen.
+ *
+ * Ported from the approved sandbox Account page. Production class names
+ * (account-*, admin-shell shared chrome, mkt-btn) stay so handlers keep
+ * working; this sheet restyles them to glass + teal. Sandbox @container
+ * page queries become plain @media at the same widths.
+ */
+
+/* ---------------------------------------------------------------
+   Shell + card
+   --------------------------------------------------------------- */
+.account-shell {
+  font-family: var(--font-ui);
+  isolation: isolate;
+  position: relative;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.account-shell::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--atmos-1), var(--atmos-2);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.account-shell .admin-shell-hero,
+.account-shell .admin-shell-body {
+  position: relative;
+  z-index: 1;
+}
+
+.account-shell .admin-shell-hero {
+  height: 140px;
+}
+
+@media (min-width: 720px) {
+  .account-shell .admin-shell-hero {
+    height: 180px;
+  }
+}
+
+.account-shell .admin-shell-hero-overlay {
+  background: linear-gradient(180deg, rgba(5, 10, 20, 0.35), var(--bg));
+}
+
+.account-shell .admin-shell-body {
+  margin-top: -56px;
+  padding-inline: var(--sp-5);
+  padding-bottom: max(var(--sp-7), calc(var(--sp-5) + var(--safe-bottom)));
+}
+
+.account-shell .admin-shell-card.account-card,
+.account-shell .account-card {
+  max-width: var(--maxw-narrow);
+  padding: var(--sp-6) var(--sp-5);
+  border-radius: var(--r-lg);
+  background: var(--surface-glass);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+}
+
+.account-shell .admin-header h1,
+.account-shell .branded-header h1,
+.account-shell h1 {
+  font-family: var(--font-ui);
+  font-size: var(--fs-2xl);
+  font-weight: var(--fw-semi);
+  letter-spacing: -0.02em;
+  line-height: var(--lh-tight);
+}
+
+.account-signed-in {
+  margin: 0 0 var(--sp-4);
+  color: var(--muted);
+  font-size: var(--fs-sm);
+}
+
+.account-desktop-note {
+  margin-bottom: var(--sp-4);
+  border-radius: var(--r-md);
+  border: 1px solid var(--accent-line);
+  background: var(--accent-soft);
+}
+
+/* ---------------------------------------------------------------
+   Sections
+   --------------------------------------------------------------- */
+.account-section {
+  margin: var(--sp-6) 0;
+  padding: var(--sp-5);
+  border-top: none;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--surface-glass);
+}
+
+.account-section:first-of-type {
+  margin-top: var(--sp-4);
+}
+
+.account-shell .admin-section-title {
+  margin: 0 0 var(--sp-4);
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-semi);
+  text-transform: none;
+  letter-spacing: -0.01em;
+  color: var(--text);
+}
+
+/* ---------------------------------------------------------------
+   Profile definition list (sandbox .a-dl layout)
+   --------------------------------------------------------------- */
+.account-dl {
+  display: grid;
+  gap: 0 var(--sp-5);
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  margin: 0;
+}
+
+.account-dl > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: var(--sp-2) 0;
+  border-bottom: 1px solid var(--line);
+  grid-template-columns: unset;
+}
+
+.account-dl dt {
+  margin: 0;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--muted);
+}
+
+.account-dl dd {
+  margin: 0;
+  text-align: right;
+  font-size: var(--fs-sm);
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.account-shell .admin-code {
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  color: var(--accent);
+}
+
+/* ---------------------------------------------------------------
+   Forms (password + checkout fields)
+   --------------------------------------------------------------- */
+.account-shell .auth-label {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  color: var(--text-dim);
+}
+
+.account-shell .auth-input,
+.account-shell select.auth-input {
+  width: 100%;
+  min-height: 46px;
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--r-md);
+  border: 1px solid var(--line);
+  background: rgba(0, 0, 0, 0.28);
+  color: var(--text);
+  font-family: inherit;
+  font-size: var(--fs-sm);
+  transition:
+    border-color var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) var(--ease-out);
+}
+
+.account-shell .auth-input::placeholder {
+  color: var(--faint);
+}
+
+.account-shell .auth-input:hover {
+  border-color: var(--line-strong);
+}
+
+.account-shell .auth-input:focus,
+.account-shell .auth-input:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.account-shell .auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.account-checkout-fields {
+  display: grid;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-4);
+}
+
+@media (min-width: 520px) {
+  .account-checkout-fields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.account-shell .auth-hint {
+  color: var(--muted);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-body);
+}
+
+.account-shell .auth-inline-link {
+  color: var(--accent);
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* ---------------------------------------------------------------
+   Plan grid (sandbox .plan-grid / .plan-card)
+   --------------------------------------------------------------- */
+.account-plan-grid {
+  display: grid;
+  gap: var(--sp-3);
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  margin-bottom: var(--sp-3);
+}
+
+.account-plan-card {
+  display: grid;
+  gap: 4px;
+  align-content: start;
+  padding: var(--sp-4);
+  text-align: left;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface-glass);
+  color: inherit;
+  font-family: inherit;
+  cursor: pointer;
+  transition:
+    border-color var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) var(--ease-out),
+    transform var(--dur-fast) var(--ease-out);
+}
+
+.account-plan-card:hover:not(:disabled) {
+  border-color: var(--accent-line);
+  background: var(--surface-glass-2);
+  transform: translateY(-1px);
+}
+
+.account-plan-card:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+
+.account-plan-card--current,
+.account-plan-card:disabled {
+  cursor: default;
+  opacity: 0.85;
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+  box-shadow: var(--glow);
+}
+
+.account-plan-card--current:hover,
+.account-plan-card:disabled:hover {
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+  transform: none;
+}
+
+.account-plan-name {
+  font-weight: var(--fw-semi);
+  font-size: var(--fs-sm);
+}
+
+.account-plan-price {
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-semi);
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+
+.account-plan-cta {
+  font-size: var(--fs-xs);
+  color: var(--accent);
+  margin-top: 2px;
+}
+
+/* ---------------------------------------------------------------
+   Billing action buttons
+   --------------------------------------------------------------- */
+.account-shell .mkt-btn,
+.account-shell .account-secondary-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  min-height: 44px;
+  padding: 0 var(--sp-5);
+  border-radius: var(--r-full);
+  border: 1px solid var(--line);
+  background: var(--surface-glass-2);
+  color: var(--text);
+  font-family: inherit;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  white-space: nowrap;
+  cursor: pointer;
+  text-decoration: none;
+  width: auto;
+  margin-top: 0;
+  transition:
+    transform var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out);
+}
+
+.account-shell .mkt-btn:hover:not(:disabled),
+.account-shell .account-secondary-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: var(--line-strong);
+  background: var(--surface-glass);
+}
+
+.account-shell .mkt-btn-primary {
+  background: var(--accent);
+  color: var(--on-accent);
+  border-color: transparent;
+  font-weight: var(--fw-semi);
+  box-shadow: var(--glow);
+}
+
+.account-shell .mkt-btn-primary:hover:not(:disabled) {
+  background: var(--accent-press);
+  border-color: transparent;
+}
+
+.account-shell .mkt-btn-ghost {
+  background: transparent;
+  border-color: var(--line);
+}
+
+.account-shell .mkt-btn-ghost:hover:not(:disabled) {
+  background: var(--surface-glass);
+}
+
+.account-shell .account-section .account-secondary-btn,
+.account-shell .account-section .mkt-btn {
+  margin-top: var(--sp-2);
+  margin-right: var(--sp-2);
+}
+
+.account-shell .account-section .auth-submit {
+  margin-top: var(--sp-3);
+  align-self: flex-start;
+  width: auto;
+}
+
+/* ---------------------------------------------------------------
+   Usage stats
+   --------------------------------------------------------------- */
+.account-shell .admin-usage-grid,
+.account-usage-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-3);
+}
+
+.account-shell .admin-stat {
+  padding: var(--sp-4);
+  border-radius: var(--r-md);
+  border: 1px solid var(--line);
+  background: var(--surface-glass);
+}
+
+.account-shell .admin-stat-label {
+  font-size: var(--fs-2xs);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.account-shell .admin-stat-val {
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-semi);
+  letter-spacing: -0.02em;
+  margin-top: var(--sp-1);
+}
+
+.account-shell .admin-stat-unlimited {
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-normal);
+  color: var(--accent);
+}
+
+.account-overage-box {
+  padding: var(--sp-4);
+  border-radius: var(--r-md);
+  border: 1px solid rgba(251, 191, 36, 0.35);
+  background: rgba(251, 191, 36, 0.1);
+}
+
+.account-overage-amount {
+  margin: 0 0 var(--sp-2);
+  font-size: var(--fs-md);
+}
+
+/* ---------------------------------------------------------------
+   Footer actions
+   --------------------------------------------------------------- */
+.account-footer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  flex-direction: row;
+  gap: var(--sp-2);
+  margin-top: var(--sp-5);
+  padding-top: var(--sp-5);
+  border-top: 1px solid var(--line);
+}
+
+.account-footer-actions .mkt-btn {
+  width: auto;
+}
+
+/* ---------------------------------------------------------------
+   Danger zone (relocated delete-account)
+   --------------------------------------------------------------- */
+.account-danger {
+  margin-top: var(--sp-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.account-danger-heading {
+  margin: 0;
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-semi);
+  color: var(--danger);
+}
+
+.account-danger-lede {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--fs-sm);
+}
+
+.account-danger .a-danger-zone {
+  margin-top: var(--sp-1);
+}
+
+.account-danger-confirm-slug {
+  color: var(--danger);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+}
+
+.account-danger-list {
+  margin: 0;
+  padding-left: 1.1rem;
+  color: var(--text-dim);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-body);
+}
+
+.account-danger-list li + li {
+  margin-top: var(--sp-1);
+}
+
+.account-danger-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  align-items: center;
+}
+
+/* ---------------------------------------------------------------
+   Responsive
+   --------------------------------------------------------------- */
+@media (max-width: 760px) {
+  .account-shell .admin-shell-body {
+    padding-inline: var(--sp-4);
+  }
+
+  .account-shell .admin-shell-card.account-card,
+  .account-shell .account-card {
+    padding: var(--sp-5) var(--sp-4);
+  }
+
+  .account-section {
+    padding: var(--sp-4);
+  }
+
+  .account-dl {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .account-dl > div {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--sp-1);
+  }
+
+  .account-dl dd {
+    text-align: left;
+  }
+
+  .account-shell .admin-usage-grid,
+  .account-usage-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .account-footer-actions {
+    flex-direction: column;
+  }
+
+  .account-footer-actions .mkt-btn {
+    width: 100%;
+  }
+
+  .account-shell .account-section .account-secondary-btn,
+  .account-shell .account-section .mkt-btn {
+    width: 100%;
+    margin-right: 0;
+  }
+}

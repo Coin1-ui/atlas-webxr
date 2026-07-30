@@ -82,6 +82,9 @@ export function renderAccountPage(
     onPricing: () => void;
     onSignOut: () => void;
     onBack: () => void;
+    /** Relocated from admin/onboard footers — optional until main.ts wires it. */
+    onDeleteAccount?: () => void | Promise<void>;
+    canDeleteAccount?: boolean;
     showAdminLink?: boolean;
     showAdminDesktopNote?: boolean;
     showOwnerLink?: boolean;
@@ -466,6 +469,54 @@ export function renderAccountPage(
             <button type="button" class="mkt-btn mkt-btn-ghost" data-action="back">\u2190 Back to showroom</button>
             <button type="button" class="mkt-btn mkt-btn-ghost" data-action="signout">Sign out</button>
           </div>
+
+          ${
+            handlers.onDeleteAccount && handlers.canDeleteAccount !== false
+              ? `<section class="account-danger" aria-label="Danger zone">
+                  <h2 class="account-danger-heading">Danger zone</h2>
+                  <p class="account-danger-lede">Irreversible actions. Nothing here can be undone.</p>
+                  <details class="a-danger-zone">
+                    <summary>
+                      <span>Danger zone — delete account</span>
+                      <span class="a-faint">Expand to continue</span>
+                    </summary>
+                    <div class="a-danger-body">
+                      <div class="a-notice a-notice--danger">
+                        <div>
+                          <strong>This permanently deletes everything below.</strong>
+                          <ul class="account-danger-list">
+                            <li>Your sign-in and profile (${escapeHtml(data.email)})</li>
+                            <li>The <strong>${escapeHtml(workspace.name)}</strong> workspace and its showroom link</li>
+                            <li>All uploaded 3D models and branding</li>
+                            <li>Usage history and analytics</li>
+                          </ul>
+                        </div>
+                      </div>
+                      <label class="a-field">
+                        <span class="a-label">Type <code class="account-danger-confirm-slug">${escapeHtml(workspace.slug)}</code> to confirm</span>
+                        <input
+                          class="a-input"
+                          name="deleteConfirmSlug"
+                          data-delete-confirm-slug
+                          placeholder="${escapeHtml(workspace.slug)}"
+                          autocomplete="off"
+                          spellcheck="false"
+                        />
+                      </label>
+                      <div class="account-danger-actions">
+                        <button type="button" class="a-btn a-btn--danger" data-action="delete-account" disabled>
+                          Permanently delete account
+                        </button>
+                        <button type="button" class="a-btn a-btn--ghost" data-action="cancel-delete">
+                          Cancel
+                        </button>
+                      </div>
+                      <p class="a-faint">Only the workspace owner can delete an account.</p>
+                    </div>
+                  </details>
+                </section>`
+              : ""
+          }
         </div>
       </div>
     </div>`;
@@ -536,4 +587,27 @@ export function renderAccountPage(
   root.querySelector("[data-action=pricing]")?.addEventListener("click", handlers.onPricing);
   root.querySelector("[data-action=back]")?.addEventListener("click", handlers.onBack);
   root.querySelector("[data-action=signout]")?.addEventListener("click", handlers.onSignOut);
+
+  const deleteConfirmInput = root.querySelector<HTMLInputElement>("[data-delete-confirm-slug]");
+  const deleteAccountBtn = root.querySelector<HTMLButtonElement>("[data-action=delete-account]");
+  const syncDeleteArmed = () => {
+    if (!deleteAccountBtn || !deleteConfirmInput) return;
+    deleteAccountBtn.disabled = deleteConfirmInput.value.trim() !== workspace.slug;
+  };
+  deleteConfirmInput?.addEventListener("input", syncDeleteArmed);
+  syncDeleteArmed();
+
+  deleteAccountBtn?.addEventListener("click", () => {
+    if (!deleteConfirmInput || deleteConfirmInput.value.trim() !== workspace.slug) return;
+    void handlers.onDeleteAccount?.();
+  });
+
+  root.querySelector("[data-action=cancel-delete]")?.addEventListener("click", () => {
+    const zone = root.querySelector<HTMLDetailsElement>(".a-danger-zone");
+    if (zone) zone.open = false;
+    if (deleteConfirmInput) {
+      deleteConfirmInput.value = "";
+      syncDeleteArmed();
+    }
+  });
 }

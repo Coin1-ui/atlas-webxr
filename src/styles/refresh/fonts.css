@@ -1,0 +1,26 @@
+/*
+ * Self-hosted faces that Amplify's CSP will actually allow.
+ *
+ * amplify.yml sets `font-src 'self' data:` and `style-src 'self' 'unsafe-inline'`,
+ * so the Google Fonts stylesheet previously linked from index.html was blocked on
+ * every production deploy. Inter ships via @fontsource imports in main.ts (Vite
+ * emits the woff2 under /assets). DM Sans reuses the sales-deck variable faces
+ * already under /sales-deck/fonts so the AR overlay (which inherits --font-body
+ * from <body>) keeps rendering as designed.
+ */
+
+@font-face {
+  font-family: "DM Sans";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("/sales-deck/fonts/dm-sans-latin-wght-normal.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "DM Sans";
+  font-style: italic;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("/sales-deck/fonts/dm-sans-latin-wght-italic.woff2") format("woff2");
+}

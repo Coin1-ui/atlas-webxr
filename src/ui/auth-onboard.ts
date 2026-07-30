@@ -27,7 +27,11 @@ export function renderAuthOnboard(
     trialPlan?: "growth" | "launch";
     onSubmit: (name: string, slug: string) => void | Promise<void>;
     onSignOut: () => void;
-    onDeleteAccount: () => void | Promise<void>;
+    /**
+     * Kept optional so `main.ts` still compiles. Delete moved to Account danger
+     * zone — stop passing these from `showOnboardScreen` when cleaning up.
+     */
+    onDeleteAccount?: () => void | Promise<void>;
     canDeleteAccount?: boolean;
     onLegalTerms: () => void;
     onLegalPrivacy: () => void;
@@ -50,15 +54,10 @@ export function renderAuthOnboard(
         <span class="auth-hint auth-slug-preview">Customer link: <code>/w/<span data-slug-preview>your-slug</span></code></span>
       </label>
       <p class="auth-hint auth-legal-inline">By launching your workspace you agree to our Terms and Privacy Policy.</p>
-      <button type="submit" class="mkt-btn mkt-btn-primary auth-submit">Launch workspace</button>
+      <button type="submit" class="a-btn a-btn--primary a-btn--block auth-submit">Launch workspace</button>
     </form>
     <div class="auth-card-actions">
-      <button type="button" class="mkt-btn mkt-btn-ghost auth-secondary" data-action="signout">Sign out</button>
-      ${
-        handlers.canDeleteAccount !== false
-          ? `<button type="button" class="mkt-btn auth-danger auth-secondary" data-action="delete">Delete account</button>`
-          : ""
-      }
+      <button type="button" class="a-btn a-btn--ghost a-btn--block auth-secondary" data-action="signout">Sign out</button>
     </div>`;
 
   root.innerHTML = authShellHtml("onboard", body, { legalFooter: authShellLegalFooterHtml() });
@@ -85,9 +84,6 @@ export function renderAuthOnboard(
 
   bindAuthLegalLinks(root, handlers);
   root.querySelector("[data-action=signout]")?.addEventListener("click", handlers.onSignOut);
-  root.querySelector("[data-action=delete]")?.addEventListener("click", () => {
-    void handlers.onDeleteAccount();
-  });
   root.querySelector("[data-form=onboard]")?.addEventListener("submit", (e) => {
     e.preventDefault();
     const form = e.target as HTMLFormElement;

@@ -1,0 +1,275 @@
+﻿/* Atlas AR — 2026-07 UI refresh.
+ * Device readiness test screen (.device-test-*).
+ * Additive only; never re-declares a style.css token. AR session is frozen.
+ *
+ * Ported from the approved sandbox DeviceTest (dt-row / dt-dot). The sandbox
+ * showed one mock; production has three states — running, AR start, complete —
+ * and all three render .device-test-page, so they share this sheet.
+ *
+ * The roots keep the shared .home class: during the AR step of the check,
+ * style.css's `body.xr-session-active #app .home` is what keeps Cancel tappable
+ * while #app itself is pointer-events: none. .device-test-page is the styling
+ * hook, so nothing here reaches .home (and therefore the iOS hand-off page).
+ */
+
+/* ---------------------------------------------------------------
+   Page shell
+   --------------------------------------------------------------- */
+.device-test-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  min-height: 100%;
+  font-family: var(--font-ui);
+  color: var(--text);
+  padding: max(var(--sp-6), env(safe-area-inset-top)) var(--sp-4)
+    calc(var(--sp-4) + var(--safe-bottom));
+  background: var(--atmos-1), var(--atmos-2), var(--bg-deep);
+}
+
+.device-test-page .device-test-head {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-2);
+}
+
+.device-test-page h2 {
+  margin: 0;
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-semi);
+  letter-spacing: -0.02em;
+  line-height: var(--lh-snug);
+}
+
+.device-test-page .home-sub {
+  margin: 0;
+  font-size: var(--fs-sm);
+  line-height: var(--lh-body);
+  color: var(--muted);
+}
+
+/* ---------------------------------------------------------------
+   Progress (running state)
+   --------------------------------------------------------------- */
+.device-test-page .device-test-track {
+  height: 6px;
+  margin: var(--sp-2) 0 0;
+  border-radius: var(--r-full);
+  background: rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+}
+
+.device-test-page .device-test-track .device-test-progress-bar {
+  height: 100%;
+  margin: 0;
+  border-radius: inherit;
+  background: var(--accent);
+  box-shadow: var(--glow);
+  transition: width var(--dur-slow) var(--ease-out);
+}
+
+.device-test-page .device-test-current {
+  margin: 0;
+  font-size: var(--fs-xs);
+  color: var(--faint);
+}
+
+/* Live AR coaching line from the check runner. */
+.device-test-page .device-test-ar-hint {
+  display: flex;
+  gap: var(--sp-3);
+  margin: 0;
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--r-md);
+  border: 1px solid var(--accent-line);
+  background: var(--accent-soft);
+  font-size: var(--fs-xs);
+  line-height: var(--lh-body);
+  color: var(--text-dim);
+}
+
+/* ---------------------------------------------------------------
+   Check list (sandbox dt-row / dt-dot)
+   --------------------------------------------------------------- */
+.device-test-page .device-test-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  font-size: var(--fs-sm);
+}
+
+.device-test-page .device-test-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface-glass);
+}
+
+.device-test-page .device-test-dot {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  flex: none;
+  border-radius: var(--r-full);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semi);
+  line-height: 1;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--faint);
+}
+
+.device-test-page .device-test-row.status-passed .device-test-dot {
+  background: rgba(52, 211, 153, 0.16);
+  color: var(--ok);
+}
+
+.device-test-page .device-test-row.status-failed .device-test-dot {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.device-test-page .device-test-row-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.device-test-page .device-test-row-name {
+  color: var(--text);
+  line-height: var(--lh-snug);
+}
+
+.device-test-page .device-test-row-note {
+  font-size: var(--fs-xs);
+  line-height: var(--lh-snug);
+  color: var(--faint);
+}
+
+.device-test-page .device-test-row-status {
+  margin-left: auto;
+  flex: none;
+  font-size: var(--fs-2xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+.device-test-page .device-test-row.status-passed .device-test-row-status {
+  color: var(--ok);
+}
+
+.device-test-page .device-test-row.status-failed .device-test-row-status {
+  color: var(--danger);
+}
+
+.device-test-page .device-test-row.status-skipped .device-test-row-status {
+  color: var(--muted);
+}
+
+/* ---------------------------------------------------------------
+   Result summary (complete state)
+   --------------------------------------------------------------- */
+.device-test-page .device-test-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.device-test-page .device-test-summary li {
+  padding: 0.25rem var(--sp-3);
+  border-radius: var(--r-full);
+  border: 1px solid var(--line);
+  background: var(--surface-glass);
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-medium);
+  letter-spacing: 0.04em;
+  color: var(--text-dim);
+}
+
+.device-test-page .device-test-export-note {
+  margin: 0;
+  font-size: var(--fs-xs);
+  color: var(--muted);
+  text-align: center;
+}
+
+/* ---------------------------------------------------------------
+   Actions — pushed to the bottom of the viewport like the sandbox
+   --------------------------------------------------------------- */
+.device-test-page .device-test-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin-top: auto;
+  padding-top: var(--sp-4);
+}
+
+.device-test-page .device-test-actions .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  flex: none;
+  width: 100%;
+  min-height: 52px;
+  padding: 0 var(--sp-5);
+  border: 1px solid transparent;
+  border-radius: var(--r-full);
+  font-size: var(--fs-md);
+  font-weight: var(--fw-medium);
+  transition:
+    transform var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out);
+}
+
+.device-test-page .device-test-actions .btn:active {
+  transform: scale(0.985);
+}
+
+.device-test-page .device-test-actions .btn-primary {
+  background: var(--accent);
+  color: var(--on-accent);
+  font-weight: var(--fw-semi);
+  box-shadow: var(--glow);
+}
+
+.device-test-page .device-test-actions .btn-ghost {
+  min-height: 44px;
+  font-size: var(--fs-sm);
+  background: transparent;
+  border-color: var(--line);
+  color: var(--text-dim);
+}
+
+.device-test-page .device-test-actions .btn-ghost:hover {
+  background: var(--surface-glass);
+  border-color: var(--line-strong);
+}
+
+/* ---------------------------------------------------------------
+   Responsive — sandbox @container page width as a plain media query
+   --------------------------------------------------------------- */
+@media (min-width: 761px) {
+  .device-test-page {
+    max-width: var(--maxw-narrow);
+    margin: 0 auto;
+    padding-inline: var(--sp-6);
+  }
+
+  .device-test-page h2 {
+    font-size: var(--fs-2xl);
+  }
+}

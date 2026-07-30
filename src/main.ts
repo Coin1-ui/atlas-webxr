@@ -1,4 +1,13 @@
 import "./style.css";
+// 2026-07 UI refresh. Loads after style.css so it wins ties on equal
+// specificity. Excludes the AR session by construction — see the layer header.
+// Inter is self-hosted via fontsource so Amplify's font-src 'self' CSP allows it.
+import "@fontsource/inter/latin-300.css";
+import "@fontsource/inter/latin-400.css";
+import "@fontsource/inter/latin-500.css";
+import "@fontsource/inter/latin-600.css";
+import "./styles/refresh/fonts.css";
+import "./styles/refresh/index.css";
 import "@babylonjs/loaders/glTF";
 import "@babylonjs/loaders/glTF/2.0/pbrMaterialLoadingAdapter";
 import "@babylonjs/loaders/glTF/2.0/openpbrMaterialLoadingAdapter";
@@ -1008,7 +1017,6 @@ function showOnboardScreen(error?: string): void {
     email: user.email,
     error,
     trialPlan: intendedTrialPlan ?? "growth",
-    canDeleteAccount: !isPlatformOwnerEmail(user.email),
     onSubmit: async (name, slug) => {
       try {
         activeWorkspace = await onboardWorkspace(name, slug, intendedTrialPlan ?? undefined);
@@ -1023,7 +1031,6 @@ function showOnboardScreen(error?: string): void {
       logout();
       goHome();
     },
-    onDeleteAccount: () => void confirmDeleteAccount(),
     onLegalTerms: () => navigateTo("/legal/terms"),
     onLegalPrivacy: () => navigateTo("/legal/privacy"),
   });
@@ -1509,6 +1516,8 @@ async function showAccountScreen(opts?: {
           activeWorkspace = null;
           goHome();
         },
+        onDeleteAccount: () => void confirmDeleteAccount(),
+        canDeleteAccount: !isPlatformOwner,
         onBack: () => {
           const slug = activeWorkspace?.slug ?? activeTenantSlug;
           if (slug) {
@@ -1701,7 +1710,6 @@ async function showAdminScreen(): Promise<void> {
       usage,
       usageUnrestricted: isPlatformOwner,
       showOwnerLink: isPlatformOwner,
-      canDeleteAccount: !isPlatformOwner,
       onboarding: showOnboarding ? { state: onboardingState, modelCount } : null,
       onGetStarted: showOnboarding ? () => navigateTo("/admin/get-started") : undefined,
       onOwner: isPlatformOwner ? () => navigateTo("/owner") : undefined,
@@ -1733,7 +1741,6 @@ async function showAdminScreen(): Promise<void> {
         activeWorkspace = null;
         goHome();
       },
-      onDeleteAccount: () => confirmDeleteAccount(),
       onBack: () => goHome(),
     });
     routePainted();
@@ -1875,7 +1882,7 @@ async function showTenantHome(slug: string): Promise<void> {
             }
           : {}),
       },
-      { usageWarning },
+      { usageWarning, iosSafariAr: isIOS() },
     );
     void warmCatalogAtHome();
     routePainted();

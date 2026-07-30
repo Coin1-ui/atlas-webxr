@@ -1,6 +1,7 @@
 import { MKT_ASSETS } from "./marketing-assets";
 import { MKT } from "./marketing-copy";
 import { brandWordmarkImgHtml } from "../shared/brand-assets";
+import { mountHeroVideo } from "./hero-video";
 import {
   bindMarketingNav,
   marketingFooterLegalHtml,
@@ -28,9 +29,6 @@ export function renderMarketingLanding(root: HTMLElement, handlers: MarketingLan
 
   root.innerHTML = `
     <div class="mkt-page">
-      <div class="mkt-bg" style="background-image: url('${MKT_ASSETS.heroBg}')"></div>
-      <div class="mkt-bg-vignette" aria-hidden="true"></div>
-
       ${marketingNavHtml(handlers, {
         mobileExperience: mobile,
         navPage: "home",
@@ -42,45 +40,34 @@ export function renderMarketingLanding(root: HTMLElement, handlers: MarketingLan
         getStartedPath: handlers.getStartedPath,
       })}
 
-      <header class="mkt-hero">
-        <div class="mkt-hero-copy">
-          <p class="mkt-eyebrow">${MKT.eyebrow}</p>
-          <h1>See it on their floor <em>before</em> they buy it.</h1>
-          <p class="mkt-lead">${MKT.heroLead}</p>
-          <div class="mkt-hero-cta">
-            ${
-              mobile && handlers.onDemo
-                ? `<button type="button" class="mkt-btn mkt-btn-primary mkt-btn-lg" data-action="demo">Try live demo</button>
-                   <button type="button" class="mkt-btn mkt-btn-ghost mkt-btn-lg" data-action="pricing">See pricing</button>`
-                : `<button type="button" class="mkt-btn mkt-btn-primary mkt-btn-lg" data-action="get-started">${signedIn ? "Admin dashboard" : "Start free — upload your first model"}</button>
-                   ${
-                     handlers.onDemo
-                       ? `<button type="button" class="mkt-btn mkt-btn-ghost mkt-btn-lg" data-action="demo">Try live demo</button>`
-                       : ""
-                   }`
-            }
+      <header class="mkt-hero mkt-hero--cinema">
+        <div class="mk-hero-media" data-hero-video></div>
+        <div class="mkt-hero-cinema-inner">
+          <div class="mkt-hero-copy">
+            <p class="mkt-eyebrow">${MKT.eyebrow}</p>
+            <h1>See it on their floor <em>before</em> they buy it.</h1>
+            <p class="mkt-lead">${MKT.heroLead}</p>
+            <div class="mkt-hero-cta">
+              ${
+                mobile && handlers.onDemo
+                  ? `<button type="button" class="mkt-btn mkt-btn-primary mkt-btn-lg" data-action="demo">Try live demo</button>
+                     <button type="button" class="mkt-btn mkt-btn-ghost mkt-btn-lg" data-action="pricing">See pricing</button>`
+                  : `<button type="button" class="mkt-btn mkt-btn-primary mkt-btn-lg" data-action="get-started">${signedIn ? "Admin dashboard" : "Start free — upload your first model"}</button>
+                     ${
+                       handlers.onDemo
+                         ? `<button type="button" class="mkt-btn mkt-btn-ghost mkt-btn-lg" data-action="demo">Try live demo</button>`
+                         : ""
+                     }`
+              }
+            </div>
+            <ul class="mkt-trust-row" aria-label="Platform support">
+              <li><span class="mkt-badge">${MKT.browserArBadgeChrome}</span></li>
+              <li><span class="mkt-badge">${MKT.browserArBadgeSafari}</span></li>
+              <li><span class="mkt-badge">True floor scale</span></li>
+              <li><span class="mkt-badge mkt-badge-warm">${MKT.noAppInstall}</span></li>
+            </ul>
+            <p class="mkt-visual-caption">Cyan ring = empty floor · Red = wall or obstacle</p>
           </div>
-          <ul class="mkt-trust-row" aria-label="Platform support">
-            <li><span class="mkt-badge">${MKT.browserArBadgeChrome}</span></li>
-            <li><span class="mkt-badge">${MKT.browserArBadgeSafari}</span></li>
-            <li><span class="mkt-badge">True floor scale</span></li>
-            <li><span class="mkt-badge mkt-badge-warm">${MKT.noAppInstall}</span></li>
-          </ul>
-        </div>
-        <div class="mkt-hero-visual">
-          <div class="mkt-hero-glow" aria-hidden="true"></div>
-          <img
-            class="mkt-hero-img"
-            src="${MKT_ASSETS.heroPhone}"
-            srcset="${MKT_ASSETS.heroPhone} 1x, ${MKT_ASSETS.heroPhone2x} 2x"
-            sizes="(max-width: 900px) 100vw, min(640px, 50vw)"
-            alt="Phone showing a chair placed in augmented reality on a living room floor"
-            width="640"
-            height="360"
-            fetchpriority="high"
-            decoding="async"
-          />
-          <p class="mkt-visual-caption">Cyan ring = empty floor · Red = wall or obstacle</p>
         </div>
       </header>
 
@@ -287,4 +274,7 @@ export function renderMarketingLanding(root: HTMLElement, handlers: MarketingLan
     onLegalPrivacy: handlers.onLegalPrivacy,
     onLegalAup: handlers.onLegalAup,
   });
+
+  const heroHost = root.querySelector<HTMLElement>("[data-hero-video]");
+  if (heroHost) mountHeroVideo(heroHost);
 }
