@@ -4,31 +4,37 @@ Canonical host: **`https://www.atlasar.in`** (www wins). Code and sitemap assume
 
 ## Amplify / DNS (one-time)
 
-- [ ] Custom domain `www.atlasar.in` attached to Amplify app (prod `main`)
-- [ ] Apex `atlasar.in` **301** → `https://www.atlasar.in`
-- [ ] `http://` → `https://` (Amplify / certificate)
-- [ ] SSL valid for www + apex
-- [ ] **Console redirects** match [`AMPLIFY-REDIRECTS.json`](./AMPLIFY-REDIRECTS.json) — see [`AMPLIFY-REDIRECTS.md`](./AMPLIFY-REDIRECTS.md)
+- [x] Custom domain `www.atlasar.in` attached to Amplify app (prod `main`)
+- [x] Apex `atlasar.in` **301** → `https://www.atlasar.in` (live re-verify 2026-07-30)
+- [x] `http://` → `https://` (Amplify / certificate)
+- [x] SSL valid for www + apex
+- [x] **Console redirects** match [`AMPLIFY-REDIRECTS.json`](./AMPLIFY-REDIRECTS.json) — see [`AMPLIFY-REDIRECTS.md`](./AMPLIFY-REDIRECTS.md)
   - SPA rule must be status **`200`** (regex), **not** only `/<*>` `404-200`
   - Slash-strip 301s for `/pricing/` `/about/` `/legal/*/`
   - sales-deck / storyboard 200 rewrites present
-- [ ] Incognito check: `/pricing` stays **no** trailing slash and returns **200**
+- [x] Incognito check: `/pricing` stays **no** trailing slash and returns **200**
 
 ## Post-deploy verification
 
-- [ ] `https://www.atlasar.in/robots.txt` returns Allow/Disallow + Sitemap line
-- [ ] `https://www.atlasar.in/sitemap.xml` lists exactly six URLs
-- [ ] Home HTML has absolute `og:image` / `og:url` / Twitter tags
-- [ ] Client nav to `/pricing` updates `document.title` + canonical + JSON-LD
-- [ ] `/login`, `/admin`, `/sales-deck/` send `noindex` (SPA meta or static meta)
+- [x] `https://www.atlasar.in/robots.txt` returns Allow/Disallow + Sitemap line
+- [x] `https://www.atlasar.in/sitemap.xml` lists exactly six URLs
+- [x] Home HTML has absolute `og:image` / `og:url` / Twitter tags
+- [x] Client nav to `/pricing` updates `document.title` + canonical + JSON-LD (SPA `applyRouteMeta`)
+- [x] `/login`, `/admin`, `/sales-deck/` send `noindex` (SPA meta or static meta)
 
 ## Search Console / Bing (manual)
 
 - [x] GSC HTML verification file live: `https://www.atlasar.in/google6baa8a3d0d627b22.html` (Amplify `cf78e70`, 200 + exact body 2026-07-31)
-- [ ] Google Search Console property: `https://www.atlasar.in/` — **click Verify** in GSC (HTML file method)
-- [ ] Submit sitemap: `https://www.atlasar.in/sitemap.xml`
-- [ ] Bing Webmaster Tools property + same sitemap
-- [ ] Request indexing for `/`, `/pricing`, `/about` after first crawl
+- [x] Google Search Console property: `https://www.atlasar.in/` — **Verified** (HTML file, 2026-07-31)
+- [x] Submit sitemap: `https://www.atlasar.in/sitemap.xml` — **Success** in GSC (2026-07-31)
+- [ ] Bing Webmaster Tools property + same sitemap (**next batch**)
+- [ ] Request indexing for `/`, `/pricing`, `/about` (URL Inspection → **Request indexing** for each; not confirmed yet)
+
+### Request indexing (if not done)
+
+1. GSC → URL inspection bar → paste each URL (www, no trailing slash on `/pricing` `/about`)
+2. **Request indexing** → wait for confirmation → next URL
+3. Quota may limit how many per day
 
 ## Indexable allowlist
 
@@ -46,3 +52,5 @@ Auth, onboard, admin, account, owner, demo, `/ar/*`, `/w/*`, `/sales-deck/*`, `/
 ## Phase 2 (backlog SEO-2)
 
 Prerender/static HTML shells for the six URLs, content hub, richer Offer schema, optional marketing host split — only after Phase 1 GSC coverage is healthy.
+
+**Phase 1 GSC status (2026-07-31):** Ownership Verified + sitemap Success. Bing + Request indexing (if unused) remain open; SEO-2 waits for healthy coverage.
