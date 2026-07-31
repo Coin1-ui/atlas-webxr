@@ -242,7 +242,7 @@ function tierCtaLabel(
   return tier.cta;
 }
 
-/** Scale is sales-led — mailto, not get-started / signup. */
+/** Scale is sales-led — contact-sales action (mailto + clipboard + on-page status). */
 function tierCtaHtml(
   tier: (typeof TIERS)[number],
   signedIn: boolean,
@@ -252,8 +252,12 @@ function tierCtaHtml(
   const label = escapeHtml(tierCtaLabel(tier, signedIn, mobile, hasDemo));
   const btnClass = `mkt-btn ${tier.featured ? "mkt-btn-primary" : "mkt-btn-ghost"}`;
   if (tier.id === "scale") {
-    const href = `mailto:${CONTACT_SALES}?subject=${encodeURIComponent("Atlas AR Scale inquiry")}`;
-    return `<a class="${btnClass}" href="${escapeHtml(href)}">${label}</a>`;
+    const email = escapeHtml(CONTACT_SALES);
+    return `<div class="mkt-price-cta-wrap">
+              <button type="button" class="${btnClass}" data-action="contact-sales">${label}</button>
+              <p class="mkt-price-sales-email"><a href="mailto:${email}">${email}</a></p>
+              <p id="mkt-sales-contact-status" class="mkt-price-sales-status" role="status" aria-live="polite"></p>
+            </div>`;
   }
   const trialAttr =
     !signedIn && (tier.id === "launch" || tier.id === "growth")

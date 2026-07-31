@@ -210,6 +210,7 @@ export function installGlobalNavLoading(root: HTMLElement = document.body): void
       }
       if (btn instanceof HTMLButtonElement && btn.disabled) return;
       const action = btn.getAttribute("data-action");
+      if (action === "contact-sales") return;
       beginNavTransition(btn, resolveNavTargetPath(action, btn));
     },
     { capture: true }

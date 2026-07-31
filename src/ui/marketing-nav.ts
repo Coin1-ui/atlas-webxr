@@ -1,4 +1,5 @@
 import { brandWordmarkImgHtml } from "../shared/brand-assets";
+import { CONTACT_SALES } from "../shared/contact";
 import { escapeHtml } from "../shared/escape-html";
 
 export type MarketingNavHandlers = {
@@ -185,6 +186,19 @@ function dispatchNavAction(
   }
   if (action === "get-started") {
     handlers.onGetStarted?.();
+  }
+  if (action === "contact-sales") {
+    e.preventDefault();
+    const mailto = `mailto:${CONTACT_SALES}?subject=${encodeURIComponent("Atlas AR Scale inquiry")}`;
+    void navigator.clipboard?.writeText(CONTACT_SALES).catch(() => {
+      /* clipboard may fail without permission / insecure context */
+    });
+    const status = document.getElementById("mkt-sales-contact-status");
+    if (status) {
+      status.textContent = `${CONTACT_SALES} copied — open your email app if it did not open`;
+    }
+    window.location.href = mailto;
+    return;
   }
   if (action === "dashboard") {
     handlers.onDashboard?.();

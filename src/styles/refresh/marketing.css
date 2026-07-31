@@ -1106,6 +1106,39 @@
   width: 100%;
 }
 
+.mkt-price-cta-wrap {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  width: 100%;
+}
+
+.mkt-price-cta-wrap .mkt-btn {
+  margin-top: 0;
+}
+
+.mkt-price-sales-email {
+  margin: 0;
+  text-align: center;
+  font-size: var(--fs-xs);
+  color: var(--faint);
+}
+
+.mkt-price-sales-email a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
+.mkt-price-sales-status {
+  margin: 0;
+  min-height: 1.25em;
+  text-align: center;
+  font-size: var(--fs-2xs);
+  color: var(--warm, #fbbf24);
+}
+
 .mkt-pricing-overage-grid {
   display: grid;
   gap: var(--sp-4);
