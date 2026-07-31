@@ -116,7 +116,10 @@ export function renderAboutPage(root: HTMLElement, handlers: AboutPageHandlers):
           <h2 id="about-contact" class="about-section-title">${escapeHtml(ABOUT.contact.headline)}</h2>
           <p class="about-prose">${escapeHtml(ABOUT.contact.body)}</p>
           <p class="about-contact-email">
-            <a href="mailto:${escapeHtml(ABOUT.contact.email)}">${escapeHtml(ABOUT.contact.email)}</a>
+            <a href="mailto:${escapeHtml(ABOUT.contact.email)}">Support — ${escapeHtml(ABOUT.contact.email)}</a>
+          </p>
+          <p class="about-contact-email">
+            <a href="mailto:${escapeHtml(ABOUT.contact.salesEmail)}">Sales — ${escapeHtml(ABOUT.contact.salesEmail)}</a>
           </p>
         </section>
 

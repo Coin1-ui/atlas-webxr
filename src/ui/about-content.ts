@@ -1,3 +1,5 @@
+import { CONTACT_SALES, CONTACT_SUPPORT } from "../shared/contact";
+
 export const ABOUT = {
   title: "About Atlas AR",
   eyebrow: "White-label floor AR",
@@ -73,8 +75,9 @@ export const ABOUT = {
 
   contact: {
     headline: "Get started or ask a question",
-    body: "Try Starter at $5/mo incl. tax, start a 14-day Growth trial from pricing, or email support@atlas-ar.com for enterprise SSO or design-partner pilots.",
-    email: "support@atlas-ar.com",
+    body: `Try Starter at $5/mo incl. tax, or start a 14-day Growth trial from pricing. Email ${CONTACT_SUPPORT} for product help and enterprise SSO questions. Design-partner and commercial inquiries: ${CONTACT_SALES}.`,
+    email: CONTACT_SUPPORT,
+    salesEmail: CONTACT_SALES,
   },
 
   disclaimer:

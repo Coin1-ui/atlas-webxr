@@ -3,6 +3,7 @@
 **Batch:** Lead research 2026-07-31  
 **Agents:** Outbound Strategist → Sales Outreach (US/EU/peer) → Account Strategist → Orchestrator  
 **Product:** https://www.atlasar.in · Offer: Design partner Growth@$59×90d (3 slots) · Founding 10 alternate  
+**Outbound From / Reply-To:** **sales@atlasar.in** (product help: support@atlasar.in)  
 **Method:** Public web research only. No purchased lists. Personal emails only when published on company sites.  
 **Mix:** ~70% Elena (retail/home) · ~30% Marcus (field/fixtures)
 
@@ -122,7 +123,7 @@ Use SAL-2 Template A (workflow question + 15-min live placement). Design-partner
 ## 6. Suggested next actions (founder)
 
 1. Pick **3** from First 5 / Tier-1 for design-partner slots (SAL-4 Owner tab).  
-2. Send SAL-2 Template A from [outreach.html](../../public/sales-deck/outreach.html) — one clear CTA: 15-min floor placement.  
+2. Send SAL-2 Template A from [outreach.html](../../public/sales-deck/outreach.html) — **From / Reply-To: sales@atlasar.in** — one clear CTA: 15-min floor placement.  
 3. Log touches in a simple sheet; do not spray all 28 in one day.  
 4. Optional: enrich LinkedIn titles before send (verify still current).
 

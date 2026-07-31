@@ -1,5 +1,7 @@
 /** SEO-2 Batch 3 — Learn hub content (truthful; no seat / Scale / custom-domain promises). */
 
+import { CONTACT_SALES } from "../shared/contact";
+
 export type LearnSection = {
   heading: string;
   paragraphs: string[];
@@ -135,7 +137,7 @@ export const LEARN_ARTICLES: LearnArticle[] = [
       {
         heading: "Design partners",
         paragraphs: [
-          "Limited Growth design-partner slots may run at a discounted rate with owner-ops tracking. Ask support@atlas-ar.com — do not treat partner pricing as public list price.",
+          `Limited Growth design-partner slots may run at a discounted rate with owner-ops tracking. Ask ${CONTACT_SALES} — do not treat partner pricing as public list price.`,
         ],
       },
     ],

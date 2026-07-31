@@ -33,7 +33,7 @@ Legend: **Ready** = customer can use today without you intervening · **Partial*
 | Unlimited shoppers & reps | **Ready** | No seat metering |
 | Browser AR + 3D inspect (Chrome & Safari) | **Ready** | WebXR + Quick Look + object mode |
 | Branded `/w/your-brand` | **Ready** | Slug routing + theme |
-| Email support (72h) | **Partial** | support@atlas-ar.com — process, not in-app SLA timer |
+| Email support (72h) | **Partial** | support@atlasar.in — process, not in-app SLA timer |
 | Overage (+$5/100 sessions pack guide, etc.) | **Ready** | Dodo hybrid meters auto-bill each payment cycle; Account estimate is a pack guide (not `/charge`) — [DODO-OVERAGE-METERS.md](./DODO-OVERAGE-METERS.md) · [PRICING.md](./PRICING.md) |
 
 ### Launch ($59/mo)
