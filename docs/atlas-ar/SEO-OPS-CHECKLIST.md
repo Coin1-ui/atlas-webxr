@@ -24,7 +24,8 @@ Canonical host: **`https://www.atlasar.in`** (www wins). Code and sitemap assume
 
 ## Search Console / Bing (manual)
 
-- [ ] Google Search Console property: `https://www.atlasar.in/`
+- [x] GSC HTML verification file live: `https://www.atlasar.in/google6baa8a3d0d627b22.html` (Amplify `cf78e70`, 200 + exact body 2026-07-31)
+- [ ] Google Search Console property: `https://www.atlasar.in/` — **click Verify** in GSC (HTML file method)
 - [ ] Submit sitemap: `https://www.atlasar.in/sitemap.xml`
 - [ ] Bing Webmaster Tools property + same sitemap
 - [ ] Request indexing for `/`, `/pricing`, `/about` after first crawl
