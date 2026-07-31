@@ -1,6 +1,7 @@
 import { escapeHtml } from "../shared/escape-html";
 import type { PublicPromo } from "../data/platform-api";
 import { promoBannerExtrasHtml } from "../shared/coupon";
+import { CONTACT_SALES } from "../shared/contact";
 import { MKT_ASSETS } from "./marketing-assets";
 import { MKT } from "./marketing-copy";
 import { setIntendedTrialPlan } from "../shared/intended-plan";
@@ -241,6 +242,27 @@ function tierCtaLabel(
   return tier.cta;
 }
 
+/** Scale is sales-led — mailto, not get-started / signup. */
+function tierCtaHtml(
+  tier: (typeof TIERS)[number],
+  signedIn: boolean,
+  mobile: boolean,
+  hasDemo: boolean,
+): string {
+  const label = escapeHtml(tierCtaLabel(tier, signedIn, mobile, hasDemo));
+  const btnClass = `mkt-btn ${tier.featured ? "mkt-btn-primary" : "mkt-btn-ghost"}`;
+  if (tier.id === "scale") {
+    const href = `mailto:${CONTACT_SALES}?subject=${encodeURIComponent("Atlas AR Scale inquiry")}`;
+    return `<a class="${btnClass}" href="${escapeHtml(href)}">${label}</a>`;
+  }
+  const trialAttr =
+    !signedIn && (tier.id === "launch" || tier.id === "growth")
+      ? ` data-trial-plan="${tier.id}"`
+      : "";
+  const action = signedIn ? "dashboard" : "get-started";
+  return `<button type="button" class="${btnClass}"${trialAttr} data-action="${action}">${label}</button>`;
+}
+
 export function renderPricingPage(root: HTMLElement, handlers: PricingHandlers): void {
   const mobile = Boolean(handlers.mobileExperience);
   const signedIn = Boolean(handlers.signedIn);
@@ -291,7 +313,7 @@ export function renderPricingPage(root: HTMLElement, handlers: PricingHandlers):
             <ul class="mkt-checklist">
               ${tier.features.map((f) => `<li>${escapeHtml(f)}</li>`).join("")}
             </ul>
-            <button type="button" class="mkt-btn ${tier.featured ? "mkt-btn-primary" : "mkt-btn-ghost"}"${!signedIn && (tier.id === "launch" || tier.id === "growth") ? ` data-trial-plan="${tier.id}"` : ""} data-action="${signedIn && tier.id !== "scale" ? "dashboard" : "get-started"}">${escapeHtml(tierCtaLabel(tier, signedIn, mobile, Boolean(handlers.onDemo)))}</button>
+            ${tierCtaHtml(tier, signedIn, mobile, Boolean(handlers.onDemo))}
           </article>
         `,
         ).join("")}
