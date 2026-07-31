@@ -5,7 +5,7 @@ export const ABOUT = {
   eyebrow: "White-label floor AR",
   effectiveDate: "June 2026",
   summary:
-    "Atlas AR lets furniture retailers and B2B field teams share a branded link. Customers and reps open it in Chrome or Safari, place 3D models on the real floor at true scale, and inspect in 3D — no app store, no custom build.",
+    "Atlas AR (atlasar.in) is Omni Manual’s white-label floor AR SaaS for furniture retail and B2B field sales — not Atlas construction loaders and not a WordPress AR plugin. Customers and reps open a branded link in Chrome or Safari, place 3D models on the real floor at true scale, and inspect in 3D — no app store.",
 
   product: {
     headline: "What is Atlas AR?",

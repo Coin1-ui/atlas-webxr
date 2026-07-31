@@ -72,3 +72,16 @@ Auth, onboard, admin, account, owner, demo, `/ar/*`, `/w/*`, `/sales-deck/*`, `/
 **Amplify Console:** redirects re-pasted and live-verified for SEO-2 shells including `/learn*` (2026-07-31).
 
 **Phase 1 search-ops status (2026-07-31):** GSC Verified · GSC sitemap Success · Request indexing for `/` `/pricing` `/about` · Bing sitemap Success. **Phase 1 search-ops complete.**
+
+## Brand SERP (2026-07-31)
+
+**Symptom:** Query `atlasar` often shows `/pricing` ahead of Home; query `atlas ar` is dominated by Atlas loaders / AI Overview (site may not appear).
+
+**Eng signals shipped:** Home title `Atlas AR — Official white-label floor AR`; Organization/WebSite `alternateName` (`AtlasAR`, `atlasar`, `Atlas AR`); hero H1 leads with Atlas AR; About disambiguation (not loaders / not WP plugin); Pricing title softened to lead with “Pricing”.
+
+### Founder checklist
+
+- [ ] GSC → URL Inspection → **`https://www.atlasar.in/`** (homepage) → Request indexing again
+- [ ] Prefer outbound links to **`https://www.atlasar.in/`** (not only `/pricing`) in SAL-2 / LinkedIn / decks
+- [ ] GSC Performance: filter `atlasar` / `atlas ar` — note which URL gets impressions
+- [ ] Expect SERP favicon + Home-first order to take **days–weeks**; do not expect to beat machinery for generic `atlas ar` overnight

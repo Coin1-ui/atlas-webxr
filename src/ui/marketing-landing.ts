@@ -46,7 +46,7 @@ export function renderMarketingLanding(root: HTMLElement, handlers: MarketingLan
         <div class="mkt-hero-cinema-inner">
           <div class="mkt-hero-copy">
             <p class="mkt-eyebrow">${MKT.eyebrow}</p>
-            <h1>See it on their floor <em>before</em> they buy it.</h1>
+            <h1>Atlas AR — see it on their floor <em>before</em> they buy it.</h1>
             <p class="mkt-lead">${MKT.heroLead}</p>
             <div class="mkt-hero-cta">
               ${

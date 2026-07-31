@@ -2,6 +2,8 @@
 
 export const SITE_ORIGIN = "https://www.atlasar.in";
 export const SITE_NAME = "Atlas AR";
+/** Brand aliases for Organization/WebSite JSON-LD (domain-style + compact queries). */
+export const SITE_ALTERNATE_NAMES = ["AtlasAR", "atlasar", "Atlas AR"] as const;
 /** Optimized 1200×630 JPEG for scrapers (Batch 2b). */
 export const DEFAULT_OG_IMAGE = `${SITE_ORIGIN}/marketing/og-home.jpg`;
 export const OG_IMAGE_WIDTH = "1200";
@@ -34,9 +36,9 @@ export type SeoRouteMeta = {
 export const INDEXABLE_SEO_ROUTES: SeoRouteMeta[] = [
   {
     path: "/",
-    title: "Atlas AR — White-label Floor AR for Retail",
+    title: "Atlas AR — Official white-label floor AR",
     description:
-      "White-label floor AR for furniture retail and B2B field sales. Share a branded link; shoppers place true-scale 3D on the real floor in Chrome or Safari—no app install.",
+      "Atlas AR (atlasar.in) is white-label floor AR for furniture retail and B2B field sales. Share a branded link; shoppers place true-scale 3D on the real floor in Chrome or Safari—no app install.",
     robots: "index",
     ogImage: `${SITE_ORIGIN}/marketing/og-home.jpg`,
     ogImageAlt: "Atlas AR — phone showing white-label floor AR placement",
@@ -44,7 +46,7 @@ export const INDEXABLE_SEO_ROUTES: SeoRouteMeta[] = [
   },
   {
     path: "/pricing",
-    title: "Atlas AR Pricing — From $5/mo Incl. Tax",
+    title: "Pricing — Atlas AR plans from $5/mo Incl. Tax",
     description:
       "Atlas AR plans for white-label floor AR workspaces. Self-serve from $5/mo incl. tax, unlimited viewers and reps, browser AR + 3D inspect in Chrome and Safari—no app store.",
     robots: "index",
@@ -55,9 +57,9 @@ export const INDEXABLE_SEO_ROUTES: SeoRouteMeta[] = [
   },
   {
     path: "/about",
-    title: "About Atlas AR — Floor AR Workspace",
+    title: "About Atlas AR — Floor AR Workspace (atlasar.in)",
     description:
-      "Atlas AR is white-label floor AR from Omni Manual for furniture retailers and field teams. Upload once, brand your link, place true-scale models in browser AR—no app install.",
+      "Atlas AR (atlasar.in) is white-label floor AR from Omni Manual for furniture retailers and field teams—not Atlas construction loaders or WordPress plugins. Upload once, brand your link, place true-scale models in browser AR.",
     robots: "index",
     ogImage: `${SITE_ORIGIN}/marketing/og-about.jpg`,
     ogImageAlt: "Atlas AR for B2B field sales — place products in the buyer space",
@@ -250,6 +252,7 @@ function organizationLd(): Record<string, unknown> {
     "@type": "Organization",
     "@id": `${SITE_ORIGIN}/#organization`,
     name: SITE_NAME,
+    alternateName: [...SITE_ALTERNATE_NAMES],
     url: `${SITE_ORIGIN}/`,
     logo: ORG_LOGO,
     parentOrganization: {
@@ -264,6 +267,7 @@ function websiteLd(): Record<string, unknown> {
     "@type": "WebSite",
     "@id": `${SITE_ORIGIN}/#website`,
     name: SITE_NAME,
+    alternateName: [...SITE_ALTERNATE_NAMES],
     url: `${SITE_ORIGIN}/`,
     publisher: { "@id": `${SITE_ORIGIN}/#organization` },
   };

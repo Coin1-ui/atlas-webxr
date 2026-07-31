@@ -1,7 +1,7 @@
 /** Customer-facing marketing language — no internal API or competitor names. */
 
 export const MKT = {
-  eyebrow: "White-label floor AR · No app store required",
+  eyebrow: "Atlas AR · White-label floor AR · No app store",
   heroLead:
     "Upload your 3D catalog once. Share a branded link. Shoppers place true-scale models on the real floor in browser AR — then flip to 3D inspect without leaving Chrome or Safari.",
   browserArShort: "Browser-based AR · Chrome & Safari",
