@@ -307,6 +307,15 @@ export async function handlePatchPlatformSettings(event) {
           ? body.demoWorkspaceSlug.trim().toLowerCase()
           : null;
     }
+    if (body.designPartners !== undefined) {
+      if (!Array.isArray(body.designPartners)) {
+        return jsonResponse(400, { error: "designPartners must be an array (max 3)" });
+      }
+      if (body.designPartners.length > 3) {
+        return jsonResponse(400, { error: "designPartners allows at most 3 slots" });
+      }
+      patch.designPartners = body.designPartners;
+    }
     if (Object.keys(patch).length === 0) {
       return jsonResponse(400, { error: "At least one setting field required" });
     }

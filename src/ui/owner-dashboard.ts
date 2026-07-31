@@ -1,5 +1,10 @@
 import type { CatalogModel } from "../data/model-catalog";
-import type { PlatformCoupon, PlatformWorkspaceRow } from "../data/platform-api";
+import type {
+  DesignPartnerSlot,
+  PlatformCoupon,
+  PlatformWorkspaceRow,
+} from "../data/platform-api";
+import { padDesignPartnerSlots } from "../data/platform-api";
 import { normalizeWorkspaceFeatures } from "../shared/workspace-features";
 import {
   billingTierFromWorkspace,
@@ -26,7 +31,7 @@ function escapeHtml(s: string): string {
     .replace(/"/g, "&quot;");
 }
 
-export type OwnerTab = "demo" | "customers" | "coupons";
+export type OwnerTab = "demo" | "customers" | "coupons" | "partners";
 
 export function renderOwnerDashboard(
   root: HTMLElement,
@@ -35,6 +40,7 @@ export function renderOwnerDashboard(
     tab: OwnerTab;
     workspaces: PlatformWorkspaceRow[];
     coupons: PlatformCoupon[];
+    designPartners?: DesignPartnerSlot[];
     status?: string;
     error?: string;
     salesDeckActive?: boolean;
@@ -74,6 +80,7 @@ export function renderOwnerDashboard(
       durationMonths?: number;
     }) => void | Promise<void>;
     onDeleteCoupon: (code: string) => void;
+    onSaveDesignPartners: (slots: DesignPartnerSlot[]) => void | Promise<void>;
     onMountDemoManager: (slot: HTMLElement) => void;
     onSignOut: () => void;
     onBack: () => void;
@@ -97,6 +104,43 @@ export function renderOwnerDashboard(
   const customerCount = state.workspaces.length;
   const deletableCount = state.workspaces.filter((w) => !w.protectedFromDeletion).length;
   const missingOwnerEmails = state.workspaces.some((w) => !(w.ownerEmails?.length));
+  const partnerSlots = padDesignPartnerSlots(state.designPartners ?? []);
+  const activePartnerCount = partnerSlots.filter((s) => s.workspace.trim() && s.status === "active").length;
+  const partnerCards = partnerSlots
+    .map((slot, index) => {
+      const c = slot.checklist;
+      return `
+        <article class="admin-card owner-partner-card" data-partner-index="${index}">
+          <input type="hidden" name="id-${index}" value="${escapeHtml(slot.id)}" />
+          <p class="admin-label">Slot ${index + 1}</p>
+          <div class="owner-form-grid">
+            <label class="auth-label">Workspace (id, slug, or name)
+              <input class="auth-input" name="workspace-${index}" maxlength="120" value="${escapeHtml(slot.workspace)}" placeholder="ws_… or brand-slug" autocomplete="off" />
+            </label>
+            <label class="auth-label">Start date
+              <input class="auth-input" name="startDate-${index}" type="date" value="${escapeHtml(slot.startDate)}" />
+            </label>
+            <label class="auth-label">Status
+              <select class="auth-input" name="status-${index}">
+                <option value="active" ${slot.status === "active" ? "selected" : ""}>Active</option>
+                <option value="converted" ${slot.status === "converted" ? "selected" : ""}>Converted</option>
+                <option value="churned" ${slot.status === "churned" ? "selected" : ""}>Churned</option>
+              </select>
+            </label>
+          </div>
+          <fieldset class="owner-partner-checklist">
+            <legend class="admin-label">Ops checklist</legend>
+            <label class="owner-coupon-check"><input type="checkbox" name="couponCreated-${index}" ${c.couponCreated ? "checked" : ""} /><span>Coupon created</span></label>
+            <label class="owner-coupon-check"><input type="checkbox" name="planSet-${index}" ${c.planSet ? "checked" : ""} /><span>Plan / entitlement set</span></label>
+            <label class="owner-coupon-check"><input type="checkbox" name="sessionLog-${index}" ${c.sessionLog ? "checked" : ""} /><span>Session log enabled</span></label>
+            <label class="owner-coupon-check"><input type="checkbox" name="kickoffDone-${index}" ${c.kickoffDone ? "checked" : ""} /><span>Kickoff done</span></label>
+          </fieldset>
+          <label class="auth-label">Notes
+            <textarea class="auth-input owner-partner-notes" name="notes-${index}" maxlength="500" rows="2" placeholder="Feedback cadence, Founding 10 note, referral…">${escapeHtml(slot.notes)}</textarea>
+          </label>
+        </article>`;
+    })
+    .join("");
   const emailLookupHint =
     state.ownerEmailLookup === "disabled"
       ? `<p class="owner-email-hint owner-email-hint-warn">Owner emails need <code>COGNITO_USER_POOL_ID</code> on the atlas-api Lambda (plus <code>cognito-idp:ListUsers</code> IAM). Redeploy <code>atlas-api-deploy.zip</code>, then refresh.</p>`
@@ -303,6 +347,7 @@ export function renderOwnerDashboard(
             <button type="button" class="owner-tab ${tab === "demo" ? "active" : ""}" data-tab="demo">Live demo models</button>
             <button type="button" class="owner-tab ${tab === "customers" ? "active" : ""}" data-tab="customers">Customer accounts</button>
             <button type="button" class="owner-tab ${tab === "coupons" ? "active" : ""}" data-tab="coupons">Discount coupons</button>
+            <button type="button" class="owner-tab ${tab === "partners" ? "active" : ""}" data-tab="partners">Design partners</button>
           </nav>
 
           <section class="owner-panel ${tab === "demo" ? "" : "hidden"}" data-panel="demo">
@@ -420,6 +465,20 @@ export function renderOwnerDashboard(
               <button type="submit" class="a-btn a-btn--primary">Create coupon</button>
             </form>
             ${couponRows}
+          </section>
+
+          <section class="owner-panel ${tab === "partners" ? "" : "hidden"}" data-panel="partners">
+            <div class="owner-panel-head">
+              <h2 class="admin-section-title">Design partners</h2>
+              <p class="auth-hint owner-panel-meta">${activePartnerCount} of 3 active slots · Growth @ $59 · 90-day pilot</p>
+            </div>
+            <p class="auth-hint">Track the three design-partner slots (ops truth only — coupons stay on the Discount coupons tab). Runbook: <code>docs/atlas-ar/SAL-4-DESIGN-PARTNER-OPS.md</code>.</p>
+            <form class="owner-partners-form" data-form="design-partners" novalidate>
+              <div class="owner-partners-grid">
+                ${partnerCards}
+              </div>
+              <button type="submit" class="a-btn a-btn--primary">Save design partners</button>
+            </form>
           </section>
 
           <div class="admin-footer-actions">
@@ -549,6 +608,30 @@ export function renderOwnerDashboard(
     e.preventDefault();
     if (!couponForm) return;
     void handlers.onCreateCoupon(parseCouponCreateForm(couponForm));
+  });
+
+  const partnersForm = root.querySelector<HTMLFormElement>("[data-form=design-partners]");
+  partnersForm?.addEventListener("submit", (e) => {
+    e.preventDefault();
+    if (!partnersForm) return;
+    const fd = new FormData(partnersForm);
+    const slots: DesignPartnerSlot[] = [0, 1, 2].map((index) => ({
+      id: String(fd.get(`id-${index}`) ?? `dp-${index + 1}`).trim() || `dp-${index + 1}`,
+      workspace: String(fd.get(`workspace-${index}`) ?? "").trim(),
+      startDate: String(fd.get(`startDate-${index}`) ?? "").trim(),
+      status: (() => {
+        const s = String(fd.get(`status-${index}`) ?? "active");
+        return s === "converted" || s === "churned" ? s : "active";
+      })(),
+      notes: String(fd.get(`notes-${index}`) ?? "").trim().slice(0, 500),
+      checklist: {
+        couponCreated: fd.get(`couponCreated-${index}`) === "on",
+        planSet: fd.get(`planSet-${index}`) === "on",
+        sessionLog: fd.get(`sessionLog-${index}`) === "on",
+        kickoffDone: fd.get(`kickoffDone-${index}`) === "on",
+      },
+    }));
+    void handlers.onSaveDesignPartners(slots);
   });
 
   const manualPlan = root.querySelector<HTMLFormElement>("[data-form=manual-workspace]");

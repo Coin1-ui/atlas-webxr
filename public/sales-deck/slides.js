@@ -52,8 +52,9 @@ export const SLIDES = [
     ],
     image: "assets/slide-04-how-it-works.png",
     webgl: "none",
+    demoLink: "https://www.atlasar.in/#product-demo",
     notes:
-      "Time-box a live demo: Let's place one SKU on your floor before we hang up. Target <15 min first placement.",
+      "Time-box a live demo: Let's place one SKU on your floor before we hang up. Target <15 min first placement. Watch product demo: www.atlasar.in/#product-demo (Android A1 · iOS B1).",
   },
   {
     id: 5,

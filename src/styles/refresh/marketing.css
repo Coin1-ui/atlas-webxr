@@ -471,6 +471,103 @@
   padding-inline: var(--sp-5);
 }
 
+/* Product demo (MKT-3b) */
+.mkt-product-demo .mkt-lead-center {
+  max-width: 36rem;
+  margin-bottom: var(--sp-6);
+}
+
+.mkt-demo-mount {
+  max-width: 52rem;
+  margin-inline: auto;
+}
+
+.mkt-demo-tabs {
+  display: flex;
+  gap: var(--sp-2);
+  justify-content: center;
+  margin-bottom: var(--sp-4);
+}
+
+.mkt-demo-tab {
+  font-family: var(--font-ui);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semi);
+  padding: 0.5rem 1.1rem;
+  border: 1px solid color-mix(in srgb, var(--text) 18%, transparent);
+  background: transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+  border-radius: 2px;
+}
+
+.mkt-demo-tab:hover {
+  color: var(--text);
+}
+
+.mkt-demo-tab.active {
+  color: var(--text);
+  border-color: var(--accent, #0ea5a0);
+  background: color-mix(in srgb, var(--accent, #0ea5a0) 12%, transparent);
+}
+
+.mkt-demo-tab:focus-visible {
+  outline: 2px solid var(--accent, #0ea5a0);
+  outline-offset: 2px;
+}
+
+.mkt-demo-panel.hidden {
+  display: none;
+}
+
+.mkt-demo-player {
+  aspect-ratio: 16 / 9;
+  background: color-mix(in srgb, var(--text) 6%, transparent);
+  overflow: hidden;
+}
+
+.mkt-demo-video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #0a0a0a;
+}
+
+.mkt-demo-poster {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.mkt-demo-still-hint {
+  margin: var(--sp-3) 0 0;
+  font-size: var(--fs-sm);
+  color: var(--text-dim);
+  text-align: center;
+}
+
+.mkt-demo-empty {
+  text-align: center;
+  padding: var(--sp-8) var(--sp-5);
+  border: 1px dashed color-mix(in srgb, var(--text) 22%, transparent);
+}
+
+.mkt-demo-empty-title {
+  margin: 0 0 var(--sp-2);
+  font-family: var(--font-ui);
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-semi);
+  color: var(--text);
+}
+
+.mkt-demo-empty-body {
+  margin: 0 0 var(--sp-4);
+  color: var(--text-dim);
+  font-size: var(--fs-sm);
+}
+
 .mkt-section-title {
   font-family: var(--font-ui);
   font-size: var(--fs-3xl);

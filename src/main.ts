@@ -83,6 +83,8 @@ import {
   platformSetSalesDeckActive,
   platformSetMkt3StoryboardActive,
   platformSetDemoWorkspaceSlug,
+  platformSetDesignPartners,
+  padDesignPartnerSlots,
   type PublicPromo,
 } from "./data/platform-api";
 import { fetchPublicSalesDeckConfig } from "./shared/sales-deck-settings";
@@ -2463,10 +2465,12 @@ async function showOwnerScreen(tab: OwnerTab = ownerTab): Promise<void> {
 
   let salesDeckActive = true;
   let mkt3StoryboardActive = true;
+  let designPartners = padDesignPartnerSlots([]);
   try {
     const settings = await fetchPlatformSettings();
     salesDeckActive = settings.salesDeckActive;
     mkt3StoryboardActive = settings.mkt3StoryboardActive;
+    designPartners = padDesignPartnerSlots(settings.designPartners);
   } catch {
     try {
       salesDeckActive = (await fetchPublicSalesDeckConfig()).active;
@@ -2484,6 +2488,7 @@ async function showOwnerScreen(tab: OwnerTab = ownerTab): Promise<void> {
       tab,
       workspaces,
       coupons,
+      designPartners,
       status,
       error,
       salesDeckActive,
@@ -2605,6 +2610,16 @@ async function showOwnerScreen(tab: OwnerTab = ownerTab): Promise<void> {
             await showOwnerScreen("coupons");
           }
         })();
+      },
+      onSaveDesignPartners: async (slots) => {
+        try {
+          await platformSetDesignPartners(slots);
+          ownerStatus = "Design partner slots saved.";
+          await showOwnerScreen("partners");
+        } catch (e) {
+          ownerError = e instanceof Error ? e.message : String(e);
+          await showOwnerScreen("partners");
+        }
       },
       onMountDemoManager: (slot) => {
         void showOwnerDemoModels(slot);

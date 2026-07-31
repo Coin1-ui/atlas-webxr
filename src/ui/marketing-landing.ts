@@ -2,6 +2,7 @@ import { MKT_ASSETS } from "./marketing-assets";
 import { MKT } from "./marketing-copy";
 import { brandWordmarkImgHtml } from "../shared/brand-assets";
 import { mountHeroVideo } from "./hero-video";
+import { mountProductDemo } from "./demo-video";
 import {
   bindMarketingNav,
   marketingFooterLegalHtml,
@@ -180,6 +181,12 @@ export function renderMarketingLanding(root: HTMLElement, handlers: MarketingLan
         </ol>
       </section>
 
+      <section id="product-demo" class="mkt-section mkt-product-demo" aria-labelledby="mkt-demo-title">
+        <h2 id="mkt-demo-title" class="mkt-section-title">Product demo</h2>
+        <p class="mkt-lead mkt-lead-center">Android Chrome and iPhone Safari — your catalog on their floor, no app install.</p>
+        <div class="mkt-demo-mount" data-product-demo></div>
+      </section>
+
       <section class="mkt-section" aria-labelledby="mkt-features-title">
         <h2 id="mkt-features-title" class="mkt-section-title">Why teams switch to Atlas AR</h2>
         <div class="mkt-card-grid mkt-card-grid-3">
@@ -277,4 +284,7 @@ export function renderMarketingLanding(root: HTMLElement, handlers: MarketingLan
 
   const heroHost = root.querySelector<HTMLElement>("[data-hero-video]");
   if (heroHost) mountHeroVideo(heroHost);
+
+  const demoHost = root.querySelector<HTMLElement>("[data-product-demo]");
+  if (demoHost) mountProductDemo(demoHost);
 }

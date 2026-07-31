@@ -118,9 +118,70 @@ function workspaceFeatureCameraCheck(item) {
   return false;
 }
 
+/**
+ * Normalize workspace onboarding checklist from Dynamo META (or PATCH body).
+ * @param {unknown} raw
+ * @returns {import("./tenant-types.mjs").WorkspaceOnboarding | undefined}
+ */
+export function normalizeWorkspaceOnboarding(raw) {
+  if (!raw || typeof raw !== "object") return undefined;
+  const src = /** @type {Record<string, unknown>} */ (raw);
+  const stepsSrc =
+    src.steps && typeof src.steps === "object"
+      ? /** @type {Record<string, unknown>} */ (src.steps)
+      : {};
+  const steps = {
+    upload: stepsSrc.upload === true,
+    share: stepsSrc.share === true,
+    preview: stepsSrc.preview === true,
+  };
+  const dismissed = src.dismissed === true;
+  let completedAt;
+  if (typeof src.completedAt === "string" && src.completedAt.trim()) {
+    const parsed = Date.parse(src.completedAt);
+    if (!Number.isNaN(parsed)) completedAt = new Date(parsed).toISOString();
+  }
+  const allDone = steps.upload && steps.share && steps.preview;
+  if (allDone && !completedAt) completedAt = new Date().toISOString();
+  return {
+    steps,
+    ...(dismissed ? { dismissed: true } : {}),
+    ...(completedAt ? { completedAt } : {}),
+  };
+}
+
+/**
+ * Merge existing + incoming onboarding (per-step OR; dismissed/completedAt if either).
+ * @param {import("./tenant-types.mjs").WorkspaceOnboarding | undefined} existing
+ * @param {unknown} incoming
+ */
+export function mergeWorkspaceOnboarding(existing, incoming) {
+  const next = normalizeWorkspaceOnboarding(incoming);
+  if (!next) return existing;
+  if (!existing) return next;
+  const steps = {
+    upload: Boolean(existing.steps?.upload || next.steps.upload),
+    share: Boolean(existing.steps?.share || next.steps.share),
+    preview: Boolean(existing.steps?.preview || next.steps.preview),
+  };
+  const dismissed = Boolean(existing.dismissed || next.dismissed);
+  const completedAt = existing.completedAt || next.completedAt;
+  const allDone = steps.upload && steps.share && steps.preview;
+  return {
+    steps,
+    ...(dismissed ? { dismissed: true } : {}),
+    ...(completedAt
+      ? { completedAt }
+      : allDone
+        ? { completedAt: new Date().toISOString() }
+        : {}),
+  };
+}
+
 /** @param {Record<string, unknown>} item */
 function workspaceFromItem(item) {
   const billingEntitlementTier = currentBillingEntitlementTier(item);
+  const onboarding = normalizeWorkspaceOnboarding(item.onboarding);
   return {
     id: String(item.id),
     slug: String(item.slug),
@@ -152,6 +213,7 @@ function workspaceFromItem(item) {
       primaryColor: item.primaryColor ? String(item.primaryColor) : "#2dd4bf",
     },
     arExitUrl: item.arExitUrl ? String(item.arExitUrl) : null,
+    ...(onboarding ? { onboarding } : {}),
     restricted: Boolean(item.restricted),
     restrictionReason: item.restrictionReason ? String(item.restrictionReason) : undefined,
     ownerContactEmail: item.ownerContactEmail
@@ -511,7 +573,13 @@ function normalizeArExitUrl(raw) {
 
 /**
  * @param {string} workspaceId
- * @param {{ name?: string; logoUrl?: string | null; primaryColor?: string; arExitUrl?: string | null }} input
+ * @param {{
+ *   name?: string;
+ *   logoUrl?: string | null;
+ *   primaryColor?: string;
+ *   arExitUrl?: string | null;
+ *   onboarding?: unknown;
+ * }} input
  */
 export async function updateWorkspaceSettings(workspaceId, input) {
   const existing = await getWorkspaceById(workspaceId);
@@ -532,20 +600,41 @@ export async function updateWorkspaceSettings(workspaceId, input) {
   const arExitUrl =
     input.arExitUrl !== undefined ? normalizeArExitUrl(input.arExitUrl) : existing.arExitUrl ?? null;
 
+  const onboarding =
+    input.onboarding !== undefined
+      ? mergeWorkspaceOnboarding(existing.onboarding, input.onboarding)
+      : existing.onboarding;
+
+  /** @type {string[]} */
+  const setParts = [
+    "#name = :name",
+    "logoUrl = :logoUrl",
+    "primaryColor = :primaryColor",
+    "arExitUrl = :arExitUrl",
+    "updatedAt = :updatedAt",
+  ];
+  /** @type {Record<string, unknown>} */
+  const values = {
+    ":name": name,
+    ":logoUrl": logoUrl,
+    ":primaryColor": primaryColor,
+    ":arExitUrl": arExitUrl,
+    ":updatedAt": now,
+  };
+  if (input.onboarding !== undefined) {
+    setParts.push("onboarding = :onboarding");
+    values[":onboarding"] = onboarding ?? {
+      steps: { upload: false, share: false, preview: false },
+    };
+  }
+
   await client.send(
     new UpdateCommand({
       TableName: workspacesTable(),
       Key: { pk: `WORKSPACE#${workspaceId}`, sk: "META" },
-      UpdateExpression:
-        "SET #name = :name, logoUrl = :logoUrl, primaryColor = :primaryColor, arExitUrl = :arExitUrl, updatedAt = :updatedAt",
+      UpdateExpression: `SET ${setParts.join(", ")}`,
       ExpressionAttributeNames: { "#name": "name" },
-      ExpressionAttributeValues: {
-        ":name": name,
-        ":logoUrl": logoUrl,
-        ":primaryColor": primaryColor,
-        ":arExitUrl": arExitUrl,
-        ":updatedAt": now,
-      },
+      ExpressionAttributeValues: values,
     })
   );
 
@@ -894,7 +983,44 @@ const PLATFORM_SETTINGS_PK = "PLATFORM#SETTINGS";
 const PLATFORM_SETTINGS_SK = "SETTINGS";
 
 /**
- * @returns {Promise<{ salesDeckActive: boolean; mkt3StoryboardActive: boolean; demoWorkspaceSlug?: string; updatedAt?: string }>}
+ * @param {unknown} raw
+ * @returns {Array<{
+ *   id: string;
+ *   workspace: string;
+ *   startDate: string;
+ *   status: "active" | "converted" | "churned";
+ *   notes: string;
+ *   checklist: { couponCreated: boolean; planSet: boolean; sessionLog: boolean; kickoffDone: boolean };
+ * }>}
+ */
+function normalizeDesignPartners(raw) {
+  if (!Array.isArray(raw)) return [];
+  const statuses = new Set(["active", "converted", "churned"]);
+  return raw.slice(0, 3).map((row, i) => {
+    const r = row && typeof row === "object" ? /** @type {Record<string, unknown>} */ (row) : {};
+    const checklist =
+      r.checklist && typeof r.checklist === "object"
+        ? /** @type {Record<string, unknown>} */ (r.checklist)
+        : {};
+    const status = typeof r.status === "string" && statuses.has(r.status) ? r.status : "active";
+    return {
+      id: typeof r.id === "string" && r.id.trim() ? String(r.id).trim() : `dp-${i + 1}`,
+      workspace: typeof r.workspace === "string" ? String(r.workspace).trim() : "",
+      startDate: typeof r.startDate === "string" ? String(r.startDate).trim() : "",
+      status: /** @type {"active" | "converted" | "churned"} */ (status),
+      notes: typeof r.notes === "string" ? String(r.notes).slice(0, 500) : "",
+      checklist: {
+        couponCreated: checklist.couponCreated === true,
+        planSet: checklist.planSet === true,
+        sessionLog: checklist.sessionLog === true,
+        kickoffDone: checklist.kickoffDone === true,
+      },
+    };
+  });
+}
+
+/**
+ * @returns {Promise<{ salesDeckActive: boolean; mkt3StoryboardActive: boolean; demoWorkspaceSlug?: string; designPartners: ReturnType<typeof normalizeDesignPartners>; updatedAt?: string }>}
  */
 export async function getPlatformSettings() {
   const row = await client.send(
@@ -904,7 +1030,7 @@ export async function getPlatformSettings() {
     })
   );
   if (!row.Item) {
-    return { salesDeckActive: true, mkt3StoryboardActive: true };
+    return { salesDeckActive: true, mkt3StoryboardActive: true, designPartners: [] };
   }
   const demoWorkspaceSlug =
     typeof row.Item.demoWorkspaceSlug === "string" && row.Item.demoWorkspaceSlug.trim()
@@ -914,13 +1040,14 @@ export async function getPlatformSettings() {
     salesDeckActive: row.Item.salesDeckActive !== false,
     mkt3StoryboardActive: row.Item.mkt3StoryboardActive !== false,
     demoWorkspaceSlug,
+    designPartners: normalizeDesignPartners(row.Item.designPartners),
     updatedAt: row.Item.updatedAt ? String(row.Item.updatedAt) : undefined,
   };
 }
 
 /**
- * @param {{ salesDeckActive?: boolean; mkt3StoryboardActive?: boolean; demoWorkspaceSlug?: string | null }} input
- * @returns {Promise<{ salesDeckActive: boolean; mkt3StoryboardActive: boolean; demoWorkspaceSlug?: string; updatedAt: string }>}
+ * @param {{ salesDeckActive?: boolean; mkt3StoryboardActive?: boolean; demoWorkspaceSlug?: string | null; designPartners?: unknown }} input
+ * @returns {Promise<{ salesDeckActive: boolean; mkt3StoryboardActive: boolean; demoWorkspaceSlug?: string; designPartners: ReturnType<typeof normalizeDesignPartners>; updatedAt: string }>}
  */
 export async function updatePlatformSettings(input) {
   const now = new Date().toISOString();
@@ -938,12 +1065,17 @@ export async function updatePlatformSettings(input) {
         ? input.demoWorkspaceSlug.trim().toLowerCase()
         : undefined;
   }
+  const designPartners =
+    input.designPartners !== undefined
+      ? normalizeDesignPartners(input.designPartners)
+      : existing.designPartners;
   /** @type {Record<string, unknown>} */
   const item = {
     pk: PLATFORM_SETTINGS_PK,
     sk: PLATFORM_SETTINGS_SK,
     salesDeckActive,
     mkt3StoryboardActive,
+    designPartners,
     updatedAt: now,
   };
   if (demoWorkspaceSlug) item.demoWorkspaceSlug = demoWorkspaceSlug;
@@ -953,7 +1085,7 @@ export async function updatePlatformSettings(input) {
       Item: item,
     })
   );
-  return { salesDeckActive, mkt3StoryboardActive, demoWorkspaceSlug, updatedAt: now };
+  return { salesDeckActive, mkt3StoryboardActive, demoWorkspaceSlug, designPartners, updatedAt: now };
 }
 
 /** @type {{ slug: string | null; at: number }} */

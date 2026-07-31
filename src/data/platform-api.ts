@@ -6,15 +6,59 @@ import { backendPlanFromBillingTier } from "../shared/plan-display";
 import type { Workspace } from "../shared/tenant";
 import type { WorkspaceFeatures } from "../shared/workspace-features";
 
+export type DesignPartnerChecklist = {
+  couponCreated: boolean;
+  planSet: boolean;
+  sessionLog: boolean;
+  kickoffDone: boolean;
+};
+
+export type DesignPartnerSlot = {
+  id: string;
+  workspace: string;
+  startDate: string;
+  status: "active" | "converted" | "churned";
+  notes: string;
+  checklist: DesignPartnerChecklist;
+};
+
 export type PlatformSettings = {
   salesDeckActive: boolean;
   mkt3StoryboardActive: boolean;
+  designPartners: DesignPartnerSlot[];
 };
 
-function normalizePlatformSettings(json: Partial<PlatformSettings>): PlatformSettings {
+function emptyChecklist(): DesignPartnerChecklist {
+  return { couponCreated: false, planSet: false, sessionLog: false, kickoffDone: false };
+}
+
+function normalizeDesignPartner(row: Partial<DesignPartnerSlot> | undefined, index: number): DesignPartnerSlot {
+  const status =
+    row?.status === "converted" || row?.status === "churned" || row?.status === "active"
+      ? row.status
+      : "active";
+  const checklist = row?.checklist;
+  return {
+    id: typeof row?.id === "string" && row.id.trim() ? row.id.trim() : `dp-${index + 1}`,
+    workspace: typeof row?.workspace === "string" ? row.workspace.trim() : "",
+    startDate: typeof row?.startDate === "string" ? row.startDate.trim() : "",
+    status,
+    notes: typeof row?.notes === "string" ? row.notes.slice(0, 500) : "",
+    checklist: {
+      couponCreated: checklist?.couponCreated === true,
+      planSet: checklist?.planSet === true,
+      sessionLog: checklist?.sessionLog === true,
+      kickoffDone: checklist?.kickoffDone === true,
+    },
+  };
+}
+
+function normalizePlatformSettings(json: Partial<PlatformSettings> & { designPartners?: unknown }): PlatformSettings {
+  const raw = Array.isArray(json.designPartners) ? json.designPartners : [];
   return {
     salesDeckActive: json.salesDeckActive !== false,
     mkt3StoryboardActive: json.mkt3StoryboardActive !== false,
+    designPartners: raw.slice(0, 3).map((row, i) => normalizeDesignPartner(row as Partial<DesignPartnerSlot>, i)),
   };
 }
 
@@ -321,6 +365,35 @@ export async function platformSetMkt3StoryboardActive(active: boolean): Promise<
   if (!res.ok) throw new Error(parsePlatformError(res.status, await res.text()));
   const json = (await res.json()) as Partial<PlatformSettings>;
   return normalizePlatformSettings(json);
+}
+
+/** Persist up to 3 design-partner slots on platform settings (SAL-4). */
+export async function platformSetDesignPartners(slots: DesignPartnerSlot[]): Promise<PlatformSettings> {
+  const designPartners = slots.slice(0, 3).map((row, i) => normalizeDesignPartner(row, i));
+  const res = await platformFetch(saasApiUrl("/v2/platform/settings"), {
+    method: "PATCH",
+    headers: authHeaders(),
+    body: JSON.stringify({ designPartners }),
+  });
+  if (!res.ok) throw new Error(parsePlatformError(res.status, await res.text()));
+  const json = (await res.json()) as Partial<PlatformSettings>;
+  return normalizePlatformSettings(json);
+}
+
+/** Ensure three editable slots for the owner UI (empty placeholders). */
+export function padDesignPartnerSlots(slots: DesignPartnerSlot[]): DesignPartnerSlot[] {
+  const out = slots.slice(0, 3).map((row, i) => normalizeDesignPartner(row, i));
+  while (out.length < 3) {
+    out.push({
+      id: `dp-${out.length + 1}`,
+      workspace: "",
+      startDate: "",
+      status: "active",
+      notes: "",
+      checklist: emptyChecklist(),
+    });
+  }
+  return out;
 }
 
 /** Link Try live demo (/demo) to the operator workspace catalog. */

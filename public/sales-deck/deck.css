@@ -368,6 +368,14 @@ a.deck-btn {
   color: var(--muted);
   line-height: 1.4;
 }
+.slide-demo-cta {
+  margin-top: clamp(14px, 2vw, 22px);
+  text-align: center;
+}
+.slide-demo-cta .deck-btn {
+  display: inline-flex;
+  text-decoration: none;
+}
 
 /* Template: ICP */
 .slide-icp .slide-body {

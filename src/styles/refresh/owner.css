@@ -715,6 +715,30 @@
   border-top: 1px solid var(--line);
 }
 
+.owner-partners-grid {
+  display: grid;
+  gap: var(--sp-4);
+  margin-bottom: var(--sp-4);
+}
+
+.owner-partner-card {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.owner-partner-checklist {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--sp-2);
+}
+
+.owner-partner-notes {
+  resize: vertical;
+  min-height: 3.5rem;
+}
+
 /* ---------------------------------------------------------------
    Responsive
    --------------------------------------------------------------- */

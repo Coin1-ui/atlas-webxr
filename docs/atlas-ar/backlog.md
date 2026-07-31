@@ -162,7 +162,7 @@
 | **MKT-7** | **Analytics story alignment** — “basic” vs “export” vs owner JSON toggle; per-model analytics deferred | P2 | Marketing | todo |
 | **SEO-1** | **Technical SEO Phase 1** — www.atlasar.in canonicals, robots/sitemap, SPA per-route meta + JSON-LD, noindex private tools | P0 | Marketing/Eng | **done** (2026-07-30) · [SEO-OPS-CHECKLIST.md](./SEO-OPS-CHECKLIST.md) |
 | **SEO-2** | **SEO Phase 2** — prerender shells for `/` `/pricing` `/about` legal; content hub; optional marketing host split; per-page OG | P2 | Marketing/Eng | todo · after GSC green on SEO-1 |
-| **SAL-4** | **Design partner ops runbook** — owner workflow for $59 Growth, coupons, session log, slot tracking | P2 | Sales/Ops | todo |
+| **SAL-4** | **Design partner ops runbook** — owner workflow for $59 Growth, coupons, session log, slot tracking | P2 | Sales/Ops | **done** ✅ · runbook + Owner Design partners tab (3 slots); CRM export out of scope |
 | **ENG-39** | **Owner dashboard: customer owner emails in Customers table** | P1 | Full-stack | **done** ✅ (Batch 34) |
 | **QA-5** | **SAL-3 QA gate on prod:** sign-up → upload → floor placement ≤15 min (Android + iOS) | P1 | QA | **confirmed** ✅ (2026-07-17) · user: first placement smooth in under ~15 min |
 | **DES-AUD** | **Graphics / UI / UX design audit** (Batch 36) | P1 | Design | **done** · 14 findings (3 P0, 7 P1, 4 P2) · canvas: `atlas-design-audit` |
@@ -175,7 +175,7 @@
 | **DES-9** | Prune legacy UI/CSS (halo, camera-error, model-manager) | P2 | Frontend | **done** ✅ (Batch 36e) |
 | **DES-10** | Pricing page CTA deduplication | P2 | Marketing | **done** ✅ (Batch 36e) |
 | **DES-11** | Marketing hero WebP + responsive images | P2 | Performance | **done** ✅ (Batch 36e) |
-| **MKT-3b** | **Record + embed demo video** (A1/B1 cuts from storyboard) | P1 | Marketing | todo · script + storyboard done |
+| **MKT-3b** | **Record + embed demo video** (A1/B1 cuts from storyboard) | P1 | Marketing | **partial** · checklist + landing `#product-demo` empty-state + sales-deck link; **awaiting A1/B1 mp4 drop** in `public/marketing/` |
 
 ---
 
@@ -198,7 +198,7 @@ SAL-3 **content** is done (deck + training + four-path close). These **product g
 | First placement ≤15 min | SAL-3 intro · MiroFish #1 objection | Works **if guided** on call | **QA-5** verify on prod |
 | iOS “View in AR” not “Start AR” | Slide 4 demo · admin help | Ready; staff training required | SUP-2 ✅ · SAL-3 training ✅ |
 | IT one-pager / security | Slide 9 | Landing + `/about` ✅ | LEG-1 for signup trust |
-| Demo video on landing | Optional SAL-3 follow-up | Script + storyboard only | **MKT-3b** |
+| Demo video on landing | Optional SAL-3 follow-up | Embed + empty-state live; mp4s pending | **MKT-3b** |
 
 **Sales-safe today (no engineering):** Starter $5 narrative · live `/demo` · manual Growth trial · design partner / Founding 10 via owner dashboard · enable JSON log toggle per workspace.
 

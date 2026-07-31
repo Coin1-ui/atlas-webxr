@@ -1,7 +1,7 @@
 import { SLIDES } from "./slides.js";
 import { loadSalesDeckActive, renderSalesDeckInactive } from "./deck-access.js";
 
-/** No-op WebGL so slides still render if the background library fails to load. */
+/** No-op WebGL so slides still render if Three.js fails to load. */
 class NullDeckWebGL {
   setMode() {}
   dispose() {}
@@ -96,6 +96,11 @@ function renderSlide(slide) {
                 )
                 .join("")}
             </div>
+            ${
+              slide.demoLink
+                ? `<p class="slide-demo-cta"><a class="deck-btn" href="${esc(slide.demoLink)}" target="_blank" rel="noopener">Watch product demo ↗</a></p>`
+                : ""
+            }
           </div>
         </div>`;
       break;
