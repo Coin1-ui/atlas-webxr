@@ -5,11 +5,13 @@
 
 ## Acceptance criteria
 
-- [ ] Live `https://www.atlasar.in/learn` + three article URLs return **route-specific** title/canonical/OG (not home shell)
-- [ ] `sitemap.xml` lists hub + 3 articles (10 indexable URLs total with existing 6)
-- [ ] Marketing nav exposes **Learn**; CTAs to pricing / signup only (no seat / custom-domain / self-serve checkout promises beyond what product already states)
-- [ ] Amplify Console redirects include `/learn` + slug 301 strip + 200 shells **before** SPA catch-all
-- [ ] SEO-OPS Phase 2 “Content hub” checked; backlog SEO-2 remains **partial** (host-split still todo)
+- [x] Code: route-specific prerender shells for `/learn` + 3 articles (Amplify `834e2ba`; verified at `/learn/index.html`)
+- [x] `sitemap.xml` lists hub + 3 articles (10 indexable URLs) — **live**
+- [x] Marketing nav exposes **Learn**; CTAs to pricing / signup only
+- [ ] Amplify Console redirects include `/learn` + slug 301 strip + 200 shells **before** SPA catch-all — **user must re-paste** [`AMPLIFY-REDIRECTS.json`](./AMPLIFY-REDIRECTS.json)
+- [ ] Clean URL live verify: `/learn` title ≠ home (blocked on Console paste)
+- [ ] GSC Request indexing for `/learn` + 3 articles
+- [x] SEO-OPS Phase 2 “Content hub” checked in code; backlog SEO-2 remains **partial** (host-split still todo)
 
 ## Seed URLs
 

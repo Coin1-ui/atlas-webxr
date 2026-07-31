@@ -57,10 +57,11 @@ Auth, onboard, admin, account, owner, demo, `/ar/*`, `/w/*`, `/sales-deck/*`, `/
 
 **Batch 3 live verify (after deploy + Console paste):**
 
-- [ ] `/learn` shell title/canonical ≠ home
-- [ ] `/learn/browser-ar-product-demo` (and siblings) Article JSON-LD present
+- [x] Shells deployed: `/learn/index.html` + article `…/index.html` have route titles + Article JSON-LD (Amplify `834e2ba`, 2026-07-31)
+- [x] sitemap.xml has 10 `<loc>` including `/learn*` (live)
+- [ ] Console redirect paste so clean `/learn` serves shell (not home SPA)
+- [ ] `/learn` shell title/canonical ≠ home (after paste)
 - [ ] `/learn/` → 301 → `/learn`
-- [ ] sitemap.xml has 10 `<loc>` including `/learn*`
 - [ ] GSC Request indexing for `/learn` + 3 articles
 - [ ] Bing sitemap re-submit (optional if auto-crawled)
 
