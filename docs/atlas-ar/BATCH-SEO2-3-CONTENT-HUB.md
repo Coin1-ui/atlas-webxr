@@ -1,6 +1,6 @@
 # SEO-2 Batch 3 — Content hub (`/learn`)
 
-**Status:** in progress · **Date:** 2026-07-31  
+**Status:** **live PASS** · **Date:** 2026-07-31  
 **Scope lock:** same-host hub only. **No** marketing host split. **No** MKT-3b media. **No** BILL-1 / PM-4.
 
 ## Acceptance criteria
@@ -8,10 +8,12 @@
 - [x] Code: route-specific prerender shells for `/learn` + 3 articles (Amplify `834e2ba`; verified at `/learn/index.html`)
 - [x] `sitemap.xml` lists hub + 3 articles (10 indexable URLs) — **live**
 - [x] Marketing nav exposes **Learn**; CTAs to pricing / signup only
-- [ ] Amplify Console redirects include `/learn` + slug 301 strip + 200 shells **before** SPA catch-all — **user must re-paste** [`AMPLIFY-REDIRECTS.json`](./AMPLIFY-REDIRECTS.json)
-- [ ] Clean URL live verify: `/learn` title ≠ home (blocked on Console paste)
-- [ ] GSC Request indexing for `/learn` + 3 articles
-- [x] SEO-OPS Phase 2 “Content hub” checked in code; backlog SEO-2 remains **partial** (host-split still todo)
+- [x] Amplify Console redirects include `/learn` + slug 301 strip + 200 shells **before** SPA catch-all — **live PASS 2026-07-31**
+- [x] Clean URL live verify: `/learn` title ≠ home — **PASS** (Learn Atlas AR… · canonical `/learn`)
+- [x] `/learn/` → 301 → `/learn` — **PASS**
+- [x] Article shell: `/learn/browser-ar-product-demo` title + Article JSON-LD — **PASS**
+- [ ] GSC Request indexing for `/learn` + 3 articles — **user** (manual)
+- [x] SEO-OPS Phase 2 “Content hub” checked; backlog SEO-2 remains **partial** (host-split still todo)
 
 ## Seed URLs
 

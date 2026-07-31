@@ -1,10 +1,10 @@
 # Atlas AR — Product backlog
 
-**Last updated:** 2026-07-31 (SEO-2 Batch 3 `/learn` content hub)
+**Last updated:** 2026-07-31 (SEO-2 Batch 3 `/learn` **live PASS**)
 
 **Parked (billing):** Natural renewal check on test-admin `sub_0NkDIEC…` ~2026-07-30T05:21Z — corrected PPUs · meterSync · no old-sub charge. Live cutover / Zoho on hold.
 
-**Latest orchestration batch (2026-07-31):** **SEO-2 Batch 3 — Content hub** `/learn` + 3 cornerstone guides. Prerender shells + sitemap (10 locs) + Amplify redirect rules. Host split deferred. **User must re-paste** [`AMPLIFY-REDIRECTS.json`](./AMPLIFY-REDIRECTS.json) in Console after deploy. See [BATCH-SEO2-3-CONTENT-HUB.md](./BATCH-SEO2-3-CONTENT-HUB.md).
+**Latest orchestration batch (2026-07-31):** **SEO-2 Batch 3 — Content hub LIVE PASS.** `/learn` + 3 guides; shells + sitemap (10 locs); Console redirects confirmed (`/learn` 200 route meta · `/learn/` 301). Host split deferred. **User:** GSC Request indexing for `/learn*`. See [BATCH-SEO2-3-CONTENT-HUB.md](./BATCH-SEO2-3-CONTENT-HUB.md).
 
 **Previous orchestration batch (2026-07-30):** **Production UI refresh LIVE** on Amplify. Push repo commit `67e05df` → `origin/main`. Additive `src/styles/refresh/` layer; cinema hero; Account Danger zone; iOS showroom branch; Inter self-hosted for CSP. AR session frozen (`guard:ar`). Prod: `https://main.d7vfdpujdozkj.amplifyapp.com`.
 
@@ -163,7 +163,7 @@
 | **BILL-4** | **Annual prepay SKUs** (20% off Launch/Growth) | P2 | Backend | **on_hold** · blocked by Batch 29 |
 | **MKT-7** | **Analytics story alignment** — usage dashboard vs JSON session log vs owner override; per-model analytics deferred | P2 | Marketing | **done** ✅ (2026-07-31) · copy only |
 | **SEO-1** | **Technical SEO Phase 1** — www.atlasar.in canonicals, robots/sitemap, SPA per-route meta + JSON-LD, noindex private tools | P0 | Marketing/Eng | **done** (2026-07-30) · GSC + Bing sitemap Success 2026-07-31 · [SEO-OPS-CHECKLIST.md](./SEO-OPS-CHECKLIST.md) |
-| **SEO-2** | **SEO Phase 2** — prerender shells for `/` `/pricing` `/about` legal; content hub; optional marketing host split; per-page OG | P2 | Marketing/Eng | **partial** · Batch 1 shells ✅ · Batch 2/2b OG ✅ · **Batch 3 `/learn` hub + 3 guides** (code 2026-07-31) · host-split still todo |
+| **SEO-2** | **SEO Phase 2** — prerender shells for `/` `/pricing` `/about` legal; content hub; optional marketing host split; per-page OG | P2 | Marketing/Eng | **partial** · Batch 1–2b ✅ · **Batch 3 `/learn` hub LIVE PASS** (2026-07-31) · host-split still todo |
 | **SAL-4** | **Design partner ops runbook** — owner workflow for $59 Growth, coupons, session log, slot tracking | P2 | Sales/Ops | **done** ✅ · runbook + Owner Design partners tab (3 slots); CRM export out of scope |
 | **ENG-39** | **Owner dashboard: customer owner emails in Customers table** | P1 | Full-stack | **done** ✅ (Batch 34) |
 | **QA-5** | **SAL-3 QA gate on prod:** sign-up → upload → floor placement ≤15 min (Android + iOS) | P1 | QA | **done / PASS** ✅ (2026-07-17 confirm · Batch 35 closed 2026-07-31) |

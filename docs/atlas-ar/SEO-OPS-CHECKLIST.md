@@ -52,21 +52,21 @@ Auth, onboard, admin, account, owner, demo, `/ar/*`, `/w/*`, `/sales-deck/*`, `/
 - [x] **Batch 1 — prerender shells** for six indexable URLs (`npm run prerender:seo` after Vite) + richer pricing `Offer` / `UnitPriceSpecification` JSON-LD (2026-07-31)
 - [x] **Batch 1 live verify** (2026-07-31): `/pricing` `/about` `/legal/*` return route-specific title/canonical + JSON-LD (not home SPA); `/pricing/` → 301 → `/pricing`
 - [x] Per-page OG images (beyond shared default) — Batch 2 done 2026-07-31; **Batch 2b** optimized `og-*.jpg` 1200×630 + width/height/alt (2026-07-31)
-- [x] **Content hub** — `/learn` + 3 guides (Batch 3, 2026-07-31). **Live verify + Console redirect paste** required after Amplify deploy.
+- [x] **Content hub** — `/learn` + 3 guides (Batch 3, 2026-07-31). **Live PASS** after Console redirect paste (2026-07-31).
 - [ ] Optional marketing host split
 
 **Batch 3 live verify (after deploy + Console paste):**
 
 - [x] Shells deployed: `/learn/index.html` + article `…/index.html` have route titles + Article JSON-LD (Amplify `834e2ba`, 2026-07-31)
 - [x] sitemap.xml has 10 `<loc>` including `/learn*` (live)
-- [ ] Console redirect paste so clean `/learn` serves shell (not home SPA)
-- [ ] `/learn` shell title/canonical ≠ home (after paste)
-- [ ] `/learn/` → 301 → `/learn`
-- [ ] GSC Request indexing for `/learn` + 3 articles
+- [x] Console redirect paste so clean `/learn` serves shell (not home SPA) — **PASS 2026-07-31**
+- [x] `/learn` shell title/canonical ≠ home — **PASS** (Learn Atlas AR… · `https://www.atlasar.in/learn`)
+- [x] `/learn/` → 301 → `/learn` — **PASS**
+- [ ] GSC Request indexing for `/learn` + 3 articles — **user** (URL Inspection)
 - [ ] Bing sitemap re-submit (optional if auto-crawled)
 
 **Note:** `og:image` is for **link previews** (Slack/LinkedIn/X), not an on-page hero. Verify with view-source or Sharing Debugger “Scrape again” after deploy.
 
-**Amplify Console:** redirects re-pasted and live-verified for SEO-2 shells (2026-07-31).
+**Amplify Console:** redirects re-pasted and live-verified for SEO-2 shells including `/learn*` (2026-07-31).
 
 **Phase 1 search-ops status (2026-07-31):** GSC Verified · GSC sitemap Success · Request indexing for `/` `/pricing` `/about` · Bing sitemap Success. **Phase 1 search-ops complete.**
