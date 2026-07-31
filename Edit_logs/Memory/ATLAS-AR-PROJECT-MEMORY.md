@@ -3,7 +3,7 @@
 **Path:** `D:\AI\atlas-webxr\Edit_logs\Memory\ATLAS-AR-PROJECT-MEMORY.md`  
 **Rule:** Before implementing or diagnosing any Atlas AR task, read this file + the relevant domain memory below. Update this file after each completed task so mistakes are not repeated.
 
-Last updated: 2026-07-31 (SEO-2 Batch 2b OG JPEG harden)
+Last updated: 2026-07-31 (SERVICES-1 3D modeling rate card)
 
 ---
 
@@ -241,3 +241,4 @@ Run: `npm run test:all`, `npm run test:design-audit`, `npm run test:des4`, `npm 
 | 2026-07-31 | **Contact emails cutover.** SoT `src/shared/contact.ts`: **support@atlasar.in** · **sales@atlasar.in**. About dual mailto; Learn + PRICING-FEATURE-READINESS + LEAD-SHEET + SAL-2 updated. Legal @atlas-ar.com unchanged. |
 | 2026-07-31 | **Contact mailboxes live PASS** (user). **support@atlasar.in** and **sales@atlasar.in** hosted and receiving mail. Contact-email batch closed. |
 | 2026-07-31 | **PM-4 done.** Removed numeric admin-seat claims (1/2/10/Unlimited) from PRICING.md · PRICING-RESEARCH.md; readiness marked Removed from offer. Product unchanged (admins not seat-metered). Viewer/rep unlimited messaging kept. |
+| 2026-07-31 | **SERVICES-1 done.** 3D modeling services rate card: charge by complexity + job type + variants (not $/tris). Doc `SERVICES-3D-MODELING-RATE-CARD.md`; linked from SAL-2 + LEAD-SHEET; quote via **sales@atlasar.in**; not a SaaS meter. Delivery: ≤50K tris / ≤5 MB preferred; Atlas 50 MB hard max. |

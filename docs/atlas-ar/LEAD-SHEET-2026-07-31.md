@@ -125,7 +125,8 @@ Use SAL-2 Template A (workflow question + 15-min live placement). Design-partner
 1. Pick **3** from First 5 / Tier-1 for design-partner slots (SAL-4 Owner tab).  
 2. Send SAL-2 Template A from [outreach.html](../../public/sales-deck/outreach.html) — **From / Reply-To: sales@atlasar.in** — one clear CTA: 15-min floor placement.  
 3. Log touches in a simple sheet; do not spray all 28 in one day.  
-4. Optional: enrich LinkedIn titles before send (verify still current).
+4. Optional: enrich LinkedIn titles before send (verify still current).  
+5. If prospect needs models: quote via **sales@atlasar.in** per [SERVICES-3D-MODELING-RATE-CARD.md](./SERVICES-3D-MODELING-RATE-CARD.md) (optimize vs create + PBR tiers).
 
 ---
 
@@ -133,4 +134,4 @@ Use SAL-2 Template A (workflow question + 15-min live placement). Design-partner
 
 - Company sites: Snug, Loaf, Sofology, Furniture Village, Cozey, Cedora, Lifely, OPTO, Room & Board leadership signals via LinkedIn public profiles  
 - Industry: UK furniture trends 2026 (LogicTrade); DE/EU sofa channel mix (IndexBox summaries); Castlery Canada launch (Furniture Today); American Signature bankruptcy (Business Insider Nov 2025)  
-- Atlas: [ICP.md](./ICP.md) · [SAL-2-DESIGN-PARTNER-OUTREACH.md](./SAL-2-DESIGN-PARTNER-OUTREACH.md)
+- Atlas: [ICP.md](./ICP.md) · [SAL-2-DESIGN-PARTNER-OUTREACH.md](./SAL-2-DESIGN-PARTNER-OUTREACH.md) · [SERVICES-3D-MODELING-RATE-CARD.md](./SERVICES-3D-MODELING-RATE-CARD.md)

@@ -160,6 +160,7 @@
 | **ENG-38** | **Hard-block upload** at model limit (or explicit upgrade gate UX) | P1 | Full-stack | **done** (Batch 33) · API 403 + admin UI gate |
 | **PM-3** | **Align storage copy:** PRICING.md vs `plan-limits.ts` | P1 | PM | **done** · code + pricing page aligned to derived storage (models × 50 MB × 2.5): Starter 625 MB · Launch 3.7 GB · Growth 12.2 GB · Scale ~1.2 TB |
 | **PM-4** | **Admin seat copy vs product:** implement seat limits or remove 2/10 seat claims from PRICING + pricing page | P2 | PM | **done** ✅ (2026-07-31) · claims removed; seat metering not built |
+| **SERVICES-1** | **3D modeling services rate card** — poly optimize + PBR; quote via sales@; not SaaS SKU | P2 | Sales/Ops | **done** ✅ (2026-07-31) · [SERVICES-3D-MODELING-RATE-CARD.md](./SERVICES-3D-MODELING-RATE-CARD.md) · optional add-on, not MVP P0 |
 | **BILL-3** | **Overage via Dodo meters** (hybrid Usage-Based; auto-bill at payment cycle) | P1 | Backend | **done** (meters + ingest) · Account shows estimate/guide only — `/charge` unsupported on hybrids · see [DODO-OVERAGE-METERS.md](./DODO-OVERAGE-METERS.md) |
 | **BILL-4** | **Annual prepay SKUs** (20% off Launch/Growth) | P2 | Backend | **on_hold** · blocked by Batch 29 |
 | **MKT-7** | **Analytics story alignment** — usage dashboard vs JSON session log vs owner override; per-model analytics deferred | P2 | Marketing | **done** ✅ (2026-07-31) · copy only |
@@ -239,7 +240,7 @@ Full matrix: [PRICING-FEATURE-READINESS.md](./PRICING-FEATURE-READINESS.md)
 | **36** | **Design audit (graphics / UI / UX)** ✅ | DES-AUD · DES-3–11 scoped | **audit done** — implement 36a→e |
 | **35** | **QA-5 prod gate** ✅ | Sign-up → upload → placement ≤15 min | **done / PASS** (2026-07-31) |
 
-**MVP P0 status (2026-07-31):** No open MVP P0 ship blockers. Auth/tenant/AR E2E, SEO-1, ENG-36/37, DES-4, BILL-METER-SYNC (Lambda uploaded) are done. **BILL-1** remains **on_hold** (P0-for-scale, not MVP launch blocker). Remaining work is P1/P2 (MKT-3b media, PM-4, SEO-2, etc.).
+**MVP P0 status (2026-07-31):** No open MVP P0 ship blockers. Auth/tenant/AR E2E, SEO-1, ENG-36/37, DES-4, BILL-METER-SYNC (Lambda uploaded) are done. **BILL-1** remains **on_hold** (P0-for-scale, not MVP launch blocker). Remaining work is P1/P2 (MKT-3b media, SEO-2 host-split, etc.). **SERVICES-1** rate card done (docs/ops only — not SaaS).
 
 **Orchestration gate:** Each batch = Agents Orchestrator scope → implement → Evidence Collector / QA-5 spot-check → **user confirm** → backlog update (NEXUS-Sprint model).
 
