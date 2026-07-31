@@ -45,6 +45,11 @@ Auth, onboard, admin, account, owner, demo, `/ar/*`, `/w/*`, `/sales-deck/*`, `/
 
 ## Phase 2 (backlog SEO-2)
 
-Prerender/static HTML shells for the six URLs, content hub, richer Offer schema, optional marketing host split — only after Phase 1 GSC coverage is healthy.
+- [x] **Batch 1 — prerender shells** for six indexable URLs (`npm run prerender:seo` after Vite) + richer pricing `Offer` / `UnitPriceSpecification` JSON-LD (2026-07-31)
+- [ ] Content hub
+- [ ] Optional marketing host split
+- [ ] Per-page OG images (beyond shared default)
 
-**Phase 1 search-ops status (2026-07-31):** GSC Verified · GSC sitemap Success · Request indexing for `/` `/pricing` `/about` · Bing sitemap Success. **Phase 1 search-ops complete.** SEO-2 waits for healthy coverage over time.
+**Amplify Console:** re-paste [`AMPLIFY-REDIRECTS.json`](./AMPLIFY-REDIRECTS.json) so `/pricing` → `/pricing/index.html` (200) sits **before** the SPA catch-all.
+
+**Phase 1 search-ops status (2026-07-31):** GSC Verified · GSC sitemap Success · Request indexing for `/` `/pricing` `/about` · Bing sitemap Success. **Phase 1 search-ops complete.** SEO-2 Batch 1 shipped (hub/host-split still open).

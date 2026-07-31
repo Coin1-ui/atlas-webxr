@@ -42,6 +42,36 @@
     "condition": null
   },
   {
+    "source": "/pricing",
+    "status": "200",
+    "target": "/pricing/index.html",
+    "condition": null
+  },
+  {
+    "source": "/about",
+    "status": "200",
+    "target": "/about/index.html",
+    "condition": null
+  },
+  {
+    "source": "/legal/terms",
+    "status": "200",
+    "target": "/legal/terms/index.html",
+    "condition": null
+  },
+  {
+    "source": "/legal/privacy",
+    "status": "200",
+    "target": "/legal/privacy/index.html",
+    "condition": null
+  },
+  {
+    "source": "/legal/acceptable-use",
+    "status": "200",
+    "target": "/legal/acceptable-use/index.html",
+    "condition": null
+  },
+  {
     "source": "/sales-deck",
     "status": "200",
     "target": "/sales-deck/index.html",

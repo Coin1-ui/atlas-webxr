@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "npx vite",
     "dev:phone": "npx vite --host",
-    "build": "tsc --noEmit && node scripts/sync-sales-deck-config.mjs && vite build",
+    "build": "tsc --noEmit && node scripts/sync-sales-deck-config.mjs && vite build && npm run prerender:seo",
+    "prerender:seo": "npx --yes tsx scripts/prerender-seo-shells.ts",
     "preview": "vite preview",
     "deck": "npx vite --open /sales-deck/index.html",
     "deck:training": "npx vite --open /sales-deck/training.html",

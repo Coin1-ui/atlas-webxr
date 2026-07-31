@@ -160,8 +160,8 @@
 | **BILL-3** | **Overage via Dodo meters** (hybrid Usage-Based; auto-bill at payment cycle) | P1 | Backend | **done** (meters + ingest) · Account shows estimate/guide only — `/charge` unsupported on hybrids · see [DODO-OVERAGE-METERS.md](./DODO-OVERAGE-METERS.md) |
 | **BILL-4** | **Annual prepay SKUs** (20% off Launch/Growth) | P2 | Backend | **on_hold** · blocked by Batch 29 |
 | **MKT-7** | **Analytics story alignment** — usage dashboard vs JSON session log vs owner override; per-model analytics deferred | P2 | Marketing | **done** ✅ (2026-07-31) · copy only |
-| **SEO-1** | **Technical SEO Phase 1** — www.atlasar.in canonicals, robots/sitemap, SPA per-route meta + JSON-LD, noindex private tools | P0 | Marketing/Eng | **done** (2026-07-30) · [SEO-OPS-CHECKLIST.md](./SEO-OPS-CHECKLIST.md) |
-| **SEO-2** | **SEO Phase 2** — prerender shells for `/` `/pricing` `/about` legal; content hub; optional marketing host split; per-page OG | P2 | Marketing/Eng | todo · after GSC green on SEO-1 |
+| **SEO-1** | **Technical SEO Phase 1** — www.atlasar.in canonicals, robots/sitemap, SPA per-route meta + JSON-LD, noindex private tools | P0 | Marketing/Eng | **done** (2026-07-30) · GSC + Bing sitemap Success 2026-07-31 · [SEO-OPS-CHECKLIST.md](./SEO-OPS-CHECKLIST.md) |
+| **SEO-2** | **SEO Phase 2** — prerender shells for `/` `/pricing` `/about` legal; content hub; optional marketing host split; per-page OG | P2 | Marketing/Eng | **partial** · Batch 1 prerender shells + Offer schema 2026-07-31 · hub / host-split / per-page OG still todo |
 | **SAL-4** | **Design partner ops runbook** — owner workflow for $59 Growth, coupons, session log, slot tracking | P2 | Sales/Ops | **done** ✅ · runbook + Owner Design partners tab (3 slots); CRM export out of scope |
 | **ENG-39** | **Owner dashboard: customer owner emails in Customers table** | P1 | Full-stack | **done** ✅ (Batch 34) |
 | **QA-5** | **SAL-3 QA gate on prod:** sign-up → upload → floor placement ≤15 min (Android + iOS) | P1 | QA | **done / PASS** ✅ (2026-07-17 confirm · Batch 35 closed 2026-07-31) |

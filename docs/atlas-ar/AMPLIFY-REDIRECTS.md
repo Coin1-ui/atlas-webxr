@@ -22,16 +22,18 @@ That **replaced** the richer rules from `amplify.yml` (slash strips + sales-deck
 |-------|------|---------|
 | 1–2 | Apex → www (301) | Canonical host |
 | 3–7 | `/pricing/` → `/pricing` (etc.) | Strip trailing slash |
-| 8–16 | sales-deck / storyboard → real HTML (200) | Enablement pages |
+| 8–12 | `/pricing` → `/pricing/index.html` (etc.) **200** | SEO-2 prerender shells |
+| 13–21 | sales-deck / storyboard → real HTML (200) | Enablement pages |
 | Last | SPA regex → `/index.html` (**200**, not 404-200) | Serve app **without** Amplify adding `/` on miss |
 
-Static files with extensions (`.js`, `.css`, `.txt`, `.xml`, images, video) are **not** rewritten — `robots.txt` / `sitemap.xml` keep working.
+Static files with extensions (`.js`, `.css`, `.txt`, `.xml`, images, video, `.html`) are **not** rewritten by the SPA rule — `robots.txt` / `sitemap.xml` / shells keep working.
 
 ## After Save — verify
 
 ```text
 https://www.atlasar.in/pricing     → 200, URL stays /pricing (no slash)
 https://www.atlasar.in/pricing/    → 301 → /pricing
+View-source /pricing               → title/canonical for Pricing (not home) + JSON-LD
 https://www.atlasar.in/robots.txt  → 200
 https://www.atlasar.in/sitemap.xml → 200
 https://atlasar.in/                → 301 → https://www.atlasar.in/

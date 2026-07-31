@@ -284,13 +284,26 @@ function offersGraphLd(): Record<string, unknown>[] {
     priceCurrency: "USD",
     priceValidUntil: "2027-12-31",
     availability: "https://schema.org/InStock",
+    category: "SaaSSubscription",
     seller: { "@id": `${SITE_ORIGIN}/#organization` },
+    priceSpecification: {
+      "@type": "UnitPriceSpecification",
+      price: offer.price,
+      priceCurrency: "USD",
+      billingDuration: "P1M",
+      unitText: "MONTH",
+      referenceQuantity: {
+        "@type": "QuantitativeValue",
+        value: 1,
+        unitCode: "MON",
+      },
+    },
   }));
 }
 
-function injectJsonLdForRoute(meta: SeoRouteMeta): void {
-  clearJsonLd();
-  if (meta.robots !== "index") return;
+/** Build schema.org @graph for an indexable route (shared by SPA + prerender). */
+export function buildRouteJsonLdGraph(meta: SeoRouteMeta): Record<string, unknown> | null {
+  if (meta.robots !== "index") return null;
 
   const graph: Record<string, unknown>[] = [
     organizationLd(),
@@ -308,13 +321,95 @@ function injectJsonLdForRoute(meta: SeoRouteMeta): void {
     graph.push(...offersGraphLd());
   }
 
-  setJsonLd(
-    "graph",
-    {
-      "@context": "https://schema.org",
-      "@graph": graph,
-    },
+  return {
+    "@context": "https://schema.org",
+    "@graph": graph,
+  };
+}
+
+function injectJsonLdForRoute(meta: SeoRouteMeta): void {
+  clearJsonLd();
+  const payload = buildRouteJsonLdGraph(meta);
+  if (!payload) return;
+  setJsonLd("graph", payload);
+}
+
+export function resolveSeoRouteMeta(pathname: string): SeoRouteMeta {
+  return resolveMeta(normalizeSeoPath(pathname));
+}
+
+function escapeHtmlAttr(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/"/g, "&quot;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+/**
+ * Rewrite a built index.html shell with per-route SEO tags (Node / prerender).
+ * Does not execute the SPA — crawlers that skip JS still see correct head.
+ */
+export function applySeoTagsToHtml(html: string, meta: SeoRouteMeta): string {
+  const path = normalizeSeoPath(meta.path);
+  const canonicalPath = path === "/" ? "/" : path;
+  const canonicalUrl = `${SITE_ORIGIN}${canonicalPath}`;
+  const robotsContent = meta.robots === "index" ? "index, follow" : "noindex, nofollow";
+  const title = escapeHtmlAttr(meta.title);
+  const description = escapeHtmlAttr(meta.description);
+  const canonicalEsc = escapeHtmlAttr(canonicalUrl);
+  const ogImage = escapeHtmlAttr(DEFAULT_OG_IMAGE);
+  const siteName = escapeHtmlAttr(SITE_NAME);
+
+  let out = html;
+  out = out.replace(/<title>[^<]*<\/title>/i, `<title>${title}</title>`);
+  out = out.replace(
+    /<meta\s+name="description"\s+content="[^"]*"\s*\/?>/i,
+    `<meta name="description" content="${description}" />`,
   );
+  out = out.replace(
+    /<meta\s+name="robots"\s+content="[^"]*"\s*\/?>/i,
+    `<meta name="robots" content="${robotsContent}" />`,
+  );
+  out = out.replace(
+    /<link\s+rel="canonical"\s+href="[^"]*"\s*\/?>/i,
+    `<link rel="canonical" href="${canonicalEsc}" />`,
+  );
+
+  const pair = (prop: string, content: string) =>
+    out.replace(
+      new RegExp(`<meta\\s+property="${prop}"\\s+content="[^"]*"\\s*\\/?>`, "i"),
+      `<meta property="${prop}" content="${content}" />`,
+    );
+  out = pair("og:title", title);
+  out = pair("og:description", description);
+  out = pair("og:url", canonicalEsc);
+  out = pair("og:type", "website");
+  out = pair("og:site_name", siteName);
+  out = pair("og:image", ogImage);
+
+  const tw = (name: string, content: string) =>
+    out.replace(
+      new RegExp(`<meta\\s+name="${name}"\\s+content="[^"]*"\\s*\\/?>`, "i"),
+      `<meta name="${name}" content="${content}" />`,
+    );
+  out = tw("twitter:card", "summary_large_image");
+  out = tw("twitter:title", title);
+  out = tw("twitter:description", description);
+  out = tw("twitter:image", ogImage);
+
+  // Strip prior prerender / SPA JSON-LD then inject route graph
+  out = out.replace(/<script[^>]*id="atlas-seo-ld-[^"]*"[^>]*>[\s\S]*?<\/script>\s*/gi, "");
+  out = out.replace(/<script[^>]*type="application\/ld\+json"[^>]*>[\s\S]*?<\/script>\s*/gi, "");
+
+  const ld = buildRouteJsonLdGraph(meta);
+  if (ld) {
+    const json = JSON.stringify(ld).replace(/</g, "\\u003c");
+    const tag = `<script type="application/ld+json" id="atlas-seo-ld-graph">${json}</script>\n`;
+    out = out.replace(/<\/head>/i, `${tag}</head>`);
+  }
+
+  return out;
 }
 
 /**
