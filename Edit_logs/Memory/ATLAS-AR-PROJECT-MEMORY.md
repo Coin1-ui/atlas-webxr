@@ -3,7 +3,7 @@
 **Path:** `D:\AI\atlas-webxr\Edit_logs\Memory\ATLAS-AR-PROJECT-MEMORY.md`  
 **Rule:** Before implementing or diagnosing any Atlas AR task, read this file + the relevant domain memory below. Update this file after each completed task so mistakes are not repeated.
 
-Last updated: 2026-07-31 (Brand SERP homepage signals)
+Last updated: 2026-07-31 (Dodo overage account trace)
 
 ---
 
@@ -248,3 +248,4 @@ Run: `npm run test:all`, `npm run test:design-audit`, `npm run test:des4`, `npm 
 | 2026-07-31 | **Launch readiness audit.** Soft launch **GO WITH CAVEATS**; full self-serve GTM **NOT READY**. Doc `LAUNCH-READINESS-2026-07-31.md` + PRICING-FEATURE-READINESS refresh. **OPS-INGEST PASS** — `/health` `sandboxDodoIngest:false` / `sandboxUsageSeed:false` (re-probe). |
 | 2026-07-31 | **SERP favicon fix.** Google showed grey globe because `/favicon.ico` 404. Added multi-size `public/favicon.ico` + `<link rel="icon" href="/favicon.ico" sizes="any">` in `index.html`. Amplify SPA rewrite already excludes `.ico`. **Founder:** GSC URL Inspection → Request indexing; SERP icon can take days–weeks. |
 | 2026-07-31 | **Brand SERP signals.** Home title → Official white-label floor AR; JSON-LD `alternateName` AtlasAR/atlasar; H1 brand-first; About disambiguation vs loaders/WP plugin; Pricing title leads with Pricing. SEO-OPS brand checklist. **Founder:** re-Request indexing for `https://www.atlasar.in/` (homepage). No guarantee vs machinery for `atlas ar`. |
+| 2026-07-31 | **Dodo overage trace (test).** Today’s surplus: **aryan.barua007@gmail.com** `pay_0NkNxZTsxympGoNbZJoIo` Launch **$59.14** (+$0.14). Cause: storage meter `free_threshold` **negative** on `sub_0NkJM4YIKzoUK0ksXz3iR`. Doc `DODO-OVERAGE-TRACE-2026-07-31.md` · script `investigate-dodo-overage-today.mjs`. Remount meters / optional refund. |
