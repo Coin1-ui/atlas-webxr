@@ -3,7 +3,7 @@
 **Path:** `D:\AI\atlas-webxr\Edit_logs\Memory\ATLAS-AR-PROJECT-MEMORY.md`  
 **Rule:** Before implementing or diagnosing any Atlas AR task, read this file + the relevant domain memory below. Update this file after each completed task so mistakes are not repeated.
 
-Last updated: 2026-07-31 (Scale contact-sales click UX)
+Last updated: 2026-07-31 (OPS-SCALE-1 Owner Scale CTA)
 
 ---
 
@@ -244,3 +244,4 @@ Run: `npm run test:all`, `npm run test:design-audit`, `npm run test:des4`, `npm 
 | 2026-07-31 | **SERVICES-1 done.** 3D modeling services rate card: charge by complexity + job type + variants (not $/tris). Doc `SERVICES-3D-MODELING-RATE-CARD.md`; linked from SAL-2 + LEAD-SHEET; quote via **sales@atlasar.in**; not a SaaS meter. Delivery: ≤50K tris / ≤5 MB preferred; Atlas 50 MB hard max. |
 | 2026-07-31 | **Scale CTA fix.** Pricing Scale “Contact sales” was wired to `data-action=get-started` (signup). Now `mailto:sales@atlasar.in` via `CONTACT_SALES` in `marketing-pricing.ts`. Launch/Growth unchanged. |
 | 2026-07-31 | **Scale contact-sales UX.** Mailto alone was a silent no-op without an OS mail client. Scale uses `data-action=contact-sales`: mailto + clipboard + live status; email shown under button; nav-loading skips this action. |
+| 2026-07-31 | **OPS-SCALE-1 done.** SAL-5 Scale ops runbook; Owner Customers **Send Scale CTA** / **Copy Scale CTA** (cc sales@); Scale plan hint (sales-led, no Dodo SKU). Entitle via Save plan → Scale after signed quote. |

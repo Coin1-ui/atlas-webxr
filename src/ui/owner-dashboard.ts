@@ -21,8 +21,34 @@ import {
   parseCouponCreateForm,
   syncCouponOfferFields,
 } from "../shared/coupon-offer-form";
+import { CONTACT_SALES } from "../shared/contact";
 import { MKT_ASSETS } from "./marketing-assets";
 
+const SCALE_PRICING_URL = "https://www.atlasar.in/pricing";
+
+function scaleCtaEmailBody(): string {
+  return [
+    "Hi,",
+    "",
+    "Thanks for your interest in Atlas AR Scale (multi-brand / custom limits, from $499/mo).",
+    "",
+    `Open pricing and use Contact sales on the Scale card: ${SCALE_PRICING_URL}`,
+    `Or email us directly: ${CONTACT_SALES}`,
+    "",
+    "Scale is sales-assisted (not self-serve checkout). We will send a quote after a short discovery call.",
+    "",
+    "— Atlas AR",
+  ].join("\n");
+}
+
+function scaleCtaMailtoHref(toEmail: string): string {
+  const params = new URLSearchParams({
+    cc: CONTACT_SALES,
+    subject: "Atlas AR Scale",
+    body: scaleCtaEmailBody(),
+  });
+  return `mailto:${toEmail}?${params.toString()}`;
+}
 function escapeHtml(s: string): string {
   return s
     .replace(/&/g, "&amp;")
@@ -234,6 +260,9 @@ export function renderOwnerDashboard(
                      <select class="field-input owner-plan-select" data-plan-for="${escapeHtml(w.id)}">
                        ${tierSelectFor(w)}
                      </select>
+                     <p class="owner-meta owner-scale-plan-hint" data-scale-hint-for="${escapeHtml(w.id)}" ${
+                       billingTierFromWorkspace(w) === "scale" ? "" : "hidden"
+                     }>Sales-led — set only after signed quote (no Dodo Scale checkout). Runbook: SAL-5.</p>
                    </td>
                    <td>${featureTogglesFor(w)}</td>
                    <td>
@@ -245,6 +274,12 @@ export function renderOwnerDashboard(
                    </td>
                    <td class="owner-row-actions">
                      <button type="button" class="a-btn a-btn--ghost a-btn--sm" data-save-plan="${escapeHtml(w.id)}">Save plan</button>
+                     ${
+                       w.ownerEmails?.[0]
+                         ? `<a class="a-btn a-btn--ghost a-btn--sm" data-send-scale-cta href="${escapeHtml(scaleCtaMailtoHref(w.ownerEmails[0]))}">Send Scale CTA</a>
+                     <button type="button" class="a-btn a-btn--ghost a-btn--sm" data-copy-scale-cta data-email="${escapeHtml(w.ownerEmails[0])}">Copy Scale CTA</button>`
+                         : `<button type="button" class="a-btn a-btn--ghost a-btn--sm" disabled title="Owner email required">Send Scale CTA</button>`
+                     }
                      ${
                        w.billingProvider
                          ? `<button type="button" class="a-btn a-btn--ghost a-btn--sm a-btn--danger-ghost" data-refund="${escapeHtml(w.id)}" data-provider="${escapeHtml(w.billingProvider)}">Issue refund</button>`
@@ -378,6 +413,7 @@ export function renderOwnerDashboard(
               <button type="button" class="a-btn a-btn--ghost a-btn--sm" data-action="refresh-workspaces">Refresh</button>
             </div>
             ${emailLookupHint}
+            <p class="auth-hint">Scale is sales-led (<code>sales@atlasar.in</code>). Use <strong>Send Scale CTA</strong> to email the Contact-sales path, then set plan to Scale after a signed quote — see <code>docs/atlas-ar/SAL-5-SCALE-OPS.md</code>.</p>
             ${workspaceRows}
             <details class="owner-restrict-form-wrap">
               <summary>Restrict account manually</summary>
@@ -530,6 +566,42 @@ export function renderOwnerDashboard(
       if (!id) return;
       const sel = root.querySelector<HTMLSelectElement>(`[data-plan-for="${id}"]`);
       if (sel) void handlers.onSetPlan(id, sel.value as PlanTierId);
+    });
+  });
+
+  root.querySelectorAll<HTMLSelectElement>("[data-plan-for]").forEach((sel) => {
+    const id = sel.getAttribute("data-plan-for");
+    if (!id) return;
+    const hint = root.querySelector<HTMLElement>(`[data-scale-hint-for="${id}"]`);
+    const syncHint = () => {
+      if (!hint) return;
+      hint.hidden = sel.value !== "scale";
+    };
+    sel.addEventListener("change", syncHint);
+    syncHint();
+  });
+
+  root.querySelectorAll<HTMLElement>("[data-copy-scale-cta]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const email = btn.getAttribute("data-email") ?? "";
+      const text = [
+        `To: ${email}`,
+        `Cc: ${CONTACT_SALES}`,
+        "Subject: Atlas AR Scale",
+        "",
+        scaleCtaEmailBody(),
+      ].join("\n");
+      void navigator.clipboard?.writeText(text).then(
+        () => {
+          btn.textContent = "Copied";
+          window.setTimeout(() => {
+            btn.textContent = "Copy Scale CTA";
+          }, 2000);
+        },
+        () => {
+          window.prompt("Copy Scale CTA:", text);
+        },
+      );
     });
   });
 

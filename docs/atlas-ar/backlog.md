@@ -161,6 +161,7 @@
 | **PM-3** | **Align storage copy:** PRICING.md vs `plan-limits.ts` | P1 | PM | **done** · code + pricing page aligned to derived storage (models × 50 MB × 2.5): Starter 625 MB · Launch 3.7 GB · Growth 12.2 GB · Scale ~1.2 TB |
 | **PM-4** | **Admin seat copy vs product:** implement seat limits or remove 2/10 seat claims from PRICING + pricing page | P2 | PM | **done** ✅ (2026-07-31) · claims removed; seat metering not built |
 | **SERVICES-1** | **3D modeling services rate card** — poly optimize + PBR; quote via sales@; not SaaS SKU | P2 | Sales/Ops | **done** ✅ (2026-07-31) · [SERVICES-3D-MODELING-RATE-CARD.md](./SERVICES-3D-MODELING-RATE-CARD.md) · optional add-on, not MVP P0 |
+| **OPS-SCALE-1** | **Scale via Owner** — SAL-5 runbook + Send/Copy Scale CTA on Customers | P2 | Sales/Ops | **done** ✅ (2026-07-31) · [SAL-5-SCALE-OPS.md](./SAL-5-SCALE-OPS.md) · sales-led; no Dodo Scale SKU |
 | **BILL-3** | **Overage via Dodo meters** (hybrid Usage-Based; auto-bill at payment cycle) | P1 | Backend | **done** (meters + ingest) · Account shows estimate/guide only — `/charge` unsupported on hybrids · see [DODO-OVERAGE-METERS.md](./DODO-OVERAGE-METERS.md) |
 | **BILL-4** | **Annual prepay SKUs** (20% off Launch/Growth) | P2 | Backend | **on_hold** · blocked by Batch 29 |
 | **MKT-7** | **Analytics story alignment** — usage dashboard vs JSON session log vs owner override; per-model analytics deferred | P2 | Marketing | **done** ✅ (2026-07-31) · copy only |

@@ -67,3 +67,4 @@
 - Outreach templates: `/sales-deck/outreach`
 - Training: `/sales-deck/training`
 - Coupons: Owner → Discount coupons
+- **Scale (sales-led):** [SAL-5-SCALE-OPS.md](./SAL-5-SCALE-OPS.md) · Owner → Customers → Send Scale CTA / Save plan Scale
