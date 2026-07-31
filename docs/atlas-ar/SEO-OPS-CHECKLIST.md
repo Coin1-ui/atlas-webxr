@@ -47,9 +47,11 @@ Auth, onboard, admin, account, owner, demo, `/ar/*`, `/w/*`, `/sales-deck/*`, `/
 
 - [x] **Batch 1 — prerender shells** for six indexable URLs (`npm run prerender:seo` after Vite) + richer pricing `Offer` / `UnitPriceSpecification` JSON-LD (2026-07-31)
 - [x] **Batch 1 live verify** (2026-07-31): `/pricing` `/about` `/legal/*` return route-specific title/canonical + JSON-LD (not home SPA); `/pricing/` → 301 → `/pricing`
-- [x] Per-page OG images (beyond shared default) — Batch 2 done 2026-07-31
+- [x] Per-page OG images (beyond shared default) — Batch 2 done 2026-07-31; **Batch 2b** optimized `og-*.jpg` 1200×630 + width/height/alt (2026-07-31)
 - [ ] Content hub
 - [ ] Optional marketing host split
+
+**Note:** `og:image` is for **link previews** (Slack/LinkedIn/X), not an on-page hero. Verify with view-source or Sharing Debugger “Scrape again” after deploy.
 
 **Amplify Console:** redirects re-pasted and live-verified for SEO-2 shells (2026-07-31).
 

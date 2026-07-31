@@ -2,7 +2,10 @@
 
 export const SITE_ORIGIN = "https://www.atlasar.in";
 export const SITE_NAME = "Atlas AR";
-export const DEFAULT_OG_IMAGE = `${SITE_ORIGIN}/marketing/hero-ar-phone.png`;
+/** Optimized 1200×630 JPEG for scrapers (Batch 2b). */
+export const DEFAULT_OG_IMAGE = `${SITE_ORIGIN}/marketing/og-home.jpg`;
+export const OG_IMAGE_WIDTH = "1200";
+export const OG_IMAGE_HEIGHT = "630";
 export const ORG_LOGO = `${SITE_ORIGIN}/apple-touch-icon-180.png`;
 
 const JSON_LD_PREFIX = "atlas-seo-ld-";
@@ -16,6 +19,8 @@ export type SeoRouteMeta = {
   robots: SeoRobots;
   /** Absolute OG/Twitter image URL (defaults to DEFAULT_OG_IMAGE). */
   ogImage?: string;
+  /** Alt text for og:image:alt */
+  ogImageAlt?: string;
   /** Inject SoftwareApplication on this route */
   softwareApp?: boolean;
   /** Inject pricing FAQ + Offer graph */
@@ -31,7 +36,8 @@ export const INDEXABLE_SEO_ROUTES: SeoRouteMeta[] = [
     description:
       "White-label floor AR for furniture retail and B2B field sales. Share a branded link; shoppers place true-scale 3D on the real floor in Chrome or Safari—no app install.",
     robots: "index",
-    ogImage: `${SITE_ORIGIN}/marketing/hero-ar-phone.png`,
+    ogImage: `${SITE_ORIGIN}/marketing/og-home.jpg`,
+    ogImageAlt: "Atlas AR — phone showing white-label floor AR placement",
     softwareApp: true,
   },
   {
@@ -40,7 +46,8 @@ export const INDEXABLE_SEO_ROUTES: SeoRouteMeta[] = [
     description:
       "Atlas AR plans for white-label floor AR workspaces. Self-serve from $5/mo incl. tax, unlimited viewers and reps, browser AR + 3D inspect in Chrome and Safari—no app store.",
     robots: "index",
-    ogImage: `${SITE_ORIGIN}/marketing/steps-workflow.png`,
+    ogImage: `${SITE_ORIGIN}/marketing/og-pricing.jpg`,
+    ogImageAlt: "Atlas AR pricing — upload, brand, and share workflow",
     pricingOffers: true,
     pricingFaq: true,
   },
@@ -50,7 +57,8 @@ export const INDEXABLE_SEO_ROUTES: SeoRouteMeta[] = [
     description:
       "Atlas AR is white-label floor AR from Omni Manual for furniture retailers and field teams. Upload once, brand your link, place true-scale models in browser AR—no app install.",
     robots: "index",
-    ogImage: `${SITE_ORIGIN}/marketing/usecase-field-sales.png`,
+    ogImage: `${SITE_ORIGIN}/marketing/og-about.jpg`,
+    ogImageAlt: "Atlas AR for B2B field sales — place products in the buyer space",
   },
   {
     path: "/legal/terms",
@@ -58,7 +66,8 @@ export const INDEXABLE_SEO_ROUTES: SeoRouteMeta[] = [
     description:
       "Terms of service for Atlas AR, the white-label floor AR workspace for furniture retail and B2B field sales. Read usage, account, and platform terms before you sign up.",
     robots: "index",
-    ogImage: `${SITE_ORIGIN}/marketing/auth-workspace-hero.png`,
+    ogImage: `${SITE_ORIGIN}/marketing/og-legal.jpg`,
+    ogImageAlt: "Atlas AR branded workspace admin",
   },
   {
     path: "/legal/privacy",
@@ -66,7 +75,8 @@ export const INDEXABLE_SEO_ROUTES: SeoRouteMeta[] = [
     description:
       "Privacy policy for Atlas AR. How Omni Manual handles workspace admin data, tenant isolation, and shopper sessions that open branded AR links without creating viewer accounts.",
     robots: "index",
-    ogImage: `${SITE_ORIGIN}/marketing/auth-workspace-hero.png`,
+    ogImage: `${SITE_ORIGIN}/marketing/og-legal.jpg`,
+    ogImageAlt: "Atlas AR branded workspace admin",
   },
   {
     path: "/legal/acceptable-use",
@@ -74,7 +84,8 @@ export const INDEXABLE_SEO_ROUTES: SeoRouteMeta[] = [
     description:
       "Acceptable use rules for Atlas AR workspaces—catalog content, branding, sharing links, and prohibited misuse of browser-based floor AR for retail and field sales.",
     robots: "index",
-    ogImage: `${SITE_ORIGIN}/marketing/auth-workspace-hero.png`,
+    ogImage: `${SITE_ORIGIN}/marketing/og-legal.jpg`,
+    ogImageAlt: "Atlas AR branded workspace admin",
   },
 ];
 
@@ -367,6 +378,7 @@ export function applySeoTagsToHtml(html: string, meta: SeoRouteMeta): string {
   const description = escapeHtmlAttr(meta.description);
   const canonicalEsc = escapeHtmlAttr(canonicalUrl);
   const ogImage = escapeHtmlAttr(meta.ogImage || DEFAULT_OG_IMAGE);
+  const ogAlt = escapeHtmlAttr(meta.ogImageAlt || meta.title);
   const siteName = escapeHtmlAttr(SITE_NAME);
 
   let out = html;
@@ -384,27 +396,39 @@ export function applySeoTagsToHtml(html: string, meta: SeoRouteMeta): string {
     `<link rel="canonical" href="${canonicalEsc}" />`,
   );
 
-  const pair = (prop: string, content: string) =>
-    out.replace(
-      new RegExp(`<meta\\s+property="${prop}"\\s+content="[^"]*"\\s*\\/?>`, "i"),
-      `<meta property="${prop}" content="${content}" />`,
-    );
-  out = pair("og:title", title);
-  out = pair("og:description", description);
-  out = pair("og:url", canonicalEsc);
-  out = pair("og:type", "website");
-  out = pair("og:site_name", siteName);
-  out = pair("og:image", ogImage);
+  const setProp = (prop: string, content: string): void => {
+    const re = new RegExp(`<meta\\s+property="${prop}"\\s+content="[^"]*"\\s*\\/?>`, "i");
+    if (re.test(out)) {
+      out = out.replace(re, `<meta property="${prop}" content="${content}" />`);
+    }
+  };
+  setProp("og:title", title);
+  setProp("og:description", description);
+  setProp("og:url", canonicalEsc);
+  setProp("og:type", "website");
+  setProp("og:site_name", siteName);
 
-  const tw = (name: string, content: string) =>
-    out.replace(
-      new RegExp(`<meta\\s+name="${name}"\\s+content="[^"]*"\\s*\\/?>`, "i"),
-      `<meta name="${name}" content="${content}" />`,
-    );
-  out = tw("twitter:card", "summary_large_image");
-  out = tw("twitter:title", title);
-  out = tw("twitter:description", description);
-  out = tw("twitter:image", ogImage);
+  // Strip prior OG image dimension tags, then set image + dims + alt once
+  out = out.replace(/<meta\s+property="og:image(?::(?:width|height|alt))?"\s+content="[^"]*"\s*\/?>\s*/gi, "");
+  out = out.replace(
+    /(<meta\s+property="og:site_name"[^>]*\/?>)/i,
+    `$1
+    <meta property="og:image" content="${ogImage}" />
+    <meta property="og:image:width" content="${OG_IMAGE_WIDTH}" />
+    <meta property="og:image:height" content="${OG_IMAGE_HEIGHT}" />
+    <meta property="og:image:alt" content="${ogAlt}" />`,
+  );
+
+  const setName = (name: string, content: string): void => {
+    const re = new RegExp(`<meta\\s+name="${name}"\\s+content="[^"]*"\\s*\\/?>`, "i");
+    if (re.test(out)) {
+      out = out.replace(re, `<meta name="${name}" content="${content}" />`);
+    }
+  };
+  setName("twitter:card", "summary_large_image");
+  setName("twitter:title", title);
+  setName("twitter:description", description);
+  setName("twitter:image", ogImage);
 
   // Strip prior prerender / SPA JSON-LD then inject route graph
   out = out.replace(/<script[^>]*id="atlas-seo-ld-[^"]*"[^>]*>[\s\S]*?<\/script>\s*/gi, "");
@@ -441,6 +465,7 @@ export function applyRouteMeta(pathname: string): void {
   ensureCanonical().setAttribute("href", canonicalUrl);
 
   const ogImage = meta.ogImage || DEFAULT_OG_IMAGE;
+  const ogAlt = meta.ogImageAlt || meta.title;
 
   ensureMetaByName("og:title", "property").setAttribute("content", meta.title);
   ensureMetaByName("og:description", "property").setAttribute("content", meta.description);
@@ -448,6 +473,9 @@ export function applyRouteMeta(pathname: string): void {
   ensureMetaByName("og:type", "property").setAttribute("content", "website");
   ensureMetaByName("og:site_name", "property").setAttribute("content", SITE_NAME);
   ensureMetaByName("og:image", "property").setAttribute("content", ogImage);
+  ensureMetaByName("og:image:width", "property").setAttribute("content", OG_IMAGE_WIDTH);
+  ensureMetaByName("og:image:height", "property").setAttribute("content", OG_IMAGE_HEIGHT);
+  ensureMetaByName("og:image:alt", "property").setAttribute("content", ogAlt);
 
   ensureMetaByName("twitter:card").setAttribute("content", "summary_large_image");
   ensureMetaByName("twitter:title").setAttribute("content", meta.title);
