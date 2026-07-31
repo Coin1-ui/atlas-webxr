@@ -27,7 +27,7 @@ Canonical host: **`https://www.atlasar.in`** (www wins). Code and sitemap assume
 - [x] GSC HTML verification file live: `https://www.atlasar.in/google6baa8a3d0d627b22.html` (Amplify `cf78e70`, 200 + exact body 2026-07-31)
 - [x] Google Search Console property: `https://www.atlasar.in/` — **Verified** (HTML file, 2026-07-31)
 - [x] Submit sitemap: `https://www.atlasar.in/sitemap.xml` — **Success** in GSC (2026-07-31)
-- [ ] Bing Webmaster Tools property + same sitemap (**next batch**)
+- [x] Bing Webmaster Tools property + same sitemap — **Success** (2026-07-31; live sitemap 200 / 6 locs confirmed)
 - [x] Request indexing for `/`, `/pricing`, `/about` — done 2026-07-31 (URL Inspection)
 
 ## Indexable allowlist
@@ -47,4 +47,4 @@ Auth, onboard, admin, account, owner, demo, `/ar/*`, `/w/*`, `/sales-deck/*`, `/
 
 Prerender/static HTML shells for the six URLs, content hub, richer Offer schema, optional marketing host split — only after Phase 1 GSC coverage is healthy.
 
-**Phase 1 GSC status (2026-07-31):** Ownership Verified · sitemap Success · Request indexing for `/` `/pricing` `/about` done. **Only open search-ops item:** Bing Webmaster. SEO-2 waits for healthy coverage.
+**Phase 1 search-ops status (2026-07-31):** GSC Verified · GSC sitemap Success · Request indexing for `/` `/pricing` `/about` · Bing sitemap Success. **Phase 1 search-ops complete.** SEO-2 waits for healthy coverage over time.
