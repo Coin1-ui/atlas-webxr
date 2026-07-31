@@ -4,7 +4,7 @@
 
 **Parked (billing):** Natural renewal check on test-admin `sub_0NkDIEC…` ~2026-07-30T05:21Z — corrected PPUs · meterSync · no old-sub charge. Live cutover / Zoho on hold.
 
-**Latest orchestration batch (2026-07-31):** **SEO-2 Batch 3 — Content hub LIVE PASS.** `/learn` + 3 guides; shells + sitemap (10 locs); Console redirects confirmed (`/learn` 200 route meta · `/learn/` 301). Host split deferred. **User:** GSC Request indexing for `/learn*`. See [BATCH-SEO2-3-CONTENT-HUB.md](./BATCH-SEO2-3-CONTENT-HUB.md).
+**Latest orchestration batch (2026-07-31):** **SEO-2 Batch 3 — Content hub LIVE PASS + GSC indexing done.** `/learn` + 3 guides; shells + sitemap (10 locs); Console redirects confirmed; GSC Request indexing for `/learn*` confirmed. Host split deferred. See [BATCH-SEO2-3-CONTENT-HUB.md](./BATCH-SEO2-3-CONTENT-HUB.md).
 
 **Previous orchestration batch (2026-07-30):** **Production UI refresh LIVE** on Amplify. Push repo commit `67e05df` → `origin/main`. Additive `src/styles/refresh/` layer; cinema hero; Account Danger zone; iOS showroom branch; Inter self-hosted for CSP. AR session frozen (`guard:ar`). Prod: `https://main.d7vfdpujdozkj.amplifyapp.com`.
 

@@ -62,10 +62,10 @@ Auth, onboard, admin, account, owner, demo, `/ar/*`, `/w/*`, `/sales-deck/*`, `/
 - [x] Console redirect paste so clean `/learn` serves shell (not home SPA) — **PASS 2026-07-31**
 - [x] `/learn` shell title/canonical ≠ home — **PASS** (Learn Atlas AR… · `https://www.atlasar.in/learn`)
 - [x] `/learn/` → 301 → `/learn` — **PASS**
-- [ ] GSC Request indexing for `/learn` + 3 articles — **user** (URL Inspection)
+- [x] GSC Request indexing for `/learn` + 3 articles — **done** (user, 2026-07-31)
 - [ ] Bing sitemap re-submit (optional if auto-crawled)
 
-**Re-verified PASS (2026-07-31):** Independent probe — `/learn` 200 Learn title/canonical; `/learn/` 301→`/learn`; all three article URLs 200 + Article JSON-LD; sitemap 10 locs with four `/learn*`. GSC Request indexing still open (user).
+**Re-verified PASS (2026-07-31):** Independent probe — `/learn` 200 Learn title/canonical; `/learn/` 301→`/learn`; all three article URLs 200 + Article JSON-LD; sitemap 10 locs with four `/learn*`. GSC Request indexing closed (user confirm).
 
 **Note:** `og:image` is for **link previews** (Slack/LinkedIn/X), not an on-page hero. Verify with view-source or Sharing Debugger “Scrape again” after deploy.
 

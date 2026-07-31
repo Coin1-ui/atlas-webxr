@@ -236,3 +236,4 @@ Run: `npm run test:all`, `npm run test:design-audit`, `npm run test:des4`, `npm 
 | 2026-07-31 | **SEO-2 Batch 3 — Content hub.** `/learn` index + 3 guides (`browser-ar-product-demo`, `glb-usdz-workflow`, `atlas-ar-for-teams`). Amplify `834e2ba`. |
 | 2026-07-31 | **SEO-2 Batch 3 live PASS.** Console redirects confirmed: `/learn` 200 Learn title/canonical (not home); `/learn/` 301→`/learn`; article shell + Article JSON-LD; sitemap 10 locs. Host split still deferred. **User:** GSC Request indexing for `/learn` + 3 articles. |
 | 2026-07-31 | **SEO-2 Batch 3 re-verified PASS.** Independent probe: `/learn` 200 · `/learn/` 301→`/learn` · three article shells + Article JSON-LD · sitemap 10 `/learn*` locs. Docs unchanged except this note. **Still user:** GSC Request indexing for `/learn*`. |
+| 2026-07-31 | **SEO-2 Batch 3 GSC Request indexing done** for `/learn` + 3 articles (user confirm). Batch 3 search-ops closed; host-split still deferred. |

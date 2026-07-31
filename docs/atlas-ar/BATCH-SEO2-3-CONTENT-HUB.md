@@ -12,7 +12,7 @@
 - [x] Clean URL live verify: `/learn` title ≠ home — **PASS** (Learn Atlas AR… · canonical `/learn`)
 - [x] `/learn/` → 301 → `/learn` — **PASS**
 - [x] Article shell: `/learn/browser-ar-product-demo` title + Article JSON-LD — **PASS**
-- [ ] GSC Request indexing for `/learn` + 3 articles — **user** (manual)
+- [x] GSC Request indexing for `/learn` + 3 articles — **done** (user, 2026-07-31)
 - [x] SEO-OPS Phase 2 “Content hub” checked; backlog SEO-2 remains **partial** (host-split still todo)
 
 ## Seed URLs
