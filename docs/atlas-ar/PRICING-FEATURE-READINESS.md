@@ -11,7 +11,7 @@
 | Verdict | Detail |
 |---------|--------|
 | **Pilot-ready (Starter → Growth core AR)** | ✅ Signup, upload, branded link, Android WebXR floor AR, iOS Quick Look, branding, usage tracking, admin onboarding |
-| **Sell with manual ops** | Founding 10 / design-partner pricing (owner sets plan + coupon), Growth “analytics export” (enable JSON session log toggle) |
+| **Sell with manual ops** | Founding 10 / design-partner pricing (owner sets plan + coupon); JSON session log is **on by default for Growth+** (ENG-37; owner can override) |
 | **Self-serve trial** | ✅ 14-day Growth trial on workspace create ([ENG-36](./BATCH-28-CONFIRMED.md)) |
 | **Do not promise as self-serve yet** | Scale tier (SSO, custom domain, multi-workspace), SLA support, annual SKUs |
 
@@ -42,7 +42,7 @@ Legend: **Ready** = customer can use today without you intervening · **Partial*
 |------------------|--------|------------------|
 | 30 models · 3,000 sessions (100/model) | **Partial** | Same warn-only enforcement |
 | Full white-label customer UI | **Ready** | Logo, accent, exit URL, branded catalog |
-| Basic session analytics | **Partial** | Admin usage dashboard (models/sessions/storage). **Not** per-model funnel UI — “basic” = workspace usage stats |
+| Usage dashboard (models · sessions · storage) | **Ready** | Admin / Account usage panel. **Not** per-model funnel UI — copy aligned **MKT-7** |
 | 2 admin seats (PRICING.md) | **Not built** | No admin-seat limit in product; any workspace member with admin role works |
 
 ### Growth ($179/mo)
@@ -50,7 +50,7 @@ Legend: **Ready** = customer can use today without you intervening · **Partial*
 | Promised feature | Status | Evidence / notes |
 |------------------|--------|------------------|
 | 100 models · 10,000 sessions (100/model) | **Partial** | Warn-only |
-| Analytics export for sales ops | **Partial** | JSON session log download exists but is **owner-toggle** per workspace (`sessionLogDownload`), not auto-enabled by plan tier |
+| JSON session log download | **Ready** | `sessionLogDownload` **on by default for Growth+** ([ENG-37](./backlog.md)); owner can override. Not a CSV/sales-ops dashboard — **MKT-7** |
 | Custom logo & accent | **Ready** | Admin branding |
 | Priority email (24h) | **Partial** | Operational promise only |
 | 10 admin seats (PRICING.md) | **Not built** | Same as Launch |
@@ -93,7 +93,7 @@ From [SALES-PLAYBOOK.md](./SALES-PLAYBOOK.md) · [MIROFISH-QA-SCENARIOS.md](./mi
 | iOS Safari Quick Look | **Ready** | “View in AR” — train staff, not “Start AR” |
 | Session analytics event → API | **Ready** | When API deployed |
 | Security story on site | **Ready** | Landing + `/about` |
-| First placement ≤15 min | **Ready if guided** | Run live on partner call |
+| First placement ≤15 min | **PASS** | **QA-5** closed 2026-07-31 — guided prod placement ≤15 min |
 | Dimension overlay on custom GLB | **Ready** | ENG-34 shipped; verify on device post-deploy |
 
 ---
@@ -111,10 +111,11 @@ From [SALES-PLAYBOOK.md](./SALES-PLAYBOOK.md) · [MIROFISH-QA-SCENARIOS.md](./mi
 
 **Qualify before promising:**
 
-- “Analytics export” → enable JSON log toggle for their workspace  
-- “Basic analytics” → show admin usage panel  
+- “JSON session log” → Growth default on; enable toggle only for Launch or if owner turned it off  
+- “Usage / basic analytics” → show admin usage panel (models · sessions · storage)  
 - Overage billing → **Dodo meters** with subscription payment cycle (Account estimate is a guide)  
 - Scale / SSO / custom domain → **contact sales, roadmap**
+- Per-model funnel analytics → **not built** (deferred)
 
 **Do not offer in self-serve outreach:**
 
@@ -128,7 +129,8 @@ From [SALES-PLAYBOOK.md](./SALES-PLAYBOOK.md) · [MIROFISH-QA-SCENARIOS.md](./mi
 | Priority | Item | Owner |
 |----------|------|-------|
 | P0 | Auto-provision 14-day Growth trial on signup (or post-verify) | ENG | **ENG-36** ✅ |
-| P0 | Tie `sessionLogDownload` to Growth tier by default | ENG | **ENG-37** · [backlog.md](./backlog.md) |
+| P0 | Tie `sessionLogDownload` to Growth tier by default | ENG | **ENG-37** ✅ |
+| P2 | Analytics copy alignment (usage vs JSON log) | MKT | **MKT-7** ✅ (2026-07-31) |
 | P1 | Hard-block upload at model limit (or clear UX when over) | ENG | **ENG-38** · **BILL-2** |
 | P1 | Align storage numbers: PRICING.md vs `plan-limits.ts` | PM | **PM-3** |
 | P1 | Dodo + Zoho self-serve checkout | BILL | **BILL-1** |
@@ -141,7 +143,8 @@ From [SALES-PLAYBOOK.md](./SALES-PLAYBOOK.md) · [MIROFISH-QA-SCENARIOS.md](./mi
 ## Related docs
 
 - [PRICING.md](./PRICING.md) · [marketing-pricing.ts](../../src/ui/marketing-pricing.ts)  
-- [backlog.md](./backlog.md) — **ENG-36–40, BILL-1–4, PM-3/4, QA-5, MKT-3b, SAL-4**  
+- [backlog.md](./backlog.md) — **ENG-36–40, BILL-1–4, PM-3/4, QA-5 ✅, MKT-7 ✅, MKT-3b, SAL-4**  
+- **MVP P0 (2026-07-31):** no open MVP ship blockers; **BILL-1** remains on_hold (P0-for-scale) |
 - [SAL-2-DESIGN-PARTNER-OUTREACH.md](./SAL-2-DESIGN-PARTNER-OUTREACH.md)  
 - [BATCH-25-CONFIRMED.md](./BATCH-25-CONFIRMED.md) · [sales-deck/PRESENTER-SCRIPT.md](./sales-deck/PRESENTER-SCRIPT.md)  
 - [SALES-PLAYBOOK.md](./SALES-PLAYBOOK.md) · [mirofish/PREDICTION-REPORT.md](./mirofish/PREDICTION-REPORT.md)

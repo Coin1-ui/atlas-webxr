@@ -146,7 +146,7 @@ export function renderMarketingLanding(root: HTMLElement, handlers: MarketingLan
             </div>
             <div class="mkt-card-content">
               <h3>B2B field sales</h3>
-              <p>Reps place approved models in the buyer&rsquo;s space during the visit. Branded workspace, curated catalog, session analytics for sales ops.</p>
+              <p>Reps place approved models in the buyer&rsquo;s space during the visit. Branded workspace, curated catalog, usage meters in admin — Growth adds JSON session logs.</p>
               <ul class="mkt-checklist">
                 <li>One link per product line</li>
                 <li>No six-figure custom AR app</li>

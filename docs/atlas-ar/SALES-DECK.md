@@ -94,7 +94,7 @@
 **Bullets:**
 - Reps share **approved SKUs only** — central catalog control
 - Buyer sees model **in their facility** during the visit
-- **Session analytics** for sales ops — which models get placed
+- **Usage meters** in admin · Growth adds **JSON session logs** (on by default)
 - No **six-figure custom app** · no MDM rollout
 
 **Visual:** Template E — Marcus quote card: “My reps won’t install another app.”
@@ -128,7 +128,7 @@
 |------|-------|----------|
 | **Starter** | $5/mo | First tests · 5 models · 100 sessions |
 | **Launch** | $59/mo | Showroom or pilot team · 30 models |
-| **Growth** | $179/mo | IT sign-off · 100 models · full analytics |
+| **Growth** | $179/mo | IT sign-off · 100 models · JSON session log |
 | **Scale** | From $499 | Multi-brand · custom limits |
 
 **Offers:** 14-day Growth trial (no card) · Founding 10: Growth @ Launch price × 12 mo

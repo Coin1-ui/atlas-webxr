@@ -133,7 +133,7 @@ export const TRAINING_MODULES = [
       "For B2B field sales — Marcus's team — credibility in the customer's facility, not yours.",
       "Reps share approved SKUs only. Central catalog control from admin.",
       "Buyer sees the model in their bay, plant, or lobby during the visit.",
-      "Session analytics for ops. No six-figure custom app. No MDM. Link in email or SMS.",
+      "Usage meters in admin. Growth adds JSON session logs. No six-figure custom app. No MDM. Link in email or SMS.",
       "Starter at $5 pilots one line; Launch at $59 when the catalog grows.",
     ],
     objection: "Reps won't adopt. They tap a link — you control the catalog; they share and view.",
@@ -168,7 +168,7 @@ export const TRAINING_MODULES = [
     say: [
       "Starter — $5 a month. Five models, one hundred AR sessions per model each month. Proof, not a science project.",
       "Launch — $59. Where most showrooms and pilot teams land.",
-      "Growth — $179/mo incl. tax. When IT and analytics need to sign off.",
+      "Growth — $179/mo incl. tax. When IT needs sign-off — 100 models · JSON session log on by default.",
       "Scale — from $499 for multi-brand operators.",
       "14-day Growth trial, no card — we enable Growth limits on your workspace.",
       "Design partner — three slots only. Ninety days Growth at fifty-nine dollars a month with biweekly feedback.",

@@ -81,7 +81,7 @@ export const SLIDES = [
     bullets: [
       "Reps share approved SKUs only — central catalog control",
       "Buyer sees model in their facility during the visit",
-      "Session analytics for sales ops — which models get placed",
+      "Usage meters in admin · Growth adds JSON session logs",
       "No six-figure custom app · no MDM rollout",
     ],
     webgl: "none",

@@ -159,12 +159,12 @@
 | **PM-4** | **Admin seat copy vs product:** implement seat limits or remove 2/10 seat claims from PRICING + pricing page | P2 | PM | todo |
 | **BILL-3** | **Overage via Dodo meters** (hybrid Usage-Based; auto-bill at payment cycle) | P1 | Backend | **done** (meters + ingest) · Account shows estimate/guide only — `/charge` unsupported on hybrids · see [DODO-OVERAGE-METERS.md](./DODO-OVERAGE-METERS.md) |
 | **BILL-4** | **Annual prepay SKUs** (20% off Launch/Growth) | P2 | Backend | **on_hold** · blocked by Batch 29 |
-| **MKT-7** | **Analytics story alignment** — “basic” vs “export” vs owner JSON toggle; per-model analytics deferred | P2 | Marketing | todo |
+| **MKT-7** | **Analytics story alignment** — usage dashboard vs JSON session log vs owner override; per-model analytics deferred | P2 | Marketing | **done** ✅ (2026-07-31) · copy only |
 | **SEO-1** | **Technical SEO Phase 1** — www.atlasar.in canonicals, robots/sitemap, SPA per-route meta + JSON-LD, noindex private tools | P0 | Marketing/Eng | **done** (2026-07-30) · [SEO-OPS-CHECKLIST.md](./SEO-OPS-CHECKLIST.md) |
 | **SEO-2** | **SEO Phase 2** — prerender shells for `/` `/pricing` `/about` legal; content hub; optional marketing host split; per-page OG | P2 | Marketing/Eng | todo · after GSC green on SEO-1 |
 | **SAL-4** | **Design partner ops runbook** — owner workflow for $59 Growth, coupons, session log, slot tracking | P2 | Sales/Ops | **done** ✅ · runbook + Owner Design partners tab (3 slots); CRM export out of scope |
 | **ENG-39** | **Owner dashboard: customer owner emails in Customers table** | P1 | Full-stack | **done** ✅ (Batch 34) |
-| **QA-5** | **SAL-3 QA gate on prod:** sign-up → upload → floor placement ≤15 min (Android + iOS) | P1 | QA | **confirmed** ✅ (2026-07-17) · user: first placement smooth in under ~15 min |
+| **QA-5** | **SAL-3 QA gate on prod:** sign-up → upload → floor placement ≤15 min (Android + iOS) | P1 | QA | **done / PASS** ✅ (2026-07-17 confirm · Batch 35 closed 2026-07-31) |
 | **DES-AUD** | **Graphics / UI / UX design audit** (Batch 36) | P1 | Design | **done** · 14 findings (3 P0, 7 P1, 4 P2) · canvas: `atlas-design-audit` |
 | **DES-3** | Design token + button unification (mkt / app / catalog / AR) | P1 | Design | **done** ✅ (Batch 36b) |
 | **DES-4** | Accessibility foundation: zoom, focus rings, reduced motion | P0 | Design | **done** ✅ (Batch 36a) |
@@ -190,12 +190,12 @@ SAL-3 **content** is done (deck + training + four-path close). These **product g
 | 14-day Growth trial, no card | Slide 8, CTA slide 10 | Auto on workspace create (Growth limits 14d) | **ENG-36** ✅ |
 | Design partner — Growth @ $59, 90 days | Slide 10 path 3 · SAL-2 outreach | Owner dashboard plan + coupon; manual invoice | **SAL-4** · **BILL-1** |
 | Founding 10 — Growth @ $59 × 12 mo | Slide 10 path 4 | Same manual ops | **SAL-4** · **BILL-1** |
-| Growth “analytics export for sales ops” | Slide 8 · Growth tier | JSON log exists; **owner toggle**, not plan-gated | **ENG-37** |
-| Launch “basic session analytics” | Slide 8 · Launch tier | Usage dashboard only (models/sessions/storage) | **MKT-7** (copy) · future ENG |
+| Growth “analytics export for sales ops” | Slide 8 · Growth tier | JSON session log **on by default** (ENG-37); owner can override | **ENG-37** ✅ · **MKT-7** ✅ |
+| Launch “basic session analytics” | Slide 8 · Launch tier | **Usage dashboard** only (models/sessions/storage) — copy aligned | **MKT-7** ✅ |
 | “Pay overage” in account | Pricing FAQ | **Meters auto-bill** at cycle; Account estimate is a guide (no hybrid card `/charge`) | **BILL-3** ✅ |
 | Starter 5 models / session limits | Slide 8 | Warnings only; upload not blocked | **ENG-38** · **BILL-2** |
 | Scale tier (SSO, custom domain, multi-workspace) | Slide 8 | Not built | **ENG-20** · **ENG-21** · Phase 3 |
-| First placement ≤15 min | SAL-3 intro · MiroFish #1 objection | Works **if guided** on call | **QA-5** verify on prod |
+| First placement ≤15 min | SAL-3 intro · MiroFish #1 objection | **PASS** on prod (guided ≤15 min) | **QA-5** ✅ |
 | iOS “View in AR” not “Start AR” | Slide 4 demo · admin help | Ready; staff training required | SUP-2 ✅ · SAL-3 training ✅ |
 | IT one-pager / security | Slide 9 | Landing + `/about` ✅ | LEG-1 for signup trust |
 | Demo video on landing | Optional SAL-3 follow-up | Embed + empty-state live; mp4s pending | **MKT-3b** |
@@ -215,7 +215,7 @@ Full matrix: [PRICING-FEATURE-READINESS.md](./PRICING-FEATURE-READINESS.md)
 | Billing | Overage collection | P1 | **BILL-3** **on_hold** |
 | Billing | Annual prepay 20% | P2 | **BILL-4** |
 | Enforcement | Hard limits (models/sessions/storage) | P1 | **ENG-38** · **BILL-2** |
-| Plan features | Analytics export tied to Growth tier | P0 | **ENG-37** |
+| Plan features | Analytics export tied to Growth tier | P0 | **ENG-37** ✅ · copy **MKT-7** ✅ |
 | Copy / truth | Storage GB mismatch (2 vs 5) | P1 | **PM-3** |
 | Copy / truth | Admin seat counts (2 / 10) | P2 | **PM-4** |
 | Scale | Multi-workspace, SSO, custom domain, analytics API, SLA | P2 | **ENG-20** · **ENG-21** · Phase 3 |
@@ -230,11 +230,13 @@ Full matrix: [PRICING-FEATURE-READINESS.md](./PRICING-FEATURE-READINESS.md)
 | **28** | **LEG-1 + trial automation** | Privacy/Terms + **ENG-36** auto Growth trial | **confirmed** ✅ [BATCH-28-CONFIRMED.md](./BATCH-28-CONFIRMED.md) |
 | **29** | **Billing MVP** ▶ | **BILL-1** Dodo · **BILL-3** hybrid meters · **BILL-2** limits | **in progress** — hybrid renewal verified 2026-07-25; BILL-2 done; Zoho India + Month SKU cutover remain |
 | **30** | ~~Limits & copy truth~~ → **33** | See Batch 33 below | Merged into Batch 33 |
-| **31** | **MKT-3 production** | Record A1/B1 · **MKT-3b** landing embed | Marketing hero · SAL-3 “watch demo” follow-up |
-| **32** | **SAL-4 ops** | Design partner tracker · owner checklist UI · CRM export optional | Scale SAL-2 outbound without founder bottlenecks |
+| **31** | **MKT-3 production** | Embed plumbing ✅ · **await A1/B1 mp4** · then Amplify media push | Marketing hero · SAL-3 “watch demo” follow-up |
+| **32** | **SAL-4 ops** | Runbook + Owner 3-slot UI ✅ · CRM export out of scope | Scale SAL-2 outbound without founder bottlenecks |
 | **33** | **Limits, plan gates & copy truth** ✅ | **ENG-37** · **ENG-38** · **PM-3** | **shipped locally** — deploy pending |
 | **36** | **Design audit (graphics / UI / UX)** ✅ | DES-AUD · DES-3–11 scoped | **audit done** — implement 36a→e |
-| **35** | **QA-5 prod gate** ⏸ | Sign-up → upload → placement ≤15 min | **on hold** |
+| **35** | **QA-5 prod gate** ✅ | Sign-up → upload → placement ≤15 min | **done / PASS** (2026-07-31) |
+
+**MVP P0 status (2026-07-31):** No open MVP P0 ship blockers. Auth/tenant/AR E2E, SEO-1, ENG-36/37, DES-4, BILL-METER-SYNC (Lambda uploaded) are done. **BILL-1** remains **on_hold** (P0-for-scale, not MVP launch blocker). Remaining work is P1/P2 (MKT-3b media, PM-4, SEO-2, etc.).
 
 **Orchestration gate:** Each batch = Agents Orchestrator scope → implement → Evidence Collector / QA-5 spot-check → **user confirm** → backlog update (NEXUS-Sprint model).
 
@@ -260,7 +262,7 @@ Full matrix: [PRICING-FEATURE-READINESS.md](./PRICING-FEATURE-READINESS.md)
 
 1. **Deploy Batch 36a–e** — Amplify push (a11y + design audit fixes + model icons)
 2. **Deploy Lambda** — default accent `#2dd4bf` in `dynamodb.mjs` (optional `package:atlas-api`)
-3. **Batch 35 — QA-5** ⏸ **ON HOLD**
+3. **Batch 35 — QA-5** ✅ **PASS** (closed 2026-07-31)
 4. **Batch 29 — Billing MVP** ▶ **IN PROGRESS** — Dodo/Zoho adapters and server-owned checkout mapping next
 
 ---
@@ -657,7 +659,7 @@ Full matrix: [PRICING-FEATURE-READINESS.md](./PRICING-FEATURE-READINESS.md)
 |------|----------------|--------|
 | 1 | **Agents Orchestrator** | Scoped QA-5 after Batch 34 close-out · Batch 29 billing stays on hold |
 | 2 | **Evidence Collector** | `npm run qa:5-prod` automated pre-flight **13/0/0** on prod |
-| 3 | **QA / User gate** | **Pending** — Android WebXR + iOS Quick Look device runs (≤15 min each) |
+| 3 | **QA / User gate** | **PASS** — first placement smooth ≤15 min (2026-07-17) · Batch 35 closed 2026-07-31 |
 
 **Manual runbook:** `npm run qa:5-prod` → `manualRunbook` in JSON output.
 

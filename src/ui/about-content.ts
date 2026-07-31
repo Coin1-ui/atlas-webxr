@@ -7,7 +7,7 @@ export const ABOUT = {
 
   product: {
     headline: "What is Atlas AR?",
-    body: "A self-serve workspace for your 3D catalog. You upload GLB models once from desktop admin, set your logo and colors, and share a link like /w/your-brand. Each workspace is isolated — your catalog, your branding, your analytics.",
+    body: "A self-serve workspace for your 3D catalog. You upload GLB models once from desktop admin, set your logo and colors, and share a link like /w/your-brand. Each workspace is isolated — your catalog, your branding, your usage.",
   },
 
   audiences: [

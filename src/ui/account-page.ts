@@ -488,7 +488,7 @@ export function renderAccountPage(
                             <li>Your sign-in and profile (${escapeHtml(data.email)})</li>
                             <li>The <strong>${escapeHtml(workspace.name)}</strong> workspace and its showroom link</li>
                             <li>All uploaded 3D models and branding</li>
-                            <li>Usage history and analytics</li>
+                            <li>Usage history (models · sessions · storage)</li>
                           </ul>
                         </div>
                       </div>

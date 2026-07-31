@@ -156,7 +156,7 @@ Reps share **approved SKUs only**. Central catalog control from admin; no rogue 
 
 The buyer sees the model **in their bay, plant, or lobby** during the visit — not back at HQ on a monitor.
 
-**Session analytics** tell ops which models actually get placed — not just which decks got emailed.
+**Usage meters** in admin show models, sessions, and storage. **Growth** includes a **JSON session log** download in AR (on by default; owner can override) — not a per-model funnel dashboard.
 
 No six-figure custom app. No MDM rollout. Link in email or SMS.
 
@@ -197,11 +197,11 @@ For finance: one avoided **$2,000 return** is roughly **thirty-four months** of 
 “Is this a pilot budget, a line-item for this quarter, or a strategic platform decision?”
 
 **[SAY]**  
-“**Starter — $5 a month.** Five models, 1,000 sessions. Proof, not a science project.
+“**Starter — $5 a month.** Five models, hundred sessions. Proof, not a science project.
 
-**Launch — $59.** Where most showrooms and pilot teams land — thirty models, 5,000 sessions.
+**Launch — $59.** Where most showrooms and pilot teams land — thirty models.
 
-**Growth — $179.** When IT and analytics need to sign off — hundred models, 15,000 sessions, full usage picture.
+**Growth — $179.** When IT needs to sign off — hundred models, JSON session log on by default.
 
 **Scale — from $499** for multi-brand operators.
 

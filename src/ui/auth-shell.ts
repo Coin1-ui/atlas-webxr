@@ -28,7 +28,7 @@ const VARIANT_COPY: Record<
     title: "Name your showroom",
     subtitle: "Pick a brand name and URL slug — your customer link goes live instantly.",
     image: MKT_ASSETS.authWorkspace,
-    perks: ["Branded customer catalog", "Floor placement on phone", "Session analytics in admin"],
+    perks: ["Branded customer catalog", "Floor placement on phone", "Usage dashboard in admin"],
   },
   forgot: {
     title: "Reset password",

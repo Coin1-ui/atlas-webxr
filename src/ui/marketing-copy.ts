@@ -30,7 +30,7 @@ export const MKT = {
   outcomePriceAnchor: "From $5/mo incl. tax — no demo gate",
   /** MiroFish — workspace vs plugin objection */
   workspaceVsPlugin:
-    "Not a single-store plugin — a white-label workspace with your catalog, brand, and analytics in one link.",
+    "Not a single-store plugin — a white-label workspace with your catalog, brand, and usage meters in one link.",
   authLoginSubDesktop: "Access your workspace admin on desktop.",
   authLoginSubMobile:
     "Sign in for your showroom on this device. Model uploads and the full admin dashboard are desktop-only.",
