@@ -43,7 +43,7 @@ Legend: **Ready** = customer can use today without you intervening · **Partial*
 | 30 models · 3,000 sessions (100/model) | **Partial** | Same warn-only enforcement |
 | Full white-label customer UI | **Ready** | Logo, accent, exit URL, branded catalog |
 | Usage dashboard (models · sessions · storage) | **Ready** | Admin / Account usage panel. **Not** per-model funnel UI — copy aligned **MKT-7** |
-| 2 admin seats (PRICING.md) | **Not built** | No admin-seat limit in product; any workspace member with admin role works |
+| 2 admin seats (PRICING.md) | **Removed from offer (PM-4)** | Claims removed 2026-07-31; product never enforced seat limits |
 
 ### Growth ($179/mo)
 
@@ -53,7 +53,7 @@ Legend: **Ready** = customer can use today without you intervening · **Partial*
 | JSON session log download | **Ready** | `sessionLogDownload` **on by default for Growth+** ([ENG-37](./backlog.md)); owner can override. Not a CSV/sales-ops dashboard — **MKT-7** |
 | Custom logo & accent | **Ready** | Admin branding |
 | Priority email (24h) | **Partial** | Operational promise only |
-| 10 admin seats (PRICING.md) | **Not built** | Same as Launch |
+| 10 admin seats (PRICING.md) | **Removed from offer (PM-4)** | Claims removed 2026-07-31; product never enforced seat limits |
 
 ### Scale (from $499/mo)
 
@@ -120,7 +120,7 @@ From [SALES-PLAYBOOK.md](./SALES-PLAYBOOK.md) · [MIROFISH-QA-SCENARIOS.md](./mi
 **Do not offer in self-serve outreach:**
 
 - Multi-workspace Scale  
-- Per-seat admin licensing (not implemented)
+- Per-seat admin licensing → **removed from offer (PM-4)**; do not re-promise without ENG seat metering
 
 ---
 
@@ -135,7 +135,7 @@ From [SALES-PLAYBOOK.md](./SALES-PLAYBOOK.md) · [MIROFISH-QA-SCENARIOS.md](./mi
 | P1 | Align storage numbers: PRICING.md vs `plan-limits.ts` | PM | **PM-3** |
 | P1 | Dodo + Zoho self-serve checkout | BILL | **BILL-1** |
 | P1 | Overage via Dodo meters (done) | BILL | **BILL-3** ✅ · [DODO-OVERAGE-METERS.md](./DODO-OVERAGE-METERS.md) |
-| P2 | Admin seat limits or remove from PRICING.md | PM | **PM-4** |
+| P2 | Admin seat claims removed from PRICING.md (copy truth) | PM | **PM-4** ✅ (2026-07-31) |
 | P2 | Annual prepay SKUs | BILL | **BILL-4** |
 
 ---

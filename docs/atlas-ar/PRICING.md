@@ -14,7 +14,7 @@
 |---|-------------|------------|------------|-----------|
 | **Base / mo (incl. tax)** | **$5** ($4 annual) | **$59** ($47 annual) | **$179** ($143 annual) | From **$499** |
 | **Workspaces** | 1 | 1 | 1 | Multi-brand |
-| **Admin seats** | 1 | 2 | 10 | Unlimited |
+| **Workspace admins** | Not seat-metered | Not seat-metered | Not seat-metered | Not seat-metered |
 | **Field reps / viewers** | Unlimited | Unlimited | Unlimited | Unlimited |
 | **GLB models** | 5 | 30 | 100 | Custom |
 | **Max GLB / USDZ file** | 50 MB | 50 MB | 50 MB | 50 MB |
@@ -24,6 +24,8 @@
 | **Browser-based AR (Chrome & Safari)** | ✓ | ✓ | ✓ | ✓ |
 | **Analytics** | Usage dashboard | Usage dashboard | JSON session log (default on) | Custom (roadmap) |
 | **Support** | Email 72h | Email 48h | Email 24h | SLA + CSM |
+
+**Workspace admins:** Not seat-metered today (PM-4). Unlimited **field reps / viewers** remain a product promise on every plan.
 
 **Trial:** 14 days of **Growth** limits · no credit card · self-serve signup.
 

@@ -4,7 +4,8 @@
 
 **Parked (billing):** Natural renewal check on test-admin `sub_0NkDIEC…` ~2026-07-30T05:21Z — corrected PPUs · meterSync · no old-sub charge. Live cutover / Zoho on hold.
 
-**Latest orchestration batch (2026-07-31):** **Contact emails code + inbox live PASS** — support@atlasar.in + sales@atlasar.in ([contact.ts](../../src/shared/contact.ts); user confirmed receiving). **Previous:** Lead research US/EU/peer ([LEAD-SHEET-2026-07-31.md](./LEAD-SHEET-2026-07-31.md)); SEO-2 Batch 3 LIVE PASS.
+**Latest orchestration batch (2026-07-31):** **PM-4 done** — admin seat claims removed from PRICING (copy truth; no seat metering). **Previous:** Contact emails code + inbox live PASS (support@ / sales@ atlasar.in).
+
 
 **Previous orchestration batch (2026-07-30):** **Production UI refresh LIVE** on Amplify. Push repo commit `67e05df` → `origin/main`. Additive `src/styles/refresh/` layer; cinema hero; Account Danger zone; iOS showroom branch; Inter self-hosted for CSP. AR session frozen (`guard:ar`). Prod: `https://main.d7vfdpujdozkj.amplifyapp.com`.
 
@@ -158,7 +159,7 @@
 | **ENG-37** | **Plan-gate features:** `sessionLogDownload` on by default for Growth+; tier-driven feature flags | **P0** | Full-stack | **done** (Batch 33) · owner explicit override via `featuresSessionLogDownloadExplicit` |
 | **ENG-38** | **Hard-block upload** at model limit (or explicit upgrade gate UX) | P1 | Full-stack | **done** (Batch 33) · API 403 + admin UI gate |
 | **PM-3** | **Align storage copy:** PRICING.md vs `plan-limits.ts` | P1 | PM | **done** · code + pricing page aligned to derived storage (models × 50 MB × 2.5): Starter 625 MB · Launch 3.7 GB · Growth 12.2 GB · Scale ~1.2 TB |
-| **PM-4** | **Admin seat copy vs product:** implement seat limits or remove 2/10 seat claims from PRICING + pricing page | P2 | PM | todo |
+| **PM-4** | **Admin seat copy vs product:** implement seat limits or remove 2/10 seat claims from PRICING + pricing page | P2 | PM | **done** ✅ (2026-07-31) · claims removed; seat metering not built |
 | **BILL-3** | **Overage via Dodo meters** (hybrid Usage-Based; auto-bill at payment cycle) | P1 | Backend | **done** (meters + ingest) · Account shows estimate/guide only — `/charge` unsupported on hybrids · see [DODO-OVERAGE-METERS.md](./DODO-OVERAGE-METERS.md) |
 | **BILL-4** | **Annual prepay SKUs** (20% off Launch/Growth) | P2 | Backend | **on_hold** · blocked by Batch 29 |
 | **MKT-7** | **Analytics story alignment** — usage dashboard vs JSON session log vs owner override; per-model analytics deferred | P2 | Marketing | **done** ✅ (2026-07-31) · copy only |
@@ -219,7 +220,7 @@ Full matrix: [PRICING-FEATURE-READINESS.md](./PRICING-FEATURE-READINESS.md)
 | Enforcement | Hard limits (models/sessions/storage) | P1 | **ENG-38** · **BILL-2** |
 | Plan features | Analytics export tied to Growth tier | P0 | **ENG-37** ✅ · copy **MKT-7** ✅ |
 | Copy / truth | Storage GB mismatch (2 vs 5) | P1 | **PM-3** |
-| Copy / truth | Admin seat counts (2 / 10) | P2 | **PM-4** |
+| Copy / truth | Admin seat counts (2 / 10) | P2 | **PM-4** done |
 | Scale | Multi-workspace, SSO, custom domain, analytics API, SLA | P2 | **ENG-20** · **ENG-21** · Phase 3 |
 | Support | In-app SLA timers (72h / 48h / 24h) | P2 | ops process only |
 

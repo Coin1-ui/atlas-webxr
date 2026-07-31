@@ -106,7 +106,6 @@
 | Included | Limit |
 |----------|-------|
 | Workspaces | 1 |
-| Admin seats | 2 |
 | GLB models | 30 |
 | Max GLB / USDZ file | 50 MB |
 | AR sessions / mo | 100 per model (3,000 max) |
@@ -124,7 +123,6 @@
 | Included | Limit |
 |----------|-------|
 | Workspaces | 1 (multi-brand: Scale) |
-| Admin seats | 10 |
 | GLB models | 100 |
 | Max GLB / USDZ file | 50 MB |
 | AR sessions / mo | 100 per model (10,000 max) |
