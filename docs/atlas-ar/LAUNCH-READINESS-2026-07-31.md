@@ -38,7 +38,7 @@
 
 | ID | Issue | Severity | Action |
 |----|--------|----------|--------|
-| **OPS-INGEST** | Live `/health` (2026-07-31 probe): `sandboxDodoIngest: true`, `sandboxUsageSeed: true` | **P0 ops** | Founder: set `ATLAS_SANDBOX_DODO_INGEST=false` (and usage-seed flags off) on atlas-api Lambda — see [OPS-SANDBOX-INGEST-OFF.md](./OPS-SANDBOX-INGEST-OFF.md) |
+| **OPS-INGEST** | Live `/health` (re-probe after push): `sandboxDodoIngest: false`, `sandboxUsageSeed: false` | **PASS** ✅ | Was true earlier 2026-07-31; confirmed **false** on re-probe. Keep off for paid traffic — [OPS-SANDBOX-INGEST-OFF.md](./OPS-SANDBOX-INGEST-OFF.md) |
 | **MKT-3b** | Demo A1/B1 mp4s missing; landing empty-state | P1 marketing | Record/drop mp4s or launch without “Watch product demo” |
 | **BILL-1** | Self-serve checkout not closed for India/Zoho | P1 for GTM | Soft launch = owner coupon + manual invoice OK |
 | **Scale tier** | SSO / custom domain / multi-workspace **Not built** | Sales risk | Use [SAL-5-SCALE-OPS.md](./SAL-5-SCALE-OPS.md); do not promise ENG-20/21/39 |
@@ -54,7 +54,7 @@
 
 ## Founder checklist before flipping “we’re live”
 
-1. Confirm Lambda env: **sandbox Dodo ingest = false** ([OPS-SANDBOX-INGEST-OFF.md](./OPS-SANDBOX-INGEST-OFF.md)) — probe `/health` until `sandboxDodoIngest: false`
+1. ~~Confirm Lambda env: sandbox Dodo ingest = false~~ **PASS** (`/health` `sandboxDodoIngest:false`)  
 2. Pick **3** leads from [LEAD-SHEET-2026-07-31.md](./LEAD-SHEET-2026-07-31.md); send SAL-2 from **sales@atlasar.in**
 3. Time first placement on kickoff (≤15 min)
 4. Optional: drop MKT-3b mp4s in `public/marketing/`
