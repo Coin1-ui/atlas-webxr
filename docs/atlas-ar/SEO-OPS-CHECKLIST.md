@@ -46,10 +46,11 @@ Auth, onboard, admin, account, owner, demo, `/ar/*`, `/w/*`, `/sales-deck/*`, `/
 ## Phase 2 (backlog SEO-2)
 
 - [x] **Batch 1 — prerender shells** for six indexable URLs (`npm run prerender:seo` after Vite) + richer pricing `Offer` / `UnitPriceSpecification` JSON-LD (2026-07-31)
+- [x] **Batch 1 live verify** (2026-07-31): `/pricing` `/about` `/legal/*` return route-specific title/canonical + JSON-LD (not home SPA); `/pricing/` → 301 → `/pricing`
+- [x] Per-page OG images (beyond shared default) — Batch 2 done 2026-07-31
 - [ ] Content hub
 - [ ] Optional marketing host split
-- [ ] Per-page OG images (beyond shared default)
 
-**Amplify Console:** re-paste [`AMPLIFY-REDIRECTS.json`](./AMPLIFY-REDIRECTS.json) so `/pricing` → `/pricing/index.html` (200) sits **before** the SPA catch-all.
+**Amplify Console:** redirects re-pasted and live-verified for SEO-2 shells (2026-07-31).
 
-**Phase 1 search-ops status (2026-07-31):** GSC Verified · GSC sitemap Success · Request indexing for `/` `/pricing` `/about` · Bing sitemap Success. **Phase 1 search-ops complete.** SEO-2 Batch 1 shipped (hub/host-split still open).
+**Phase 1 search-ops status (2026-07-31):** GSC Verified · GSC sitemap Success · Request indexing for `/` `/pricing` `/about` · Bing sitemap Success. **Phase 1 search-ops complete.**

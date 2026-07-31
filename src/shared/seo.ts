@@ -14,6 +14,8 @@ export type SeoRouteMeta = {
   title: string;
   description: string;
   robots: SeoRobots;
+  /** Absolute OG/Twitter image URL (defaults to DEFAULT_OG_IMAGE). */
+  ogImage?: string;
   /** Inject SoftwareApplication on this route */
   softwareApp?: boolean;
   /** Inject pricing FAQ + Offer graph */
@@ -29,6 +31,7 @@ export const INDEXABLE_SEO_ROUTES: SeoRouteMeta[] = [
     description:
       "White-label floor AR for furniture retail and B2B field sales. Share a branded link; shoppers place true-scale 3D on the real floor in Chrome or Safari—no app install.",
     robots: "index",
+    ogImage: `${SITE_ORIGIN}/marketing/hero-ar-phone.png`,
     softwareApp: true,
   },
   {
@@ -37,6 +40,7 @@ export const INDEXABLE_SEO_ROUTES: SeoRouteMeta[] = [
     description:
       "Atlas AR plans for white-label floor AR workspaces. Self-serve from $5/mo incl. tax, unlimited viewers and reps, browser AR + 3D inspect in Chrome and Safari—no app store.",
     robots: "index",
+    ogImage: `${SITE_ORIGIN}/marketing/steps-workflow.png`,
     pricingOffers: true,
     pricingFaq: true,
   },
@@ -46,6 +50,7 @@ export const INDEXABLE_SEO_ROUTES: SeoRouteMeta[] = [
     description:
       "Atlas AR is white-label floor AR from Omni Manual for furniture retailers and field teams. Upload once, brand your link, place true-scale models in browser AR—no app install.",
     robots: "index",
+    ogImage: `${SITE_ORIGIN}/marketing/usecase-field-sales.png`,
   },
   {
     path: "/legal/terms",
@@ -53,6 +58,7 @@ export const INDEXABLE_SEO_ROUTES: SeoRouteMeta[] = [
     description:
       "Terms of service for Atlas AR, the white-label floor AR workspace for furniture retail and B2B field sales. Read usage, account, and platform terms before you sign up.",
     robots: "index",
+    ogImage: `${SITE_ORIGIN}/marketing/auth-workspace-hero.png`,
   },
   {
     path: "/legal/privacy",
@@ -60,6 +66,7 @@ export const INDEXABLE_SEO_ROUTES: SeoRouteMeta[] = [
     description:
       "Privacy policy for Atlas AR. How Omni Manual handles workspace admin data, tenant isolation, and shopper sessions that open branded AR links without creating viewer accounts.",
     robots: "index",
+    ogImage: `${SITE_ORIGIN}/marketing/auth-workspace-hero.png`,
   },
   {
     path: "/legal/acceptable-use",
@@ -67,6 +74,7 @@ export const INDEXABLE_SEO_ROUTES: SeoRouteMeta[] = [
     description:
       "Acceptable use rules for Atlas AR workspaces—catalog content, branding, sharing links, and prohibited misuse of browser-based floor AR for retail and field sales.",
     robots: "index",
+    ogImage: `${SITE_ORIGIN}/marketing/auth-workspace-hero.png`,
   },
 ];
 
@@ -358,7 +366,7 @@ export function applySeoTagsToHtml(html: string, meta: SeoRouteMeta): string {
   const title = escapeHtmlAttr(meta.title);
   const description = escapeHtmlAttr(meta.description);
   const canonicalEsc = escapeHtmlAttr(canonicalUrl);
-  const ogImage = escapeHtmlAttr(DEFAULT_OG_IMAGE);
+  const ogImage = escapeHtmlAttr(meta.ogImage || DEFAULT_OG_IMAGE);
   const siteName = escapeHtmlAttr(SITE_NAME);
 
   let out = html;
@@ -432,17 +440,19 @@ export function applyRouteMeta(pathname: string): void {
   ensureMetaByName("robots").setAttribute("content", robotsContent);
   ensureCanonical().setAttribute("href", canonicalUrl);
 
+  const ogImage = meta.ogImage || DEFAULT_OG_IMAGE;
+
   ensureMetaByName("og:title", "property").setAttribute("content", meta.title);
   ensureMetaByName("og:description", "property").setAttribute("content", meta.description);
   ensureMetaByName("og:url", "property").setAttribute("content", canonicalUrl);
   ensureMetaByName("og:type", "property").setAttribute("content", "website");
   ensureMetaByName("og:site_name", "property").setAttribute("content", SITE_NAME);
-  ensureMetaByName("og:image", "property").setAttribute("content", DEFAULT_OG_IMAGE);
+  ensureMetaByName("og:image", "property").setAttribute("content", ogImage);
 
   ensureMetaByName("twitter:card").setAttribute("content", "summary_large_image");
   ensureMetaByName("twitter:title").setAttribute("content", meta.title);
   ensureMetaByName("twitter:description").setAttribute("content", meta.description);
-  ensureMetaByName("twitter:image").setAttribute("content", DEFAULT_OG_IMAGE);
+  ensureMetaByName("twitter:image").setAttribute("content", ogImage);
 
   injectJsonLdForRoute(meta);
 }
