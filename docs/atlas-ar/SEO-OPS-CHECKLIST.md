@@ -17,7 +17,7 @@ Canonical host: **`https://www.atlasar.in`** (www wins). Code and sitemap assume
 ## Post-deploy verification
 
 - [x] `https://www.atlasar.in/robots.txt` returns Allow/Disallow + Sitemap line
-- [x] `https://www.atlasar.in/sitemap.xml` lists exactly six URLs
+- [x] `https://www.atlasar.in/sitemap.xml` lists indexable URLs (10 locs after SEO-2 Batch 3 `/learn`)
 - [x] Home HTML has absolute `og:image` / `og:url` / Twitter tags
 - [x] Client nav to `/pricing` updates `document.title` + canonical + JSON-LD (SPA `applyRouteMeta`)
 - [x] `/login`, `/admin`, `/sales-deck/` send `noindex` (SPA meta or static meta)
@@ -35,6 +35,10 @@ Canonical host: **`https://www.atlasar.in`** (www wins). Code and sitemap assume
 - `https://www.atlasar.in/`
 - `https://www.atlasar.in/pricing`
 - `https://www.atlasar.in/about`
+- `https://www.atlasar.in/learn`
+- `https://www.atlasar.in/learn/browser-ar-product-demo`
+- `https://www.atlasar.in/learn/glb-usdz-workflow`
+- `https://www.atlasar.in/learn/atlas-ar-for-teams`
 - `https://www.atlasar.in/legal/terms`
 - `https://www.atlasar.in/legal/privacy`
 - `https://www.atlasar.in/legal/acceptable-use`
@@ -48,8 +52,17 @@ Auth, onboard, admin, account, owner, demo, `/ar/*`, `/w/*`, `/sales-deck/*`, `/
 - [x] **Batch 1 — prerender shells** for six indexable URLs (`npm run prerender:seo` after Vite) + richer pricing `Offer` / `UnitPriceSpecification` JSON-LD (2026-07-31)
 - [x] **Batch 1 live verify** (2026-07-31): `/pricing` `/about` `/legal/*` return route-specific title/canonical + JSON-LD (not home SPA); `/pricing/` → 301 → `/pricing`
 - [x] Per-page OG images (beyond shared default) — Batch 2 done 2026-07-31; **Batch 2b** optimized `og-*.jpg` 1200×630 + width/height/alt (2026-07-31)
-- [ ] Content hub
+- [x] **Content hub** — `/learn` + 3 guides (Batch 3, 2026-07-31). **Live verify + Console redirect paste** required after Amplify deploy.
 - [ ] Optional marketing host split
+
+**Batch 3 live verify (after deploy + Console paste):**
+
+- [ ] `/learn` shell title/canonical ≠ home
+- [ ] `/learn/browser-ar-product-demo` (and siblings) Article JSON-LD present
+- [ ] `/learn/` → 301 → `/learn`
+- [ ] sitemap.xml has 10 `<loc>` including `/learn*`
+- [ ] GSC Request indexing for `/learn` + 3 articles
+- [ ] Bing sitemap re-submit (optional if auto-crawled)
 
 **Note:** `og:image` is for **link previews** (Slack/LinkedIn/X), not an on-page hero. Verify with view-source or Sharing Debugger “Scrape again” after deploy.
 

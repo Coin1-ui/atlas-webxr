@@ -3,7 +3,7 @@
 **Path:** `D:\AI\atlas-webxr\Edit_logs\Memory\ATLAS-AR-PROJECT-MEMORY.md`  
 **Rule:** Before implementing or diagnosing any Atlas AR task, read this file + the relevant domain memory below. Update this file after each completed task so mistakes are not repeated.
 
-Last updated: 2026-07-31 (MKT-7 analytics copy · QA-5 PASS · P0 confirm)
+Last updated: 2026-07-31 (SEO-2 Batch 2b OG JPEG harden)
 
 ---
 
@@ -224,3 +224,13 @@ Run: `npm run test:all`, `npm run test:design-audit`, `npm run test:des4`, `npm 
 | 2026-07-31 | **QA-5 PASS** · Batch 35 closed. First placement ≤15 min on prod (user 2026-07-17). |
 | 2026-07-31 | **MVP P0 confirm:** no open MVP P0 ship blockers; BILL-1 remains on_hold (scale). |
 | 2026-07-31 | **MKT-7 done** — analytics copy aligned: Launch/Starter = usage dashboard; Growth = JSON session log default on (ENG-37); no per-model funnel claims. Pricing page, landing, sales deck, PRICING.md, readiness updated. |
+| 2026-07-31 | **GSC HTML verify file live.** `public/google6baa8a3d0d627b22.html` → `https://www.atlasar.in/google6baa8a3d0d627b22.html` (200, exact `google-site-verification:` body). Amplify `cf78e70`. **User:** click Verify in Search Console, then submit `sitemap.xml`. Bing still open. |
+| 2026-07-31 | **GSC ownership Verified** (HTML file). Next: submit sitemap + Request indexing for `/`, `/pricing`, `/about`. |
+| 2026-07-31 | **GSC sitemap Success** — `https://www.atlasar.in/sitemap.xml`. Phase 1 GSC ownership + sitemap closed. Checklist DNS/post-deploy ticks aligned to live PASS. **Still open:** Request indexing (if not done) · Bing Webmaster · SEO-2. |
+| 2026-07-31 | **GSC Request indexing done** for `/`, `/pricing`, `/about`. Phase 1 Google search-ops complete. **Still open:** Bing Webmaster · SEO-2. |
+| 2026-07-31 | **Bing Webmaster sitemap Success** (user). Live probe: `sitemap.xml` 200 / 6 `<loc>` · robots Sitemap line OK. **Phase 1 search-ops complete** (GSC + Bing). SEO-2 still later. |
+| 2026-07-31 | **SEO-2 Batch 1:** prerender shells for 6 indexable URLs (`scripts/prerender-seo-shells.ts` after Vite). Richer pricing Offer + `UnitPriceSpecification`. Amplify redirects add `/pricing`→`/pricing/index.html` 200 (etc.) before SPA — **user must re-paste AMPLIFY-REDIRECTS.json in Console**. Hub / host-split / per-page OG deferred. |
+| 2026-07-31 | **SEO-2 Batch 1 live PASS** after Console redirect paste: `/pricing` `/about` `/legal/*` shells with route meta + JSON-LD; `/pricing/` 301→`/pricing`. |
+| 2026-07-31 | **SEO-2 Batch 2:** per-route `ogImage` in `seo.ts` (home phone · pricing steps · about field · legal workspace). SPA + prerender. Hub / host-split still open. |
+| 2026-07-31 | **SEO-2 Batch 2b OG harden:** Live HTML already had correct Batch 2 `og:image` (not a rewrite miss). User “not showing” = OG is meta-only / scraper cache / ~2 MB PNGs. Added `public/marketing/og-{home,pricing,about,legal}.jpg` @ 1200×630 (~60–90 KB) + `og:image:width/height/alt`. Refresh FB/LinkedIn debugger after deploy. |
+| 2026-07-31 | **SEO-2 Batch 3 — Content hub.** `/learn` index + 3 guides (`browser-ar-product-demo`, `glb-usdz-workflow`, `atlas-ar-for-teams`). `learn-content.ts` + `marketing-learn.ts`; nav Learn link; `seo.ts` + Article JSON-LD; sitemap 10 locs; Amplify 301/200 for `/learn*`. Host split deferred. **User: paste AMPLIFY-REDIRECTS.json + GSC Request indexing for `/learn*`.** |

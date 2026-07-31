@@ -6,6 +6,8 @@ const ROUTE_LOADING_CLASS = "is-route-loading";
 const NAV_ACTIONS = new Set([
   "home",
   "about",
+  "learn",
+  "learn-article",
   "product",
   "pricing",
   "demo",
@@ -49,6 +51,7 @@ function resolveNavTargetPath(action: string | null, el: HTMLElement): string | 
   const map: Record<string, string> = {
     home: "/",
     about: "/about",
+    learn: "/learn",
     product: "/",
     pricing: "/pricing",
     demo: "/demo",

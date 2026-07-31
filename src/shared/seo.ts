@@ -26,6 +26,8 @@ export type SeoRouteMeta = {
   /** Inject pricing FAQ + Offer graph */
   pricingOffers?: boolean;
   pricingFaq?: boolean;
+  /** Inject Article schema (learn guides) */
+  article?: boolean;
 };
 
 /** Indexable marketing + legal routes (sitemap allowlist). */
@@ -86,6 +88,45 @@ export const INDEXABLE_SEO_ROUTES: SeoRouteMeta[] = [
     robots: "index",
     ogImage: `${SITE_ORIGIN}/marketing/og-legal.jpg`,
     ogImageAlt: "Atlas AR branded workspace admin",
+  },
+  {
+    path: "/learn",
+    title: "Learn Atlas AR — Browser Floor AR Guides",
+    description:
+      "Learn Atlas AR: browser floor AR for furniture retail and B2B field sales, GLB to USDZ workflow, and how white-label workspaces work. No app store.",
+    robots: "index",
+    ogImage: `${SITE_ORIGIN}/marketing/og-home.jpg`,
+    ogImageAlt: "Atlas AR — phone showing white-label floor AR placement",
+  },
+  {
+    path: "/learn/browser-ar-product-demo",
+    title: "Share Product AR in the Browser | Atlas AR",
+    description:
+      "How Atlas AR shares white-label floor AR in Chrome and Safari. Branded links, true-scale placement, and 3D inspect — no app install for furniture retail and field sales.",
+    robots: "index",
+    ogImage: `${SITE_ORIGIN}/marketing/og-home.jpg`,
+    ogImageAlt: "Atlas AR — phone showing white-label floor AR placement",
+    article: true,
+  },
+  {
+    path: "/learn/glb-usdz-workflow",
+    title: "GLB to USDZ Workflow | Atlas AR",
+    description:
+      "Atlas AR GLB to USDZ workflow: upload once on desktop, automatic USDZ for iOS Quick Look, Android browser AR, icons, and share links for your white-label workspace.",
+    robots: "index",
+    ogImage: `${SITE_ORIGIN}/marketing/og-pricing.jpg`,
+    ogImageAlt: "Atlas AR pricing — upload, brand, and share workflow",
+    article: true,
+  },
+  {
+    path: "/learn/atlas-ar-for-teams",
+    title: "Atlas AR for Retail and Field Teams",
+    description:
+      "Who Atlas AR is for: furniture retail showrooms and B2B field sales. White-label workspaces, 14-day Growth trial, plans from $5/mo incl. tax, unlimited viewers — no per-seat fees.",
+    robots: "index",
+    ogImage: `${SITE_ORIGIN}/marketing/og-about.jpg`,
+    ogImageAlt: "Atlas AR for B2B field sales — place products in the buyer space",
+    article: true,
   },
 ];
 
@@ -253,7 +294,20 @@ function breadcrumbLd(path: string, title: string): Record<string, unknown> {
   const items: { "@type": string; position: number; name: string; item: string }[] = [
     { "@type": "ListItem", position: 1, name: "Home", item: `${SITE_ORIGIN}/` },
   ];
-  if (path !== "/") {
+  if (path.startsWith("/learn/") && path !== "/learn") {
+    items.push({
+      "@type": "ListItem",
+      position: 2,
+      name: "Learn",
+      item: `${SITE_ORIGIN}/learn`,
+    });
+    items.push({
+      "@type": "ListItem",
+      position: 3,
+      name: title.replace(/\s*[|—].*$/, "").trim() || title,
+      item: `${SITE_ORIGIN}${path}`,
+    });
+  } else if (path !== "/") {
     items.push({
       "@type": "ListItem",
       position: 2,
@@ -264,6 +318,22 @@ function breadcrumbLd(path: string, title: string): Record<string, unknown> {
   return {
     "@type": "BreadcrumbList",
     itemListElement: items,
+  };
+}
+
+function articleLd(meta: SeoRouteMeta): Record<string, unknown> {
+  return {
+    "@type": "Article",
+    "@id": `${SITE_ORIGIN}${meta.path}#article`,
+    headline: meta.title,
+    description: meta.description,
+    url: `${SITE_ORIGIN}${meta.path}`,
+    image: meta.ogImage || DEFAULT_OG_IMAGE,
+    datePublished: "2026-07-31",
+    dateModified: "2026-07-31",
+    author: { "@id": `${SITE_ORIGIN}/#organization` },
+    publisher: { "@id": `${SITE_ORIGIN}/#organization` },
+    mainEntityOfPage: { "@id": `${SITE_ORIGIN}${meta.path}#webpage` },
   };
 }
 
@@ -338,6 +408,9 @@ export function buildRouteJsonLdGraph(meta: SeoRouteMeta): Record<string, unknow
   }
   if (meta.pricingOffers) {
     graph.push(...offersGraphLd());
+  }
+  if (meta.article) {
+    graph.push(articleLd(meta));
   }
 
   return {

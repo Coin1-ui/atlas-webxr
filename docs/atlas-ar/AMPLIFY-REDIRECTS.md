@@ -21,9 +21,9 @@ That **replaced** the richer rules from `amplify.yml` (slash strips + sales-deck
 | Order | Rule | Purpose |
 |-------|------|---------|
 | 1–2 | Apex → www (301) | Canonical host |
-| 3–7 | `/pricing/` → `/pricing` (etc.) | Strip trailing slash |
-| 8–12 | `/pricing` → `/pricing/index.html` (etc.) **200** | SEO-2 prerender shells |
-| 13–21 | sales-deck / storyboard → real HTML (200) | Enablement pages |
+| 3–11 | `/pricing/` `/about/` `/learn/` `/learn/*/` `/legal/*/` → strip slash | Strip trailing slash |
+| 12–21 | `/pricing` `/about` `/learn` + articles `/legal/*` → `…/index.html` **200** | SEO-2 prerender shells |
+| 22–30 | sales-deck / storyboard → real HTML (200) | Enablement pages |
 | Last | SPA regex → `/index.html` (**200**, not 404-200) | Serve app **without** Amplify adding `/` on miss |
 
 Static files with extensions (`.js`, `.css`, `.txt`, `.xml`, images, video, `.html`) are **not** rewritten by the SPA rule — `robots.txt` / `sitemap.xml` / shells keep working.
@@ -33,9 +33,11 @@ Static files with extensions (`.js`, `.css`, `.txt`, `.xml`, images, video, `.ht
 ```text
 https://www.atlasar.in/pricing     → 200, URL stays /pricing (no slash)
 https://www.atlasar.in/pricing/    → 301 → /pricing
+https://www.atlasar.in/learn       → 200, Learn title/canonical (not home)
+https://www.atlasar.in/learn/browser-ar-product-demo → 200, article shell
 View-source /pricing               → title/canonical for Pricing (not home) + JSON-LD
 https://www.atlasar.in/robots.txt  → 200
-https://www.atlasar.in/sitemap.xml → 200
+https://www.atlasar.in/sitemap.xml → 200 (10 locs after SEO-2 Batch 3)
 https://atlasar.in/                → 301 → https://www.atlasar.in/
 ```
 

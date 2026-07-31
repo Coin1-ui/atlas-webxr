@@ -1549,6 +1549,81 @@
   border-top: 1px solid var(--line);
 }
 
+/* ---------------------------------------------------------------
+   Learn hub (SEO-2 Batch 3)
+   --------------------------------------------------------------- */
+.learn-breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--fs-sm);
+  color: var(--muted);
+  margin-bottom: var(--sp-2);
+}
+
+.learn-breadcrumb-sep {
+  opacity: 0.5;
+}
+
+.learn-grid {
+  display: grid;
+  gap: var(--sp-5);
+  padding: var(--sp-6) 0;
+}
+
+.learn-card {
+  padding: var(--sp-5);
+  border-radius: var(--r-lg);
+  background: var(--surface-glass);
+  border: 1px solid var(--line);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+}
+
+.learn-card-eyebrow {
+  margin: 0 0 var(--sp-2);
+  font-size: var(--fs-xs);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.learn-card-title {
+  margin: 0 0 var(--sp-3);
+  font-family: var(--font-ui);
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-semi);
+  letter-spacing: -0.02em;
+  line-height: var(--lh-tight);
+}
+
+.learn-card-link {
+  all: unset;
+  cursor: pointer;
+  color: var(--text);
+}
+
+.learn-card-link:hover,
+.learn-card-link:focus-visible {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+.learn-card-summary {
+  margin: 0 0 var(--sp-4);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-body);
+  color: var(--text-dim);
+  max-width: 62ch;
+}
+
+@media (min-width: 760px) {
+  .learn-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
 @media (max-width: 760px) {
   .mkt-section {
     padding-block: var(--sp-6);

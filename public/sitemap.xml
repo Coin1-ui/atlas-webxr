@@ -16,6 +16,26 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://www.atlasar.in/learn</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.atlasar.in/learn/browser-ar-product-demo</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.atlasar.in/learn/glb-usdz-workflow</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.atlasar.in/learn/atlas-ar-for-teams</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://www.atlasar.in/legal/terms</loc>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>

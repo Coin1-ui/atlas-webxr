@@ -19,6 +19,8 @@ import { renderHomeMinimal } from "./ui/home-minimal";
 import { renderMarketingLanding } from "./ui/marketing-landing";
 import { renderPricingPage } from "./ui/marketing-pricing";
 import { renderAboutPage } from "./ui/marketing-about";
+import { renderLearnArticle, renderLearnHub } from "./ui/marketing-learn";
+import { getLearnArticle } from "./ui/learn-content";
 import { renderAccountPage } from "./ui/account-page";
 import { renderTenantCatalog } from "./ui/tenant-catalog";
 import {
@@ -2131,6 +2133,8 @@ function signedInMarketingNav(): {
 function marketingHandlersBase(): {
   onHome: () => void;
   onAbout: () => void;
+  onLearn: () => void;
+  onLearnArticle: (slug: string) => void;
   onProduct: () => void;
   onPricing: () => void;
   onDemo?: () => void;
@@ -2148,6 +2152,8 @@ function marketingHandlersBase(): {
     mobileExperience: mobile,
     onHome: () => navigateTo("/"),
     onAbout: () => navigateTo("/about"),
+    onLearn: () => navigateTo("/learn"),
+    onLearnArticle: (articleSlug: string) => navigateTo(`/learn/${encodeURIComponent(articleSlug)}`),
     onProduct: () => navigateTo("/"),
     onPricing: () => navigateTo("/pricing"),
     ...(mobile ? { onDemo: () => navigateTo("/demo") } : {}),
@@ -2278,6 +2284,37 @@ function showAboutPage(): void {
     ...base,
     ...signedInMarketingNav(),
   });
+  routePainted();
+}
+
+function parseLearnSlug(): string | null {
+  const match = /^\/learn\/([^/]+)$/.exec(routePath());
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
+function showLearnHub(): void {
+  clearSession({ skipSessionLog: true });
+  applyWorkspaceTheme(null);
+  const base = marketingHandlersBase();
+  renderLearnHub(app, {
+    ...base,
+    ...signedInMarketingNav(),
+  });
+  routePainted();
+}
+
+function showLearnArticlePage(slug: string): void {
+  clearSession({ skipSessionLog: true });
+  applyWorkspaceTheme(null);
+  const base = marketingHandlersBase();
+  const ok = renderLearnArticle(app, slug, {
+    ...base,
+    ...signedInMarketingNav(),
+  });
+  if (!ok) {
+    navigateTo("/learn", true);
+    return;
+  }
   routePainted();
 }
 
@@ -2711,6 +2748,19 @@ function routeApp(): void {
   }
   if (path === "/about") {
     showAboutPage();
+    return;
+  }
+  if (path === "/learn") {
+    showLearnHub();
+    return;
+  }
+  const learnSlug = parseLearnSlug();
+  if (learnSlug) {
+    if (!getLearnArticle(learnSlug)) {
+      navigateTo("/learn", true);
+      return;
+    }
+    showLearnArticlePage(learnSlug);
     return;
   }
   if (path === "/account") {

@@ -4,6 +4,7 @@ import { escapeHtml } from "../shared/escape-html";
 export type MarketingNavHandlers = {
   onHome: () => void;
   onAbout: () => void;
+  onLearn?: () => void;
   onProduct: () => void;
   onPricing: () => void;
   onDemo?: () => void;
@@ -52,10 +53,18 @@ export function marketingNavHtml(handlers: MarketingNavHandlers, options: Market
   const pricingProductToggle = pricingProductToggleHtml("desktop", options.navPage);
   const pricingProductMenuItem = pricingProductToggleHtml("mobile", options.navPage);
 
+  const learnDesktop = handlers.onLearn
+    ? `<button type="button" class="mkt-nav-link" data-action="learn" data-nav-path="/learn">Learn</button>`
+    : "";
+  const learnMenu = handlers.onLearn
+    ? `<button type="button" class="mkt-nav-menu-item" data-action="learn" data-nav-path="/learn" role="menuitem">Learn</button>`
+    : "";
+
   const desktopLinks = mobile
     ? ""
     : `
           ${pricingProductToggle}
+          ${learnDesktop}
           <button type="button" class="mkt-nav-link" data-action="about" data-nav-path="/about">About Atlas AR</button>
           ${
             signedIn && handlers.onDashboard
@@ -82,6 +91,7 @@ export function marketingNavHtml(handlers: MarketingNavHandlers, options: Market
                 : ""
             }
             ${pricingProductMenuItem}
+            ${learnMenu}
             <button type="button" class="mkt-nav-menu-item" data-action="about" data-nav-path="/about" role="menuitem">About Atlas AR</button>
             ${
               signedIn && handlers.onDashboard
@@ -95,6 +105,7 @@ export function marketingNavHtml(handlers: MarketingNavHandlers, options: Market
             }`
     : `
             ${pricingProductMenuItem}
+            ${learnMenu}
             ${
               handlers.onDemo
                 ? `<button type="button" class="mkt-nav-menu-item" data-action="demo" role="menuitem">Try live demo</button>`
@@ -153,6 +164,10 @@ function dispatchNavAction(
   }
   if (action === "about") {
     handlers.onAbout();
+    return;
+  }
+  if (action === "learn") {
+    handlers.onLearn?.();
     return;
   }
   if (action === "product") {
