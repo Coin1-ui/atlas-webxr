@@ -3,7 +3,7 @@
 **Path:** `D:\AI\atlas-webxr\Edit_logs\Memory\ATLAS-AR-PROJECT-MEMORY.md`  
 **Rule:** Before implementing or diagnosing any Atlas AR task, read this file + the relevant domain memory below. Update this file after each completed task so mistakes are not repeated.
 
-Last updated: 2026-07-31 (Launch readiness audit)
+Last updated: 2026-07-31 (SERP favicon.ico for Google)
 
 ---
 
@@ -246,3 +246,4 @@ Run: `npm run test:all`, `npm run test:design-audit`, `npm run test:des4`, `npm 
 | 2026-07-31 | **Scale contact-sales UX.** Mailto alone was a silent no-op without an OS mail client. Scale uses `data-action=contact-sales`: mailto + clipboard + live status; email shown under button; nav-loading skips this action. |
 | 2026-07-31 | **OPS-SCALE-1 done.** SAL-5 Scale ops runbook; Owner Customers **Send Scale CTA** / **Copy Scale CTA** (cc sales@); Scale plan hint (sales-led, no Dodo SKU). Entitle via Save plan → Scale after signed quote. |
 | 2026-07-31 | **Launch readiness audit.** Soft launch **GO WITH CAVEATS**; full self-serve GTM **NOT READY**. Doc `LAUNCH-READINESS-2026-07-31.md` + PRICING-FEATURE-READINESS refresh. **OPS-INGEST PASS** — `/health` `sandboxDodoIngest:false` / `sandboxUsageSeed:false` (re-probe). |
+| 2026-07-31 | **SERP favicon fix.** Google showed grey globe because `/favicon.ico` 404. Added multi-size `public/favicon.ico` + `<link rel="icon" href="/favicon.ico" sizes="any">` in `index.html`. Amplify SPA rewrite already excludes `.ico`. **Founder:** GSC URL Inspection → Request indexing; SERP icon can take days–weeks. |
