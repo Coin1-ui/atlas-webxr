@@ -138,7 +138,7 @@ From [SALES-PLAYBOOK.md](./SALES-PLAYBOOK.md) · [MIROFISH-QA-SCENARIOS.md](./mi
 | P1 | Overage via Dodo meters (done) | BILL | **BILL-3** ✅ · [DODO-OVERAGE-METERS.md](./DODO-OVERAGE-METERS.md) |
 | P2 | Admin seat claims removed from PRICING.md (copy truth) | PM | **PM-4** ✅ (2026-07-31) |
 | P2 | Annual prepay SKUs | BILL | **BILL-4** on_hold |
-| P0 ops | Sandbox Dodo ingest off on prod Lambda | Ops | [OPS-SANDBOX-INGEST-OFF.md](./OPS-SANDBOX-INGEST-OFF.md) — founder |
+| P0 ops | Sandbox Dodo ingest off on prod Lambda | Ops | **PASS** ✅ · [OPS-SANDBOX-INGEST-OFF.md](./OPS-SANDBOX-INGEST-OFF.md) |
 
 ---
 
