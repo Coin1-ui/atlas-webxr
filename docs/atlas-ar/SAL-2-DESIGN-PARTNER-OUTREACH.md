@@ -3,7 +3,7 @@
 **Batch 27 · Sales Outreach + Account Strategist + Discovery Coach**  
 **Status:** Confirmed ✅ (2026-05-21) · Interactive module at [outreach.html](../../public/sales-deck/outreach.html)  
 **Live product:** https://www.atlasar.in  
-**Outbound mailbox:** **sales@atlasar.in** (From / Reply-To for Templates A–F). Product support: **support@atlasar.in**.  
+**Outbound mailbox:** **sales@atlasar.in** (From / Reply-To for Templates A–F) — **live / receiving**. Product support: **support@atlasar.in** — **live / receiving** (user confirm 2026-07-31).  
 **Sources:** [MiroFish PREDICTION-REPORT.md](./mirofish/PREDICTION-REPORT.md) · [LIVE-REPORT-EN.md](./mirofish/LIVE-REPORT-EN.md) · [SALES-PLAYBOOK.md](./SALES-PLAYBOOK.md) · [ICP.md](./ICP.md) · [PRICING.md](./PRICING.md) · design-partner best practices (DoWhatMatter, Allston Labs, 2025–2026)
 
 ---

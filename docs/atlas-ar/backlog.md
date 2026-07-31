@@ -4,7 +4,7 @@
 
 **Parked (billing):** Natural renewal check on test-admin `sub_0NkDIEC…` ~2026-07-30T05:21Z — corrected PPUs · meterSync · no old-sub charge. Live cutover / Zoho on hold.
 
-**Latest orchestration batch (2026-07-31):** **Contact emails** — support@atlasar.in + sales@atlasar.in ([contact.ts](../../src/shared/contact.ts)). **Previous:** Lead research US/EU/peer ([LEAD-SHEET-2026-07-31.md](./LEAD-SHEET-2026-07-31.md)); SEO-2 Batch 3 LIVE PASS.
+**Latest orchestration batch (2026-07-31):** **Contact emails code + inbox live PASS** — support@atlasar.in + sales@atlasar.in ([contact.ts](../../src/shared/contact.ts); user confirmed receiving). **Previous:** Lead research US/EU/peer ([LEAD-SHEET-2026-07-31.md](./LEAD-SHEET-2026-07-31.md)); SEO-2 Batch 3 LIVE PASS.
 
 **Previous orchestration batch (2026-07-30):** **Production UI refresh LIVE** on Amplify. Push repo commit `67e05df` → `origin/main`. Additive `src/styles/refresh/` layer; cinema hero; Account Danger zone; iOS showroom branch; Inter self-hosted for CSP. AR session frozen (`guard:ar`). Prod: `https://main.d7vfdpujdozkj.amplifyapp.com`.
 

@@ -3,7 +3,7 @@
 **Batch:** Lead research 2026-07-31  
 **Agents:** Outbound Strategist → Sales Outreach (US/EU/peer) → Account Strategist → Orchestrator  
 **Product:** https://www.atlasar.in · Offer: Design partner Growth@$59×90d (3 slots) · Founding 10 alternate  
-**Outbound From / Reply-To:** **sales@atlasar.in** (product help: support@atlasar.in)  
+**Outbound From / Reply-To:** **sales@atlasar.in** (product help: support@atlasar.in) — both inboxes **live / receiving** (user confirm 2026-07-31)  
 **Method:** Public web research only. No purchased lists. Personal emails only when published on company sites.  
 **Mix:** ~70% Elena (retail/home) · ~30% Marcus (field/fixtures)
 
