@@ -66,6 +66,36 @@
     "condition": null
   },
   {
+    "source": "/showcase/",
+    "status": "301",
+    "target": "/sales-deck/showcase",
+    "condition": null
+  },
+  {
+    "source": "/showcase",
+    "status": "301",
+    "target": "/sales-deck/showcase",
+    "condition": null
+  },
+  {
+    "source": "/sales-deck/showcase/",
+    "status": "301",
+    "target": "/sales-deck/showcase",
+    "condition": null
+  },
+  {
+    "source": "/sales-deck/showcase",
+    "status": "200",
+    "target": "/index.html",
+    "condition": null
+  },
+  {
+    "source": "/sales-deck/showcase/<*>",
+    "status": "200",
+    "target": "/index.html",
+    "condition": null
+  },
+  {
     "source": "/pricing",
     "status": "200",
     "target": "/pricing/index.html",
@@ -174,7 +204,7 @@
     "condition": null
   },
   {
-    "source": "</^[^.]+$|\\.(?!(css|gif|ico|jpg|jpeg|js|png|txt|svg|woff|woff2|ttf|map|json|webp|mp4|xml|webmanifest|html)$)([^.]+$)/>",
+    "source": "</^[^.]+$|\\.(?!(css|gif|ico|jpg|jpeg|js|png|txt|svg|woff|woff2|ttf|map|json|webp|mp4|xml|webmanifest|html|glb|usdz)$)([^.]+$)/>",
     "status": "200",
     "target": "/index.html",
     "condition": null

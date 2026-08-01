@@ -98,7 +98,7 @@ function renderSlide(slide) {
             </div>
             ${
               slide.demoLink
-                ? `<p class="slide-demo-cta"><a class="deck-btn" href="${esc(slide.demoLink)}" target="_blank" rel="noopener">Watch product demo ↗</a></p>`
+                ? `<p class="slide-demo-cta"><a class="deck-btn" href="${esc(slide.demoLink)}" target="_blank" rel="noopener">Open product + Direct AR demo ↗</a></p>`
                 : ""
             }
           </div>

@@ -21,6 +21,14 @@ import { renderPricingPage } from "./ui/marketing-pricing";
 import { renderAboutPage } from "./ui/marketing-about";
 import { renderLearnArticle, renderLearnHub } from "./ui/marketing-learn";
 import { getLearnArticle } from "./ui/learn-content";
+import { renderShowcaseCatalog, renderShowcaseProduct } from "./ui/marketing-showcase";
+import {
+  findShowcaseCatalogModel,
+  getShowcaseProduct,
+  showcaseCatalogPath,
+  showcaseProductPath,
+} from "./shared/showcase-catalog";
+import { getShowcaseLinkConfig } from "./shared/showcase-link-overrides";
 import { renderAccountPage } from "./ui/account-page";
 import { renderTenantCatalog } from "./ui/tenant-catalog";
 import {
@@ -2009,8 +2017,11 @@ async function showGlobalArDirect(modelId: string): Promise<void> {
 
   try {
     const records = await fetchCatalog({ bustCache: true });
-    const record = findCatalogModelById(records, modelId);
+    let record = findCatalogModelById(records, modelId);
     if (!record || isDemoCatalogModel(record)) {
+      record = findShowcaseCatalogModel(modelId);
+    }
+    if (!record) {
       app.innerHTML = `<div class="home"><h1>Model not found</h1><p class="home-sub">No model “${escapeHtml(modelId)}” in the global catalog.</p><button class="btn btn-ghost btn-block" data-action="back">Back to home</button></div>`;
       app.querySelector("[data-action=back]")?.addEventListener("click", () => goHome());
       routePainted();
@@ -2290,6 +2301,49 @@ function showAboutPage(): void {
 function parseLearnSlug(): string | null {
   const match = /^\/learn\/([^/]+)$/.exec(routePath());
   return match ? decodeURIComponent(match[1]) : null;
+}
+
+function parseShowcaseProductId(): string | null {
+  const match = /^\/sales-deck\/showcase\/([^/]+)$/.exec(routePath());
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
+function showcaseHandlers() {
+  const base = marketingHandlersBase();
+  return {
+    ...base,
+    ...signedInMarketingNav(),
+    onShowcase: () => navigateTo(showcaseCatalogPath()),
+    onShowcaseProduct: (id: string) => navigateTo(showcaseProductPath(id)),
+    onDirectAr: (id: string) => {
+      const href = getShowcaseLinkConfig(id).directArUrl.trim() || `/ar/${encodeURIComponent(id)}`;
+      if (/^https?:\/\//i.test(href)) {
+        location.assign(href);
+        return;
+      }
+      const path = href.startsWith("/") ? href : `/${href}`;
+      navigateTo(path);
+    },
+  };
+}
+
+function showShowcaseCatalogPage(): void {
+  clearSession({ skipSessionLog: true });
+  applyWorkspaceTheme(null);
+  renderShowcaseCatalog(app, showcaseHandlers());
+  routePainted();
+}
+
+function showShowcaseProductPage(productId: string): void {
+  clearSession({ skipSessionLog: true });
+  applyWorkspaceTheme(null);
+  if (!getShowcaseProduct(productId)) {
+    navigateTo(showcaseCatalogPath(), true);
+    showShowcaseCatalogPage();
+    return;
+  }
+  renderShowcaseProduct(app, productId, showcaseHandlers());
+  routePainted();
 }
 
 function showLearnHub(): void {
@@ -2763,6 +2817,23 @@ function routeApp(): void {
     showLearnArticlePage(learnSlug);
     return;
   }
+  if (path === "/showcase" || /^\/showcase\/[^/.]+$/.test(path)) {
+    const legacyId = path === "/showcase" ? null : path.slice("/showcase/".length);
+    navigateTo(
+      legacyId ? showcaseProductPath(decodeURIComponent(legacyId)) : showcaseCatalogPath(),
+      true,
+    );
+    return;
+  }
+  if (path === "/sales-deck/showcase") {
+    showShowcaseCatalogPage();
+    return;
+  }
+  const showcaseProductId = parseShowcaseProductId();
+  if (showcaseProductId) {
+    showShowcaseProductPage(showcaseProductId);
+    return;
+  }
   if (path === "/account") {
     void showAccountScreen();
     return;
@@ -2802,7 +2873,13 @@ function routeApp(): void {
 }
 
 async function loadPickerItemsCache(opts?: { bustCache?: boolean }): Promise<ModelPickerItem[]> {
-  const records = await fetchCatalog(opts);
+  let records = await fetchCatalog(opts);
+  if (directArModelId) {
+    const showcase = findShowcaseCatalogModel(directArModelId);
+    if (showcase && !findCatalogModelById(records, showcase.id)) {
+      records = [...records, showcase];
+    }
+  }
   const scoped =
     showFullCatalogInAr() || !directArModelId
       ? records
@@ -3650,7 +3727,7 @@ async function enterArPlacementMode(): Promise<void> {
       details: stats as unknown as Record<string, string | number | boolean | null | undefined>,
     });
   };
-  let hitStatsTimer: ReturnType<typeof setInterval> | undefined;
+  let hitStatsTimer: number | undefined;
   hitStatsTimer = window.setInterval(logHitTestStats, 5000);
   window.setTimeout(logHitTestStats, 2500);
   const clearHitStatsTimer = () => {

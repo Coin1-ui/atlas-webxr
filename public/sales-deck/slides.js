@@ -52,9 +52,9 @@ export const SLIDES = [
     ],
     image: "assets/slide-04-how-it-works.png",
     webgl: "none",
-    demoLink: "https://www.atlasar.in/#product-demo",
+    demoLink: "https://www.atlasar.in/sales-deck/showcase",
     notes:
-      "Time-box a live demo: Let's place one SKU on your floor before we hang up. Target <15 min first placement. Watch product demo: www.atlasar.in/#product-demo (Android A1 · iOS B1).",
+      "Time-box a live demo: open /sales-deck/showcase on phone → pick a SKU → View in AR → Back to catalog returns to that product page (arExitUrl). Also share /ar/{id} as Direct AR. Target <15 min first placement.",
   },
   {
     id: 5,

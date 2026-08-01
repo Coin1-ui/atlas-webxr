@@ -1,0 +1,389 @@
+/* Marketing showcase — Cozey-style PDP + catalog for Direct AR demos */
+
+.showcase-page .showcase-main,
+.showcase-page .showcase-pdp-main {
+  position: relative;
+  z-index: 1;
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: var(--sp-8) var(--sp-4) var(--sp-10);
+}
+
+.showcase-hero {
+  max-width: 40rem;
+  margin-bottom: var(--sp-8);
+}
+
+.showcase-deck-link {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.showcase-deck-link:hover {
+  text-decoration: underline;
+}
+
+a.showcase-crumb-link {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+a.showcase-crumb-link:hover {
+  text-decoration: underline;
+}
+
+.showcase-hero-title {
+  margin: var(--sp-3) 0 var(--sp-4);
+  font-family: var(--font-ui);
+  font-size: clamp(1.75rem, 4vw, 2.75rem);
+  font-weight: var(--fw-semi);
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  color: var(--text);
+}
+
+.showcase-hero-summary {
+  margin: 0;
+  font-size: var(--fs-lg);
+  line-height: var(--lh-body);
+  color: var(--text-dim);
+}
+
+.showcase-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  gap: var(--sp-5);
+  margin-bottom: var(--sp-10);
+}
+
+.showcase-card {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--line);
+  background: rgba(10, 17, 32, 0.72);
+  overflow: hidden;
+}
+
+.showcase-card-media {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  min-height: 11rem;
+  padding: var(--sp-4);
+  border: 0;
+  cursor: pointer;
+  text-align: left;
+  color: var(--text);
+  background:
+    radial-gradient(ellipse 80% 70% at 70% 20%, rgba(45, 212, 191, 0.22), transparent 55%),
+    radial-gradient(ellipse 60% 50% at 20% 90%, rgba(251, 191, 36, 0.12), transparent 50%),
+    linear-gradient(160deg, #0f172a, #020617);
+}
+
+.showcase-card-badge {
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-semi);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.showcase-card-sku {
+  font-size: var(--fs-2xl);
+  font-weight: var(--fw-semi);
+  letter-spacing: -0.02em;
+}
+
+.showcase-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  flex: 1;
+}
+
+.showcase-card-title {
+  margin: 0;
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-semi);
+}
+
+.showcase-card-link {
+  border: 0;
+  padding: 0;
+  background: none;
+  color: var(--text);
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+
+.showcase-card-summary {
+  margin: 0;
+  flex: 1;
+  font-size: var(--fs-sm);
+  line-height: var(--lh-body);
+  color: var(--text-dim);
+}
+
+.showcase-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.showcase-howto {
+  max-width: 36rem;
+  padding-top: var(--sp-6);
+  border-top: 1px solid var(--line);
+}
+
+.showcase-howto-title {
+  margin: 0 0 var(--sp-3);
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-semi);
+}
+
+.showcase-howto-list {
+  margin: 0;
+  padding-left: 1.25rem;
+  color: var(--text-dim);
+  line-height: 1.6;
+}
+
+.showcase-howto-list code {
+  font-size: 0.9em;
+  color: var(--accent);
+}
+
+/* ---- PDP (Cozey-like) ---- */
+
+.showcase-crumb {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: var(--sp-5);
+  font-size: var(--fs-sm);
+  color: var(--muted);
+}
+
+.showcase-crumb-link {
+  border: 0;
+  padding: 0;
+  background: none;
+  color: var(--accent);
+  cursor: pointer;
+  font: inherit;
+}
+
+.showcase-crumb-sep {
+  opacity: 0.5;
+}
+
+.showcase-pdp-layout {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: var(--sp-7);
+  align-items: stretch;
+}
+
+.showcase-pdp-stage {
+  min-height: 22rem;
+  padding: var(--sp-6);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  border: 1px solid var(--line);
+  background:
+    radial-gradient(ellipse 70% 60% at 60% 30%, rgba(45, 212, 191, 0.28), transparent 55%),
+    radial-gradient(ellipse 50% 40% at 15% 85%, rgba(96, 165, 250, 0.16), transparent 50%),
+    linear-gradient(165deg, #111827 0%, #020617 70%);
+}
+
+.showcase-pdp-stage-kicker {
+  margin: 0 0 var(--sp-2);
+  font-size: var(--fs-2xs);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.showcase-pdp-stage-name {
+  margin: 0;
+  font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: var(--fw-semi);
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+}
+
+.showcase-pdp-stage-hint {
+  margin: var(--sp-3) 0 0;
+  font-size: var(--fs-sm);
+  color: var(--text-dim);
+}
+
+.showcase-pdp-copy {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  align-items: flex-start;
+}
+
+.showcase-pdp-title {
+  margin: 0;
+  font-size: clamp(1.75rem, 3.5vw, 2.5rem);
+  font-weight: var(--fw-semi);
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+.showcase-pdp-summary {
+  margin: 0;
+  font-size: var(--fs-lg);
+  line-height: var(--lh-body);
+  color: var(--text-dim);
+}
+
+.showcase-pdp-details {
+  margin: 0;
+  padding-left: 1.15rem;
+  color: var(--text-dim);
+  line-height: 1.55;
+}
+
+.showcase-pdp-cta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  margin-top: var(--sp-2);
+}
+
+.showcase-pdp-note {
+  margin: 0;
+  font-size: var(--fs-xs);
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.showcase-pdp-note code {
+  color: var(--accent);
+  word-break: break-all;
+}
+
+/* ---- Link options editor (admin-parity demo) ---- */
+
+.showcase-link-editor {
+  margin-top: var(--sp-8);
+  padding: var(--sp-5);
+  border: 1px solid var(--line);
+  background: rgba(10, 17, 32, 0.78);
+  max-width: 48rem;
+}
+
+.showcase-link-editor-head {
+  margin-bottom: var(--sp-4);
+}
+
+.showcase-link-editor-title {
+  margin: 0 0 var(--sp-2);
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-semi);
+}
+
+.showcase-link-editor-lead {
+  margin: 0;
+  font-size: var(--fs-sm);
+  line-height: var(--lh-body);
+  color: var(--text-dim);
+}
+
+.showcase-link-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-4);
+}
+
+.showcase-link-label {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semi);
+  color: var(--text);
+}
+
+.showcase-link-hint {
+  font-size: var(--fs-xs);
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.showcase-link-hint code {
+  color: var(--accent);
+}
+
+.showcase-link-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  align-items: center;
+}
+
+.showcase-link-input {
+  flex: 1 1 16rem;
+  min-width: 0;
+  padding: 0.65rem 0.85rem;
+  border: 1px solid var(--line);
+  border-radius: 0;
+  background: rgba(2, 6, 23, 0.85);
+  color: var(--text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: var(--fs-sm);
+}
+
+.showcase-link-input:focus {
+  outline: 1px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.showcase-link-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-3);
+}
+
+.showcase-link-status {
+  min-height: 1.25rem;
+  margin: 0 0 var(--sp-2);
+  font-size: var(--fs-sm);
+  color: var(--accent);
+}
+
+.showcase-link-preview {
+  margin: 0;
+  font-size: var(--fs-xs);
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.showcase-link-preview code {
+  color: var(--accent);
+  word-break: break-all;
+}
+
+@media (max-width: 900px) {
+  .showcase-pdp-layout {
+    grid-template-columns: 1fr;
+    gap: var(--sp-5);
+  }
+
+  .showcase-pdp-stage {
+    min-height: 14rem;
+  }
+
+  .showcase-pdp-cta .mkt-btn {
+    flex: 1 1 10rem;
+  }
+}

@@ -57,6 +57,15 @@ frontend:
     - source: "/learn/atlas-ar-for-teams/"
       target: "/learn/atlas-ar-for-teams"
       status: "301"
+    - source: "/showcase/"
+      target: "/sales-deck/showcase"
+      status: "301"
+    - source: "/showcase"
+      target: "/sales-deck/showcase"
+      status: "301"
+    - source: "/sales-deck/showcase/"
+      target: "/sales-deck/showcase"
+      status: "301"
     # SEO-2 prerender shells (must be before SPA rewrite)
     - source: "/pricing"
       target: "/pricing/index.html"
@@ -84,6 +93,13 @@ frontend:
       status: "200"
     - source: "/legal/acceptable-use"
       target: "/legal/acceptable-use/index.html"
+      status: "200"
+    # Showcase SPA routes (must be before /sales-deck → index.html)
+    - source: "/sales-deck/showcase"
+      target: "/index.html"
+      status: "200"
+    - source: "/sales-deck/showcase/<*>"
+      target: "/index.html"
       status: "200"
     # Static enablement pages (must be before SPA rewrite)
     - source: "/sales-deck"
@@ -114,7 +130,8 @@ frontend:
       target: "/mkt-3-storyboard/index.html"
       status: "200"
     # SPA rewrite with 200 (not 404-200) so Amplify does not add trailing slash on miss
-    - source: '</^[^.]+$|\.(?!(css|gif|ico|jpg|jpeg|js|png|txt|svg|woff|woff2|ttf|map|json|webp|mp4|xml|webmanifest|html)$)([^.]+$)/>'
+    # Include glb/usdz so /showcase/*.glb is served as static assets (not SPA index.html)
+    - source: '</^[^.]+$|\.(?!(css|gif|ico|jpg|jpeg|js|png|txt|svg|woff|woff2|ttf|map|json|webp|mp4|xml|webmanifest|html|glb|usdz)$)([^.]+$)/>'
       target: "/index.html"
       status: "200"
   customHeaders:

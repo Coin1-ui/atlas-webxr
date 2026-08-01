@@ -131,6 +131,16 @@ a.deck-btn {
   background: rgba(45, 212, 191, 0.28);
 }
 
+.deck-btn-showcase {
+  border-color: rgba(96, 165, 250, 0.5);
+  color: #93c5fd;
+}
+
+.deck-btn-showcase:hover {
+  border-color: #93c5fd;
+  background: rgba(96, 165, 250, 0.12);
+}
+
 .deck-btn-training {
   border-color: rgba(45, 212, 191, 0.45);
   color: var(--accent);

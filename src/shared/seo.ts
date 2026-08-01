@@ -194,7 +194,9 @@ function isNoindexPath(path: string): boolean {
     path.startsWith("/ar/") ||
     path.startsWith("/w/") ||
     path.startsWith("/sales-deck") ||
-    path.startsWith("/mkt-3-storyboard")
+    path.startsWith("/mkt-3-storyboard") ||
+    path === "/showcase" ||
+    path.startsWith("/showcase/")
   ) {
     return true;
   }

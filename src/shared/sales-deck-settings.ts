@@ -56,6 +56,8 @@ export function isSalesDeckPath(pathname: string): boolean {
     p === "/sales-deck/index.html" ||
     p === "/sales-deck/training.html" ||
     p === "/sales-deck/outreach.html" ||
-    p === "/sales-deck.html"
+    p === "/sales-deck.html" ||
+    p === "/sales-deck/showcase" ||
+    p.startsWith("/sales-deck/showcase/")
   );
 }

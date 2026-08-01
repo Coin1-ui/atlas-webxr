@@ -101,9 +101,10 @@ export const TRAINING_MODULES = [
     personaBranch: null,
     demo: true,
     demoSteps: [
-      "Ask them to open /demo on their phone.",
-      "Pick any model → Start AR → scan floor.",
-      "Wait for cyan placement ring before you talk again.",
+      "Ask them to open /sales-deck/showcase on their phone (retailer-style product pages).",
+      "Open a SKU → View in AR (Direct AR landing) → Start AR → scan floor.",
+      "Tap Back to catalog — confirm they return to that product page (not home).",
+      "Optional: paste /ar/{id} in a new tab to show a one-SKU Direct AR link.",
     ],
   },
   {
