@@ -19,6 +19,10 @@ function prefersReducedMotion(): boolean {
   return typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
+function isPhoneViewport(): boolean {
+  return typeof window !== "undefined" && window.matchMedia("(max-width: 760px)").matches;
+}
+
 /**
  * Mount the cinema hero video into `host` (typically `.mk-hero-media`).
  * Returns a cleanup function the caller may ignore.
@@ -44,16 +48,11 @@ export function mountHeroVideo(host: HTMLElement): () => void {
   video.preload = "metadata";
   video.poster = POSTER;
 
-  const mobileSource = document.createElement("source");
-  mobileSource.src = SRC_MOBILE;
-  mobileSource.type = "video/mp4";
-  mobileSource.media = "(max-width: 760px)";
-
-  const desktopSource = document.createElement("source");
-  desktopSource.src = SRC_DESKTOP;
-  desktopSource.type = "video/mp4";
-
-  video.append(mobileSource, desktopSource);
+  /* Single source via matchMedia — `<source media>` is unreliable across browsers. */
+  const source = document.createElement("source");
+  source.src = isPhoneViewport() ? SRC_MOBILE : SRC_DESKTOP;
+  source.type = "video/mp4";
+  video.append(source);
 
   const scrim = document.createElement("div");
   scrim.className = "mk-hero-scrim";
