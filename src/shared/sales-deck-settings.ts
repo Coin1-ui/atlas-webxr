@@ -3,7 +3,7 @@ export type SalesDeckConfig = { active: boolean; apiUrl?: string };
 const DEFAULT: SalesDeckConfig = { active: true, apiUrl: "" };
 
 function publicSettingsUrl(apiUrl?: string): string | null {
-  const trimmed = apiUrl?.replace(/\/$/, "") ?? "";
+  const trimmed = apiUrl?.trim().replace(/\/$/, "") ?? "";
   if (trimmed) return `${trimmed}/v2/platform/public-settings`;
   if (
     typeof location !== "undefined" &&
@@ -23,7 +23,7 @@ export async function fetchPublicSalesDeckConfig(): Promise<SalesDeckConfig> {
       const json = (await res.json()) as Partial<SalesDeckConfig>;
       fileConfig = {
         active: json.active !== false,
-        apiUrl: typeof json.apiUrl === "string" ? json.apiUrl.replace(/\/$/, "") : "",
+        apiUrl: typeof json.apiUrl === "string" ? json.apiUrl.trim().replace(/\/$/, "") : "",
       };
     }
   } catch {

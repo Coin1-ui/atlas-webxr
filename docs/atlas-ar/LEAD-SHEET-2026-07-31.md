@@ -122,11 +122,12 @@ Use SAL-2 Template A (workflow question + 15-min live placement). Design-partner
 
 ## 6. Suggested next actions (founder)
 
-1. Pick **3** from First 5 / Tier-1 for design-partner slots (SAL-4 Owner tab).  
-2. Send SAL-2 Template A from [outreach.html](../../public/sales-deck/outreach.html) — **From / Reply-To: sales@atlasar.in** — one clear CTA: 15-min floor placement.  
-3. Log touches in a simple sheet; do not spray all 28 in one day.  
-4. Optional: enrich LinkedIn titles before send (verify still current).  
-5. If prospect needs models: quote via **sales@atlasar.in** per [SERVICES-3D-MODELING-RATE-CARD.md](./SERVICES-3D-MODELING-RATE-CARD.md) (optimize vs create + PBR tiers).
+1. ~~Pick **3** from First 5 / Tier-1~~ **Done 2026-08-01:** Cozey · Star Furniture · Furniture Mart USA (Snug / OPTO waitlist).  
+2. Send personalized Template A from [DP-TEMPLATES-A-F-2026-08-01.md](./DP-TEMPLATES-A-F-2026-08-01.md) — **From / Reply-To: sales@atlasar.in** — follow [DP-TOUCH-LOG-2026-08-01.md](./DP-TOUCH-LOG-2026-08-01.md).  
+3. Log touches in the touch log; do not spray all 28 in one day.  
+4. Verify LinkedIn titles morning of send ([DP-BRIEFS-COZEY-STAR-FMUSA-2026-08-01.md](./DP-BRIEFS-COZEY-STAR-FMUSA-2026-08-01.md)).  
+5. GLB gate + SAL-4 coupon prep: [DP-GATE-GLB-2026-08-01.md](./DP-GATE-GLB-2026-08-01.md) · [DP-SAL4-KICKOFF-CHECKLIST-2026-08-01.md](./DP-SAL4-KICKOFF-CHECKLIST-2026-08-01.md).  
+6. If prospect needs models: quote via **sales@atlasar.in** per [SERVICES-3D-MODELING-RATE-CARD.md](./SERVICES-3D-MODELING-RATE-CARD.md).
 
 ---
 

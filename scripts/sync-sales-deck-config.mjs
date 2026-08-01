@@ -9,7 +9,9 @@ import { loadEnv } from "vite";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const env = loadEnv(process.env.NODE_ENV || "production", root, "");
-const apiUrl = (env.VITE_ATLAS_API_URL || process.env.VITE_ATLAS_API_URL || "").replace(/\/$/, "");
+const apiUrl = (env.VITE_ATLAS_API_URL || process.env.VITE_ATLAS_API_URL || "")
+  .trim()
+  .replace(/\/$/, "");
 
 function syncConfig(relativePath) {
   const configPath = path.join(root, relativePath);

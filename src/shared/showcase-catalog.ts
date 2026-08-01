@@ -1,5 +1,6 @@
 /**
- * Marketing / sales showcase catalog — static GLBs under /showcase/*.glb
+ * Marketing / sales showcase catalog — static GLBs under /custom-models/showcase/*.glb
+ * (Served as model/gltf-binary on Amplify; bare /showcase/*.glb was SPA-rewritten to HTML.)
  * Used to demo Direct AR links + Back to catalog (arExitUrl → product page).
  */
 import type { CatalogModel } from "../data/model-catalog";
@@ -13,7 +14,7 @@ export type ShowcaseProduct = {
   eyebrow: string;
   summary: string;
   details: string[];
-  /** Filename under public/showcase/ */
+  /** Filename under public/custom-models/showcase/ */
   glbFile: string;
 };
 
@@ -67,7 +68,7 @@ export function showcaseProductPath(id: string): string {
 
 export function showcaseGlbUrl(glbFile: string): string {
   const root = base.endsWith("/") ? base : `${base}/`;
-  return `${root}showcase/${encodeURIComponent(glbFile)}`;
+  return `${root}custom-models/showcase/${encodeURIComponent(glbFile)}`;
 }
 
 /** CatalogModel for AR / picker — arExitUrl from link demo overrides (or PDP default). */

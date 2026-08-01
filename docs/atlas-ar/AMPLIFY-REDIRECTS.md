@@ -26,7 +26,22 @@ That **replaced** the richer rules from `amplify.yml` (slash strips + sales-deck
 | 22–30 | sales-deck / storyboard → real HTML (200) | Enablement pages |
 | Last | SPA regex → `/index.html` (**200**, not 404-200) | Serve app **without** Amplify adding `/` on miss |
 
-Static files with extensions (`.js`, `.css`, `.txt`, `.xml`, images, video, `.html`) are **not** rewritten by the SPA rule — `robots.txt` / `sitemap.xml` / shells keep working.
+Static files with extensions (`.js`, `.css`, `.txt`, `.xml`, images, video, `.html`, **`.glb`**, **`.usdz`**) are **not** rewritten by the SPA rule — `robots.txt` / `sitemap.xml` / shells keep working.
+
+### Showcase GLBs (2026-08-01)
+
+If `/showcase/*.glb` returns `text/html`, the Console SPA allowlist is stale **or** the file is missing from the deploy. Working fallback used by the app:
+
+- Serve sales demo models from `/custom-models/showcase/*.glb` (proven `model/gltf-binary` on prod).
+- Still paste full [`AMPLIFY-REDIRECTS.json`](./AMPLIFY-REDIRECTS.json) so `/showcase` redirects and `glb|usdz` exclusions stay correct.
+
+**Verify after Console save:**
+
+```text
+https://www.atlasar.in/custom-models/showcase/ct202.glb  → 200, Content-Type model/gltf-binary (or octet-stream)
+https://www.atlasar.in/sales-deck/showcase               → 200 SPA
+https://www.atlasar.in/showcase/ct202.glb                → ideally binary after Console sync (not HTML)
+```
 
 ## After Save — verify
 
