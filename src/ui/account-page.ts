@@ -489,6 +489,7 @@ export function renderAccountPage(
                             <li>The <strong>${escapeHtml(workspace.name)}</strong> workspace and its showroom link</li>
                             <li>All uploaded 3D models and branding</li>
                             <li>Usage history (models · sessions · storage)</li>
+                            <li>Any paid Dodo subscription is cancelled immediately (no further renewals)</li>
                           </ul>
                         </div>
                       </div>
