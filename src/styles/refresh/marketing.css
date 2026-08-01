@@ -286,6 +286,10 @@
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
+  /* Italic overhang + h1 letter-spacing:-0.03em collided with "they" on mobile. */
+  display: inline-block;
+  padding-inline-end: 0.22em;
+  letter-spacing: 0;
 }
 
 .mkt-hero--cinema .mkt-lead {
@@ -429,6 +433,10 @@
 
   .mkt-hero--cinema .mkt-hero-copy > h1 {
     font-size: var(--fs-4xl);
+  }
+
+  .mkt-hero--cinema .mkt-hero-copy > h1 em {
+    padding-inline-end: 0.28em;
   }
 
   .mk-hero-video {
