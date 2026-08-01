@@ -4,6 +4,7 @@ import {
   devSignUp,
   isCognitoAuthEnabled,
   requestPasswordReset,
+  resendSignUpCode,
   signIn,
   signOutLocal,
   signUp,
@@ -43,6 +44,13 @@ export async function register(email: string, password: string): Promise<{ needs
 
 export async function verifyEmail(email: string, code: string): Promise<void> {
   await confirmSignUp(email, code);
+}
+
+export async function resendVerificationEmail(email: string): Promise<void> {
+  if (!isCognitoAuthEnabled()) {
+    throw new Error("Resend verification requires Cognito.");
+  }
+  await resendSignUpCode(email);
 }
 
 export async function forgotPassword(email: string): Promise<void> {

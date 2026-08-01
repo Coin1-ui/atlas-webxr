@@ -57,6 +57,20 @@ export async function confirmSignUp(email: string, code: string): Promise<void> 
   });
 }
 
+/** Resend signup confirmation code (Cognito email provider — works in SES sandbox). */
+export async function resendSignUpCode(email: string): Promise<void> {
+  if (!cognitoConfigured()) {
+    throw new Error("Cognito is not configured for this build.");
+  }
+  const user = new CognitoUser({ Username: email.trim().toLowerCase(), Pool: userPool() });
+  return new Promise((resolve, reject) => {
+    user.resendConfirmationCode((err) => {
+      if (err) reject(err);
+      else resolve();
+    });
+  });
+}
+
 export async function signIn(email: string, password: string): Promise<AuthUser> {
   if (!cognitoConfigured()) {
     return devSignIn(email);

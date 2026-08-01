@@ -179,6 +179,7 @@ import {
   logout,
   onboardWorkspace,
   register,
+  resendVerificationEmail,
   resetPassword,
   verifyEmail,
 } from "./auth/flow";
@@ -926,10 +927,11 @@ function showForgotPasswordScreen(error?: string, info?: string): void {
   routePainted();
 }
 
-function showSignupScreen(error?: string): void {
+function showSignupScreen(error?: string, info?: string): void {
   renderAuthSignup(app, {
     cognitoEnabled: isCognitoAuthEnabled(),
     error,
+    info,
     subtitle: isMobileExperience() ? MKT.authSignupSubMobile : undefined,
     needsVerification: signupNeedsVerification,
     prefillEmail: pendingVerifyEmail || undefined,
@@ -974,6 +976,18 @@ function showSignupScreen(error?: string): void {
         showLoginScreen("Email verified — sign in to continue.");
       } catch (e) {
         releaseAuthSubmitLoading(routePath());
+        showSignupScreen(e instanceof Error ? e.message : String(e));
+      }
+    },
+    onResendCode: async (email) => {
+      try {
+        pendingVerifyEmail = email.trim().toLowerCase();
+        await resendVerificationEmail(email);
+        showSignupScreen(
+          undefined,
+          "Code sent — check your inbox and spam folder. You can request another in 60 seconds.",
+        );
+      } catch (e) {
         showSignupScreen(e instanceof Error ? e.message : String(e));
       }
     },

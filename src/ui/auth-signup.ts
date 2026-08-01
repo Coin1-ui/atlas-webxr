@@ -19,16 +19,20 @@ function bindAuthLegalLinks(root: HTMLElement, handlers: AuthLegalHandlers): voi
   root.querySelector("[data-action=legal-privacy]")?.addEventListener("click", handlers.onLegalPrivacy);
 }
 
+const RESEND_COOLDOWN_MS = 60_000;
+
 export function renderAuthSignup(
   root: HTMLElement,
   handlers: {
     cognitoEnabled: boolean;
     error?: string;
+    info?: string;
     needsVerification?: boolean;
     prefillEmail?: string;
     subtitle?: string;
     onRegister: (email: string, password: string) => void | Promise<void>;
     onConfirm: (email: string, code: string) => void | Promise<void>;
+    onResendCode?: (email: string) => void | Promise<void>;
     onSignIn: () => void;
     onBack: () => void;
     onLegalTerms: () => void;
@@ -42,11 +46,16 @@ export function renderAuthSignup(
         <p class="auth-card-sub">Enter the code sent to your inbox. Check your spam or junk folder if it does not arrive within a few minutes.</p>
       </header>
       ${handlers.error ? `<div class="camera-warning" role="alert">${escapeHtml(handlers.error)}</div>` : ""}
+      ${handlers.info ? `<p class="auth-info" role="status">${escapeHtml(handlers.info)}</p>` : ""}
       <form class="auth-form" data-form="confirm">
         <label class="auth-label">Email<input class="auth-input" type="email" name="email" autocomplete="username" required placeholder="you@company.com" /></label>
-        <label class="auth-label">Verification code<input class="auth-input" type="text" name="code" inputmode="numeric" required placeholder="123456" /></label>
+        <label class="auth-label">Verification code<input class="auth-input" type="text" name="code" inputmode="numeric" autocomplete="one-time-code" required placeholder="123456" /></label>
         <button type="submit" class="a-btn a-btn--primary a-btn--block auth-submit">Confirm account</button>
       </form>
+      <div class="auth-resend-row">
+        <button type="button" class="a-btn a-btn--ghost a-btn--block auth-resend" data-action="resend-code">Resend verification code</button>
+        <p class="auth-resend-hint" data-resend-hint aria-live="polite"></p>
+      </div>
       <p class="auth-card-footer">
         <button type="button" class="auth-inline-link" data-action="signin">Back to sign in</button>
       </p>`;
@@ -67,6 +76,54 @@ export function renderAuthSignup(
       const code = (form.elements.namedItem("code") as HTMLInputElement).value;
       void handlers.onConfirm(email, code);
     });
+
+    const resendBtn = root.querySelector<HTMLButtonElement>("[data-action=resend-code]");
+    const resendHint = root.querySelector<HTMLElement>("[data-resend-hint]");
+    let cooldownTimer: number | undefined;
+    const setCooldown = (until: number) => {
+      const tick = () => {
+        const left = Math.ceil((until - Date.now()) / 1000);
+        if (!resendBtn) return;
+        if (left <= 0) {
+          resendBtn.disabled = false;
+          resendBtn.textContent = "Resend verification code";
+          if (cooldownTimer !== undefined) window.clearInterval(cooldownTimer);
+          cooldownTimer = undefined;
+          return;
+        }
+        resendBtn.disabled = true;
+        resendBtn.textContent = `Resend available in ${left}s`;
+      };
+      tick();
+      if (cooldownTimer !== undefined) window.clearInterval(cooldownTimer);
+      cooldownTimer = window.setInterval(tick, 500);
+    };
+    resendBtn?.addEventListener("click", () => {
+      const email =
+        emailInput?.value.trim() ||
+        handlers.prefillEmail?.trim() ||
+        "";
+      if (!email) {
+        if (resendHint) resendHint.textContent = "Enter your email above, then resend.";
+        emailInput?.focus();
+        return;
+      }
+      if (!handlers.onResendCode) return;
+      resendBtn.disabled = true;
+      if (resendHint) resendHint.textContent = "Sending…";
+      void Promise.resolve(handlers.onResendCode(email))
+        .then(() => {
+          if (resendHint) resendHint.textContent = "";
+          setCooldown(Date.now() + RESEND_COOLDOWN_MS);
+        })
+        .catch(() => {
+          resendBtn.disabled = false;
+          resendBtn.textContent = "Resend verification code";
+        });
+    });
+    if (handlers.info?.toLowerCase().includes("code sent")) {
+      setCooldown(Date.now() + RESEND_COOLDOWN_MS);
+    }
     return;
   }
 
